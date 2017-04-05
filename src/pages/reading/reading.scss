@@ -13,9 +13,18 @@ page-reading {
     font-size: 16px;
   }
 
-  ion-content.no-toolbar .scroll-content {
+  ion-content .scroll-content {
     margin-top: 0px!important;
   }
+
+  .before-novel-md {
+    margin-top: 56px;
+  }
+
+  .before-novel-ios {
+    margin-top: 44px;
+  }
+
 }
 
 ion-item.current-ch {

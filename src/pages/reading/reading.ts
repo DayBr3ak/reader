@@ -1,5 +1,7 @@
 import { ViewChild, Component } from '@angular/core';
-import { NavController, NavParams, ModalController, Content } from 'ionic-angular';
+import { trigger, transition, style, animate } from '@angular/core';
+
+import { NavController, NavParams, ModalController, Content, Platform, Events } from 'ionic-angular';
 import { Http } from '@angular/http';
 import { StatusBar } from '@ionic-native/status-bar';
 import { Storage } from '@ionic/storage';
@@ -9,7 +11,21 @@ import { ReadModalPage } from '../read-modal/read-modal';
 
 @Component({
   selector: 'page-reading',
-  templateUrl: 'reading.html'
+  templateUrl: 'reading.html',
+  animations: [
+    trigger(
+      'enterAnimation', [
+        transition(':enter', [
+          style({transform: 'translateY(0)', opacity: 0}),
+          animate('100ms', style({transform: 'translateY(0)', opacity: 1}))
+        ]),
+        transition(':leave', [
+          style({transform: 'translateY(0)', opacity: 1}),
+          animate('100ms', style({transform: 'translateY(0)', opacity: 0}))
+        ])
+      ]
+    )
+  ],
 })
 export class ReadingPage {
   @ViewChild(Content) content: Content;
@@ -21,9 +37,20 @@ export class ReadingPage {
   public hideUi: boolean;
   public chapList: Array<number>;
 
-  constructor(public statusBar: StatusBar, public navCtrl: NavController, public navParams: NavParams, private http: Http, public modalCtrl: ModalController, public storage: Storage) {
+  constructor(public statusBar: StatusBar,
+    public navCtrl: NavController,
+    public navParams: NavParams,
+    private http: Http,
+    public modalCtrl: ModalController,
+    public storage: Storage,
+    public platform: Platform,
+    public events: Events
+  ) {
     this.hideUi = false;
     this.maxChapter = null;
+
+    this.statusBar.overlaysWebView(false);
+    // this.statusBar.show();
   }
 
   presentModal() {
@@ -42,53 +69,103 @@ export class ReadingPage {
     return 'http://www.wuxiaworld.com/mga-index/mga-chapter-' + num;
   }
 
-  ionViewDidLoad() {
+  myViewDidLoad() {
+    // this.platform.registerListener(document, 'volumeupbutton', () => {
+    //   console.log('volume:up')
+    //   console.log('chapter is now ' + (this.currentChapter - 1))
+    //   this.prevChapter();
+    // }, false);
+
+    // this.platform.registerListener(document, 'volumedownbutton', () => {
+    //   console.log('volume:down')
+    //   console.log('chapter is now ' + (this.currentChapter + 1))
+    //   this.nextChapter();
+    // }, false);
+
+    this.events.subscribe('volume:up', () => {
+      console.log('volume:up')
+      console.log('chapter is now ' + (this.currentChapter - 1))
+      this.prevChapter();
+    })
+
+    this.events.subscribe('volume:down', () => {
+      console.log('volume:down')
+      console.log('chapter is now ' + (this.currentChapter + 1))
+      this.nextChapter();
+    })
+
     this.content.enableScrollListener();
     this.content.ionScrollEnd.subscribe((event) => {
-      this.storage.ready().then(() => {
-        this.storage.set('mga-scrolltop', event.scrollTop);
-      });
+      this.storage.set('mga-chapter-scroll-' + this.currentChapter, event.scrollTop);
     });
-
 
     console.log('ionViewDidLoad ReadingPage');
-    this.storage.ready().then(() => {
-
-      this.storage.get('mga').then((val) => {
-        let currentChapter;
-        if (val && val.currentChapter) {
-          currentChapter = val.currentChapter;
-        } else {
-          currentChapter = 1;
-        }
-        this.loadChapter(currentChapter, () => {
-          // view loaded, should scroll to saved scroll point if available
-          this.storage.get('mga-scrolltop').then((sTop) => {
-           this.content.scrollTop = sTop? sTop: 0;
-          });
-          this.content.fullscreen = true;
-        });
-      })
-    });
+    this.storage.get('mga-current-chapter').then((val) => {
+      let currentChapter;
+      if (val) {
+        currentChapter = val;
+      } else {
+        currentChapter = 1;
+      }
+      this.loadChapter(currentChapter, () => {
+        this.content.fullscreen = true;
+        this.loadAhead(currentChapter, 3);
+      });
+    })
     this.getNbChapter();
   }
 
-  loadChapter(chapter, callback=null) {
-    this.scrap(chapter, (paragraphs) => {
-      this.paragraphs = paragraphs;
-      // TODO maybe store scroll so when you get back it's the same?
-      this.storage.ready().then(() => {
-        this.storage.set('mga', {currentChapter: chapter});
-      });
-      this.currentChapter = chapter;
+  ionViewDidLoad() {
+    this.storage.ready().then(() => {
+      this.myViewDidLoad();
+    })
+  }
 
-      if (callback) {
-        callback();
+  loadChapter(chapter, callback=null, changeChapter=true) {
+    let afterLoad = () => {
+
+      if (changeChapter) {
+        this.currentChapter = chapter;
+        this.storage.set('mga-current-chapter', this.currentChapter);
+
+
+        // view loaded, should scroll to saved scroll point if available
+        this.storage.get('mga-chapter-scroll-' + this.currentChapter).then((scroll) => {
+          console.log('scroll: ' + scroll)
+          this.content.scrollTop = scroll? scroll: 0;
+          if (callback) {
+            callback();
+          }
+        });
       } else {
-        // default behavior
-        this.content.scrollTop = 0;
+        if (callback)
+          callback();
+      }
+    }
+
+    let scrap = (chapter) => {
+      this.scrap(chapter, (paragraphs) => {
+        if (changeChapter) {
+          this.paragraphs = paragraphs;
+        }
+
+        // TODO maybe store scroll so when you get back it's the same?
+        this.storage.set('mga-chapter-txt-' + chapter, paragraphs)
+        afterLoad();
+      });
+    }
+
+    this.storage.get('mga-chapter-txt-' + chapter).then((data) => {
+      if (data) {
+        if (changeChapter) {
+          this.paragraphs = data;
+        }
+        afterLoad();
+      } else {
+        scrap(chapter);
       }
     });
+
   }
 
   scrap(chapter, callback) {
@@ -152,8 +229,17 @@ export class ReadingPage {
     })
   }
 
+  loadAhead(chapter, ahead) {
+    if (chapter < 1600) {
+      for (let i = 1; i <= ahead; i++) {
+        this.loadChapter(chapter + i, null, false);
+      }
+    }
+  }
+
   nextChapter() {
     this.loadChapter(this.currentChapter + 1);
+    this.loadAhead(this.currentChapter + 1, 3);
   }
 
   prevChapter() {
@@ -173,11 +259,11 @@ export class ReadingPage {
     console.log('tap!!')
     this.hideUi = !this.hideUi;
     if (this.hideUi) {
-      this.statusBar.hide();
-      this.content.resize();
+      // this.statusBar.hide();
+      // this.content.resize();
 
     } else {
-      this.statusBar.show();
+      // this.statusBar.show();
     }
   }
 
