@@ -1,10 +1,11 @@
 import { ViewChild, Component } from '@angular/core';
-import { NavController, NavParams, ModalController, Platform, ViewController, Content } from 'ionic-angular';
+import { NavController, NavParams, ModalController, Content } from 'ionic-angular';
 import { Http } from '@angular/http';
 import { StatusBar } from '@ionic-native/status-bar';
 import { Storage } from '@ionic/storage';
 import 'rxjs/add/operator/map';
 
+import { ReadModalPage } from '../read-modal/read-modal';
 
 @Component({
   selector: 'page-reading',
@@ -27,7 +28,7 @@ export class ReadingPage {
 
   presentModal() {
     if (this.maxChapter) {
-      let modal = this.modalCtrl.create(ModalContentPage, { max: this.maxChapter, current: this.currentChapter });
+      let modal = this.modalCtrl.create(ReadModalPage, { max: this.maxChapter, current: this.currentChapter });
       modal.onDidDismiss(data => {
         if (data) {
           this.loadChapter(data);
@@ -199,92 +200,5 @@ export class ReadingPage {
   </ion-list>
 `
 
-@Component({
-  template: `
-<ion-header>
-  <ion-toolbar>
-    <ion-title>
-      {{ modTitle }}
-    </ion-title>
-    <ion-buttons start>
-      <button ion-button (click)="dismiss()">
-        <span ion-text color="light" showWhen="ios">Cancel</span>
-        <ion-icon name="md-close" showWhen="android, windows"></ion-icon>
-      </button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
-<ion-content id="cc1">
 
-  <ion-list no-lines>
-
-    <ion-item *ngFor="let chap of chapList"
-      (click)="selectCh(chap)" [attr.id]="createElemId(chap)"
-      [ngClass]="{'current-ch': (isSelected(chap) == true)}">
-      Chapter {{ chap }}
-    </ion-item>
-
-  </ion-list>
-
-</ion-content>
-`
-})
-export class ModalContentPage {
-  modTitle: string;
-  max: number;
-  chapList: Array<number>;
-  @ViewChild(Content) content: Content;
-
-  constructor(
-    public platform: Platform,
-    public params: NavParams,
-    public viewCtrl: ViewController
-  ) {
-    this.modTitle = 'Choose Chapter';
-    this.max = this.params.data.max;
-    this.chapList = [];
-    this.createList(this.params.data.current);
-  }
-
-  ionViewDidEnter() {
-    // scroll to chapter
-    let selected = this.params.data.current - 3;
-    if (selected < 0) {
-      selected = 0;
-    }
-
-    this.content.scrollTop = document.getElementById(this.createElemId(selected)).offsetTop;
-  }
-
-  createElemId(chap) {
-    return 'chapter-id-' + chap;
-  }
-
-  dismiss() {
-    this.viewCtrl.dismiss(null);
-  }
-
-  selectCh(chap) {
-    this.viewCtrl.dismiss(chap);
-  }
-
-  createList(center) {
-    const offset = 8;
-    let min = center - offset;
-    if (min < 1) min = 1;
-    let max = center + offset;
-    if (max > this.max) max = this.max;
-
-    min = 1;
-    max = this.max;
-    for (let i = min; i <= max; i++) {
-      this.chapList.push(i);
-    }
-  }
-
-  isSelected(chap) {
-    return chap == this.params.data.current;
-  }
-
-}
 

@@ -5,7 +5,8 @@ import { AboutPage } from '../pages/about/about';
 import { ContactPage } from '../pages/contact/contact';
 import { HomePage } from '../pages/home/home';
 import { TabsPage } from '../pages/tabs/tabs';
-import { ReadingPage, ModalContentPage } from '../pages/reading/reading';
+import { ReadingPage } from '../pages/reading/reading';
+import { ReadModalPage } from '../pages/read-modal/read-modal';
 
 import { IonicStorageModule } from '@ionic/storage';
 
@@ -20,7 +21,7 @@ import { SplashScreen } from '@ionic-native/splash-screen';
     HomePage,
     TabsPage,
     ReadingPage,
-    ModalContentPage
+    ReadModalPage
   ],
   imports: [
     IonicModule.forRoot(MyApp),
@@ -34,7 +35,7 @@ import { SplashScreen } from '@ionic-native/splash-screen';
     HomePage,
     TabsPage,
     ReadingPage,
-    ModalContentPage
+    ReadModalPage
   ],
   providers: [
     StatusBar,
