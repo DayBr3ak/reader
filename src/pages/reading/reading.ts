@@ -27,7 +27,7 @@ export class ReadingPage {
 
   presentModal() {
     if (this.maxChapter) {
-      let modal = this.modalCtrl.create(ModalContentPage, { list: this.chapList, current: this.currentChapter });
+      let modal = this.modalCtrl.create(ModalContentPage, { max: this.maxChapter, current: this.currentChapter });
       modal.onDidDismiss(data => {
         if (data) {
           this.loadChapter(data);
@@ -167,15 +167,7 @@ export class ReadingPage {
     let url = 'https://gist.githubusercontent.com/ChuTengMga/2b96da48467fa23698da1051fcf5c00a/raw/0b0510521aff26071f22fe825e9fc29ae58c03ff/wu.json';
     this.http.get(url).map(res => res.json()).subscribe((data) => {
       this.maxChapter = data.mga;
-      this.createList();
     })
-  }
-
-  createList() {
-    this.chapList = [];
-    for (let i = 1; i <= this.maxChapter; i++) {
-      this.chapList.push(i);
-    }
   }
 
   onTap() {
@@ -196,6 +188,17 @@ export class ReadingPage {
   }
 }
 
+`
+<ion-list [virtualScroll]="chapList" no-lines>
+      <ion-item *virtualItem="let chap" (click)="selectCh(chap)" [attr.id]="createElemId(chap)" [ngClass]="{'current-ch': (isSelected(chap) == true)}">
+      <!--<ion-item *ngFor="let k of chapList" (click)="selectCh(k)" [attr.id]="createElemId(k)">-->
+        Chapter {{ chap }}
+        <ion-note item-right>
+        </ion-note>
+      </ion-item>
+  </ion-list>
+`
+
 @Component({
   template: `
 <ion-header>
@@ -212,19 +215,23 @@ export class ReadingPage {
   </ion-toolbar>
 </ion-header>
 <ion-content id="cc1">
-  <ion-list [virtualScroll]="chapList" no-lines>
-      <ion-item *virtualItem="let chap" (click)="selectCh(chap)" [attr.id]="createElemId(chap)">
-      <!--<ion-item *ngFor="let k of chapList" (click)="selectCh(k)" [attr.id]="createElemId(k)">-->
-        Chapter {{ chap }}
-        <ion-note item-right>
-        </ion-note>
-      </ion-item>
+
+  <ion-list no-lines>
+
+    <ion-item *ngFor="let chap of chapList"
+      (click)="selectCh(chap)" [attr.id]="createElemId(chap)"
+      [ngClass]="{'current-ch': (isSelected(chap) == true)}">
+      Chapter {{ chap }}
+    </ion-item>
+
   </ion-list>
+
 </ion-content>
 `
 })
 export class ModalContentPage {
   modTitle: string;
+  max: number;
   chapList: Array<number>;
   @ViewChild(Content) content: Content;
 
@@ -234,7 +241,9 @@ export class ModalContentPage {
     public viewCtrl: ViewController
   ) {
     this.modTitle = 'Choose Chapter';
-    this.chapList = this.params.data.list;
+    this.max = this.params.data.max;
+    this.chapList = [];
+    this.createList(this.params.data.current);
   }
 
   ionViewDidEnter() {
@@ -243,7 +252,8 @@ export class ModalContentPage {
     if (selected < 0) {
       selected = 0;
     }
-    this.content.scrollTop = 46 * selected;
+
+    this.content.scrollTop = document.getElementById(this.createElemId(selected)).offsetTop;
   }
 
   createElemId(chap) {
@@ -255,10 +265,26 @@ export class ModalContentPage {
   }
 
   selectCh(chap) {
-    debugger
-
     this.viewCtrl.dismiss(chap);
   }
 
+  createList(center) {
+    const offset = 8;
+    let min = center - offset;
+    if (min < 1) min = 1;
+    let max = center + offset;
+    if (max > this.max) max = this.max;
+
+    min = 1;
+    max = this.max;
+    for (let i = min; i <= max; i++) {
+      this.chapList.push(i);
+    }
+  }
+
+  isSelected(chap) {
+    return chap == this.params.data.current;
+  }
 
 }
+
