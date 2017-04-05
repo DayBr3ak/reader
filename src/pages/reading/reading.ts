@@ -44,11 +44,10 @@ export class ReadingPage {
   ionViewDidLoad() {
     this.content.enableScrollListener();
     this.content.ionScrollEnd.subscribe((event) => {
-      console.log(event);
       this.storage.ready().then(() => {
         this.storage.set('mga-scrolltop', event.scrollTop);
       });
-    })
+    });
 
 
     console.log('ionViewDidLoad ReadingPage');
@@ -206,14 +205,14 @@ export class ReadingPage {
     </ion-title>
     <ion-buttons start>
       <button ion-button (click)="dismiss()">
-        <span ion-text color="primary" showWhen="ios">Cancel</span>
+        <span ion-text color="light" showWhen="ios">Cancel</span>
         <ion-icon name="md-close" showWhen="android, windows"></ion-icon>
       </button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 <ion-content id="cc1">
-  <ion-list [virtualScroll]="chapList">
+  <ion-list [virtualScroll]="chapList" no-lines>
       <ion-item *virtualItem="let chap" (click)="selectCh(chap)" [attr.id]="createElemId(chap)">
       <!--<ion-item *ngFor="let k of chapList" (click)="selectCh(k)" [attr.id]="createElemId(k)">-->
         Chapter {{ chap }}
@@ -238,12 +237,13 @@ export class ModalContentPage {
     this.chapList = this.params.data.list;
   }
 
-  ionViewDidLoad() {
-    let eid = this.createElemId(this.params.data.current);
-    console.log(eid)
-    let yOffset = document.getElementById(eid).offsetTop;
-    console.log(yOffset);
-    this.content.scrollTo(0, yOffset, 4000)
+  ionViewDidEnter() {
+    // scroll to chapter
+    let selected = this.params.data.current - 3;
+    if (selected < 0) {
+      selected = 0;
+    }
+    this.content.scrollTop = 46 * selected;
   }
 
   createElemId(chap) {
@@ -255,6 +255,8 @@ export class ModalContentPage {
   }
 
   selectCh(chap) {
+    debugger
+
     this.viewCtrl.dismiss(chap);
   }
 
