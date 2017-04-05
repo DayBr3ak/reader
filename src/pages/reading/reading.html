@@ -1,0 +1,34 @@
+<!--
+  Generated template for the Reading page.
+
+  See http://ionicframework.com/docs/v2/components/#navigation for more info on
+  Ionic pages and navigation.
+-->
+<ion-header *ngIf="hideUi == false">
+
+  <!-- <ion-navbar [ngClass]="{'hidden': (hideUi == true)}"> -->
+  <ion-navbar>
+
+      <ion-title (click)="onPress()">{{ novelName }} - Chapter {{ currentChapter }}</ion-title>
+
+      <ion-buttons start>
+        <button ion-button icon-only (click)='prevChapter()'>
+          <ion-icon name="arrow-back"></ion-icon>
+        </button>
+      </ion-buttons>
+
+      <ion-buttons end>
+        <button ion-button icon-only (click)='nextChapter()'>
+          <ion-icon name="arrow-forward"></ion-icon>
+        </button>
+      </ion-buttons>
+
+  </ion-navbar>
+
+</ion-header>
+
+
+<ion-content padding (click)="onTap()" [ngClass]="{'no-toolbar' : (hideUi == true)}">
+  <p *ngFor="let paragraph of paragraphs" [ngClass]="{'bold' : (paragraph.strong == true)}">{{ paragraph.text }}</p>
+</ion-content>
+

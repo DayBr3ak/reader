@@ -1,0 +1,19 @@
+page-reading {
+
+  .bold {
+    font-weight: bold
+  }
+
+  .hidden {
+    display: none!important;
+  }
+
+  p {
+    text-align: justify;
+    font-size: 16px;
+  }
+
+  ion-content.no-toolbar .scroll-content {
+        margin-top: 0px!important;
+  }
+}
