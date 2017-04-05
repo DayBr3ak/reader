@@ -55,12 +55,13 @@ export class ReadingPage {
     this.storage.ready().then(() => {
 
       this.storage.get('mga').then((val) => {
+        let currentChapter;
         if (val && val.currentChapter) {
-          this.currentChapter = val.currentChapter;
+          currentChapter = val.currentChapter;
         } else {
-          this.currentChapter = 1;
+          currentChapter = 1;
         }
-        this.loadChapter(this.currentChapter, () => {
+        this.loadChapter(currentChapter, () => {
           // view loaded, should scroll to saved scroll point if available
           this.storage.get('mga-scrolltop').then((sTop) => {
            this.content.scrollTop = sTop? sTop: 0;
@@ -73,13 +74,14 @@ export class ReadingPage {
   }
 
   loadChapter(chapter, callback=null) {
-    this.storage.ready().then(() => {
-      this.storage.set('mga', {currentChapter: chapter});
-    });
-    this.currentChapter = chapter;
     this.scrap(chapter, (paragraphs) => {
       this.paragraphs = paragraphs;
       // TODO maybe store scroll so when you get back it's the same?
+      this.storage.ready().then(() => {
+        this.storage.set('mga', {currentChapter: chapter});
+      });
+      this.currentChapter = chapter;
+
       if (callback) {
         callback();
       } else {
@@ -124,17 +126,13 @@ export class ReadingPage {
       let para = articleBody.getElementsByTagName('p');
       let res = [];
       for (let i = 0; i < para.length; i++) {
+        const htmlTagRegex = /(<([^>]+)>)/ig
+
         let txt = para[i].innerHTML.replace('&nbsp;', ' ');
-        txt = txt.replace('&nbsp;', ' ').replace('<a href="">', '').replace('</a>', '');
-        if (txt.includes('<strong>')) {
-          txt = txt.replace('<strong>', '').replace('</strong>', '');
-          res.push({ strong: true, text: txt });
-        } else {
-          res.push({ strong: false, text: txt });
-        }
+        txt = txt.replace('&nbsp;', ' ')
+        txt = txt.replace(htmlTagRegex, '');
+        res.push({ strong: i == 0, text: txt });
       }
-
-
       return res;
     }
 

@@ -9,7 +9,11 @@
   <!-- <ion-navbar [ngClass]="{'hidden': (hideUi == true)}"> -->
   <ion-navbar>
 
-      <ion-title (click)="onPress()">{{ novelName }} - Chapter {{ currentChapter }}</ion-title>
+      <button ion-button menuToggle>
+        <ion-icon name="menu"></ion-icon>
+      </button>
+
+      <ion-title>{{ novelName }} - Chapter {{ currentChapter }}</ion-title>
 
       <ion-buttons start>
         <button ion-button icon-only (click)='prevChapter()'>

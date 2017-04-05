@@ -1,7 +1,5 @@
 import { ViewChild, Component } from '@angular/core';
-import { NavController, NavParams, ModalController, Platform, ViewController, Content } from 'ionic-angular';
-import { StatusBar } from '@ionic-native/status-bar';
-
+import { NavParams, Platform, ViewController, Content } from 'ionic-angular';
 
 @Component({
   selector: 'page-read-modal',

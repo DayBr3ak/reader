@@ -21,3 +21,11 @@ page-reading {
 ion-item.current-ch {
   background-color: map-get($colors, secondary);
 }
+
+ion-content.menu-content {
+  background-color: map-get($colors, secondary);
+
+  button {
+    background-color: map-get($colors, danger);
+  }
+}
