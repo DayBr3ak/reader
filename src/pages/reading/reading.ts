@@ -1,13 +1,14 @@
-import { ViewChild, Component } from '@angular/core';
+import { ViewChild, Component, ElementRef } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/core';
 
-import { NavController, NavParams, ModalController, Content, Platform, Events } from 'ionic-angular';
+import { NavController, NavParams, ModalController, Content, Platform, Events, PopoverController } from 'ionic-angular';
 import { Http } from '@angular/http';
 import { StatusBar } from '@ionic-native/status-bar';
 import { Storage } from '@ionic/storage';
 import 'rxjs/add/operator/map';
 
 import { ReadModalPage } from '../read-modal/read-modal';
+import { PopoverReadPage } from '../popover-read/popover-read';
 
 @Component({
   selector: 'page-reading',
@@ -28,10 +29,13 @@ import { ReadModalPage } from '../read-modal/read-modal';
   ],
 })
 export class ReadingPage {
-  @ViewChild(Content) content: Content;
+  @ViewChild('pageContent') content: Content;
+  @ViewChild('pageContent', { read: ElementRef }) contentEref: ElementRef;
+  @ViewChild('articleBody', { read: ElementRef }) textEref: ElementRef;
 
   public novelName: string = 'MGA';
   public paragraphs: any;
+  public readerSettings: any;
   public currentChapter: number;
   public maxChapter: number;
   public hideUi: boolean;
@@ -44,12 +48,17 @@ export class ReadingPage {
     public modalCtrl: ModalController,
     public storage: Storage,
     public platform: Platform,
-    public events: Events
+    public events: Events,
+    public popoverCtrl: PopoverController
   ) {
     this.hideUi = false;
     this.maxChapter = null;
-
     this.statusBar.overlaysWebView(false);
+    this.readerSettings = {
+      fontFamily: 'roboto',
+      fontSize: '4vw',
+      bgClass: 'bg-black'
+    }
     // this.statusBar.show();
   }
 
@@ -69,34 +78,34 @@ export class ReadingPage {
     return 'http://www.wuxiaworld.com/mga-index/mga-chapter-' + num;
   }
 
-  myViewDidLoad() {
-    // this.platform.registerListener(document, 'volumeupbutton', () => {
-    //   console.log('volume:up')
-    //   console.log('chapter is now ' + (this.currentChapter - 1))
-    //   this.prevChapter();
-    // }, false);
-
-    // this.platform.registerListener(document, 'volumedownbutton', () => {
-    //   console.log('volume:down')
-    //   console.log('chapter is now ' + (this.currentChapter + 1))
-    //   this.nextChapter();
-    // }, false);
-
+  registerEvents() {
     this.events.subscribe('volume:up', () => {
-      console.log('volume:up')
-      console.log('chapter is now ' + (this.currentChapter - 1))
+      console.log('VUP, chapter is now ' + (this.currentChapter - 1))
       this.prevChapter();
     })
 
     this.events.subscribe('volume:down', () => {
-      console.log('volume:down')
-      console.log('chapter is now ' + (this.currentChapter + 1))
+      console.log('VDOWN, chapter is now ' + (this.currentChapter + 1))
       this.nextChapter();
     })
 
     this.content.enableScrollListener();
     this.content.ionScrollEnd.subscribe((event) => {
       this.storage.set('mga-chapter-scroll-' + this.currentChapter, event.scrollTop);
+    });
+
+    this.events.subscribe('change:background', (bg) => {
+      this.readerSettings.bgClass = bg;
+    });
+  }
+
+  myViewDidLoad() {
+    this.registerEvents();
+
+    this.storage.get('reader-settings').then((setts) => {
+      if (setts) {
+        this.readerSettings = setts;
+      }
     });
 
     console.log('ionViewDidLoad ReadingPage');
@@ -165,7 +174,6 @@ export class ReadingPage {
         scrap(chapter);
       }
     });
-
   }
 
   scrap(chapter, callback) {
@@ -255,7 +263,7 @@ export class ReadingPage {
     })
   }
 
-  onTap() {
+  hideInterface() {
     console.log('tap!!')
     this.hideUi = !this.hideUi;
     if (this.hideUi) {
@@ -267,9 +275,25 @@ export class ReadingPage {
     }
   }
 
-  onPress() {
-    console.log('press..');
+  chapterModal() {
     this.presentModal();
+  }
+
+  presentPopover() {
+    let popover = this.popoverCtrl.create(PopoverReadPage, {
+      contentEle: this.contentEref.nativeElement,
+      textEle: this.textEref.nativeElement,
+      bgClass: this.readerSettings.bgClass
+    });
+    popover.onDidDismiss((data) => {
+      console.log('popover dismissed');
+      this.readerSettings.fontFamily = this.textEref.nativeElement.style.fontFamily;
+      this.readerSettings.fontSize = this.textEref.nativeElement.style.fontSize;
+      //bgClass already set
+
+      this.storage.set('reader-settings', this.readerSettings);
+    })
+    popover.present();
   }
 }
 

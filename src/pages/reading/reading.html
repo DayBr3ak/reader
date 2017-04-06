@@ -20,15 +20,68 @@
       </ion-buttons>
 
   </ion-navbar>
-
 </ion-header>
 
 
-<ion-content padding (click)="onTap()"
-  [ngClass]="{'no-toolbar' : (hideUi)}"
+<ion-content #pageContent padding
   (swipe)="onSwipe($event)"
+  [ngClass]="{'bg-black': (readerSettings.bgClass == 'bg-black'),
+              'bg-white': (readerSettings.bgClass == 'bg-white'),
+              'bg-grey': (readerSettings.bgClass == 'bg-grey'),
+              'bg-tan': (readerSettings.bgClass == 'bg-tan')
+             }"
   >
-  <div [ngClass]="{'before-novel-ios': (platform.is('ios')), 'before-novel-md': (!platform.is('ios'))}"></div>
-  <p *ngFor="let paragraph of paragraphs" [ngClass]="{'bold' : (paragraph.strong)}">{{ paragraph.text }}</p>
+
+  <div class="before-novel"></div>
+
+  <ion-segment color="secondary">
+    <ion-segment-button value="a" (ionSelect)="prevChapter()">
+      Previous
+    </ion-segment-button>
+    <ion-segment-button value="b" (ionSelect)="chapterModal()">
+      Select Chapter
+    </ion-segment-button>
+    <ion-segment-button value="c" (ionSelect)="nextChapter()">
+      Next
+    </ion-segment-button>
+  </ion-segment>
+
+  <div #articleBody class="article-body" (click)="hideInterface()"
+    [style.fontFamily]="readerSettings.fontFamily"
+    [style.fontSize]="readerSettings.fontSize"
+  >
+    <p *ngFor="let paragraph of paragraphs" [class.bold]="paragraph.strong">{{ paragraph.text }}</p>
+  </div>
+
+  <ion-segment color="secondary">
+    <ion-segment-button value="a" (ionSelect)="prevChapter()">
+      Previous
+    </ion-segment-button>
+    <ion-segment-button value="b" (ionSelect)="chapterModal()">
+      Select Chapter
+    </ion-segment-button>
+    <ion-segment-button value="c" (ionSelect)="nextChapter()">
+      Next
+    </ion-segment-button>
+  </ion-segment>
+
+  <div class="after-novel"></div>
+
 </ion-content>
 
+<ion-footer  *ngIf="!hideUi" [@enterAnimation]="hideUi">
+  <ion-toolbar>
+    <ion-title>Footer</ion-title>
+    <!-- <ion-buttons start>
+        <button ion-button icon-only (click)='prevChapter()'>
+          <ion-icon name="arrow-back"></ion-icon>
+        </button>
+      </ion-buttons>
+ -->
+      <ion-buttons end>
+        <button ion-button icon-only (click)='presentPopover()'>
+          <ion-icon name="contrast"></ion-icon>
+        </button>
+      </ion-buttons>
+  </ion-toolbar>
+</ion-footer>

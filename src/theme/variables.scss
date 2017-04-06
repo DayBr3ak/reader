@@ -41,29 +41,33 @@ $colors: (
   secondary:  #8f1212,
   danger:     #610e0e,
   light:      #ffffff,
-  dark:       #000000
-);
+  dark:       #000000,
 
+  white:      rgb(255, 255, 255),
+  grey:       rgb(76,75,80),
+  black:      rgb(0, 0, 0),
+  tan:        rgb(249, 241, 228)
+);
 
 // App iOS Variables
 // --------------------------------------------------
 // iOS only Sass variables can go here
 
-
+$ios-toolbar-spacing: 44px;
 
 
 // App Material Design Variables
 // --------------------------------------------------
 // Material Design only Sass variables can go here
 
-
+$md-toolbar-spacing: 56px;
 
 
 // App Windows Variables
 // --------------------------------------------------
 // Windows only Sass variables can go here
 
-
+$wp-toolbar-spacing: $md-toolbar-spacing;
 
 
 // App Theme
