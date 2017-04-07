@@ -1,0 +1,12 @@
+
+  <!-- <ion-range min="1" [max]="maxChapter" color="secondary" pin="true" snaps="true">
+    <ion-label range-left>1</ion-label>
+    <ion-label range-right>{{ maxChapter }}</ion-label>
+  </ion-range> -->
+
+  <ion-item>
+    <ion-label floating>Select Chapter</ion-label>
+    <ion-input #selectCh type="number" [value]="currentChapter"></ion-input>
+  </ion-item>
+
+  <button ion-button block color="secondary" (click)="validate(selectCh)">Go to</button>

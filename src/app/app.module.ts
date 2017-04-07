@@ -5,6 +5,7 @@ import { ReadingPage } from '../pages/reading/reading';
 import { ReadModalPage } from '../pages/read-modal/read-modal';
 import { SettingsPage } from '../pages/settings/settings';
 import { PopoverReadPage } from '../pages/popover-read/popover-read';
+import { PopoverChapterPage } from '../pages/popover-chapter/popover-chapter';
 
 
 import { IonicStorageModule } from '@ionic/storage';
@@ -18,7 +19,8 @@ import { SplashScreen } from '@ionic-native/splash-screen';
     ReadingPage,
     ReadModalPage,
     SettingsPage,
-    PopoverReadPage
+    PopoverReadPage,
+    PopoverChapterPage
   ],
   imports: [
     IonicModule.forRoot(MyApp),
@@ -30,7 +32,8 @@ import { SplashScreen } from '@ionic-native/splash-screen';
     ReadingPage,
     ReadModalPage,
     SettingsPage,
-    PopoverReadPage
+    PopoverReadPage,
+    PopoverChapterPage
   ],
   providers: [
     StatusBar,

@@ -34,17 +34,21 @@
 
   <div class="before-novel"></div>
 
-  <ion-segment color="secondary">
-    <ion-segment-button value="a" (ionSelect)="prevChapter()">
-      Previous
-    </ion-segment-button>
-    <ion-segment-button value="b" (ionSelect)="chapterModal()">
-      Select Chapter
-    </ion-segment-button>
-    <ion-segment-button value="c" (ionSelect)="nextChapter()">
+  <p class="reader-nav">
+    <button ion-button outline color="secondary" icon-left (click)="prevChapter()">
+      <ion-icon name='arrow-back'></ion-icon>
+      Back
+    </button>
+
+    <button ion-button outline color="secondary" icon-only (click)="presentPopoverChapter()">
+      <ion-icon name='search'></ion-icon>
+    </button>
+
+    <button ion-button outline color="secondary" icon-right (click)="nextChapter()">
       Next
-    </ion-segment-button>
-  </ion-segment>
+      <ion-icon name='arrow-forward'></ion-icon>
+    </button>
+  </p>
 
   <div #articleBody class="article-body" (click)="hideInterface()"
     [style.fontFamily]="readerSettings.fontFamily"
@@ -53,17 +57,21 @@
     <p *ngFor="let paragraph of paragraphs" [class.bold]="paragraph.strong" [innerHTML]="paragraph.text"></p>
   </div>
 
-  <ion-segment color="secondary">
-    <ion-segment-button value="a" (ionSelect)="prevChapter()">
-      Previous
-    </ion-segment-button>
-    <ion-segment-button value="b" (ionSelect)="chapterModal()">
-      Select Chapter
-    </ion-segment-button>
-    <ion-segment-button value="c" (ionSelect)="nextChapter()">
+  <p class="reader-nav">
+    <button ion-button outline color="secondary" icon-left (click)="prevChapter()">
+      <ion-icon name='arrow-back'></ion-icon>
+      Back
+    </button>
+
+    <button ion-button outline color="secondary" icon-only (click)="presentPopoverChapter()">
+      <ion-icon name='search'></ion-icon>
+    </button>
+
+    <button ion-button outline color="secondary" icon-right (click)="nextChapter()">
       Next
-    </ion-segment-button>
-  </ion-segment>
+      <ion-icon name='arrow-forward'></ion-icon>
+    </button>
+  </p>
 
   <div class="after-novel"></div>
 
@@ -71,15 +79,15 @@
 
 <ion-footer  *ngIf="!hideUi" [@enterAnimation]="hideUi">
   <ion-toolbar>
-    <ion-title>Footer</ion-title>
-    <!-- <ion-buttons start>
-        <button ion-button icon-only (click)='prevChapter()'>
-          <ion-icon name="arrow-back"></ion-icon>
+    <!-- <ion-title>Footer</ion-title> -->
+      <ion-buttons start>
+        <button ion-button icon-only (click)='presentPopoverChapter()'>
+          <ion-icon name="search"></ion-icon>
         </button>
       </ion-buttons>
- -->
+
       <ion-buttons end>
-        <button ion-button icon-only (click)='presentPopover()'>
+        <button ion-button icon-only (click)='presentPopoverRead()'>
           <ion-icon name="contrast"></ion-icon>
         </button>
       </ion-buttons>

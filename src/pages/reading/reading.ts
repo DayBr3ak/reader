@@ -7,7 +7,7 @@ import { StatusBar } from '@ionic-native/status-bar';
 import { Storage } from '@ionic/storage';
 import 'rxjs/add/operator/map';
 
-import { ReadModalPage } from '../read-modal/read-modal';
+import { PopoverChapterPage } from '../popover-chapter/popover-chapter';
 import { PopoverReadPage } from '../popover-read/popover-read';
 
 @Component({
@@ -62,17 +62,7 @@ export class ReadingPage {
     // this.statusBar.show();
   }
 
-  presentModal() {
-    if (this.maxChapter) {
-      let modal = this.modalCtrl.create(ReadModalPage, { max: this.maxChapter, current: this.currentChapter });
-      modal.onDidDismiss(data => {
-        if (data) {
-          this.loadChapter(data);
-        }
-      });
-      modal.present();
-    }
-  }
+
 
   resolveUrl(num) {
     return 'http://www.wuxiaworld.com/mga-index/mga-chapter-' + num;
@@ -274,11 +264,7 @@ export class ReadingPage {
     }
   }
 
-  chapterModal() {
-    this.presentModal();
-  }
-
-  presentPopover() {
+  presentPopoverRead() {
     let popover = this.popoverCtrl.create(PopoverReadPage, {
       contentEle: this.contentEref.nativeElement,
       textEle: this.textEref.nativeElement,
@@ -293,6 +279,21 @@ export class ReadingPage {
       this.storage.set('reader-settings', this.readerSettings);
     })
     popover.present();
+  }
+
+  presentPopoverChapter() {
+    if (this.maxChapter) {
+      let popover = this.popoverCtrl.create(PopoverChapterPage, {
+        max: this.maxChapter,
+        current: this.currentChapter
+      });
+      popover.onDidDismiss(data => {
+        if (data) {
+          this.loadChapter(data);
+        }
+      });
+      popover.present();
+    }
   }
 }
 
