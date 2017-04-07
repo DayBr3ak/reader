@@ -35,7 +35,9 @@
   <div class="before-novel"></div>
 
   <p class="reader-nav">
-    <button ion-button outline color="secondary" icon-left (click)="prevChapter()">
+    <button ion-button outline color="secondary"
+      *ngIf="currentChapter != 1"
+      icon-left (click)="prevChapter()">
       <ion-icon name='arrow-back'></ion-icon>
       Back
     </button>
@@ -58,7 +60,9 @@
   </div>
 
   <p class="reader-nav">
-    <button ion-button outline color="secondary" icon-left (click)="prevChapter()">
+    <button ion-button outline color="secondary"
+      *ngIf="currentChapter != 1"
+      icon-left (click)="prevChapter()">
       <ion-icon name='arrow-back'></ion-icon>
       Back
     </button>

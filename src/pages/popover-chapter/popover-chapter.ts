@@ -29,7 +29,7 @@ export class PopoverChapterPage {
   }
 
   validate(input) {
-    this.viewCtrl.dismiss(input.value);
+    this.viewCtrl.dismiss(parseInt(input.value));
   }
 
 }

@@ -1,7 +1,8 @@
 import { ViewChild, Component, ElementRef } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/core';
 
-import { NavController, NavParams, ModalController, Content, Platform, Events, PopoverController } from 'ionic-angular';
+import { NavController, NavParams, ModalController,
+  Content, Platform, Events, PopoverController, ToastController } from 'ionic-angular';
 import { Http } from '@angular/http';
 import { StatusBar } from '@ionic-native/status-bar';
 import { Storage } from '@ionic/storage';
@@ -49,7 +50,8 @@ export class ReadingPage {
     public storage: Storage,
     public platform: Platform,
     public events: Events,
-    public popoverCtrl: PopoverController
+    public popoverCtrl: PopoverController,
+    public toastCtrl: ToastController
   ) {
     this.hideUi = false;
     this.maxChapter = null;
@@ -65,7 +67,7 @@ export class ReadingPage {
 
 
   resolveUrl(num) {
-    return 'http://www.wuxiaworld.com/mga-index/mga-chapter-' + num;
+    return 'http://www.wuxiaworld.com/mga-index/mga-chapter-' + num + '/';
   }
 
   registerEvents() {
@@ -121,8 +123,17 @@ export class ReadingPage {
   }
 
   loadChapter(chapter, callback=null, changeChapter=true) {
-    let afterLoad = () => {
+    console.log('loadchapter ' + chapter);
+    if (chapter < 1) {
+      let toast = this.toastCtrl.create({
+        message: "Chapter " + chapter + " doesn't exist.",
+        duration: 3000
+      });
+      toast.present();
+      return;
+    }
 
+    let afterLoad = () => {
       if (changeChapter) {
         this.currentChapter = chapter;
         this.storage.set('mga-current-chapter', this.currentChapter);
@@ -223,6 +234,15 @@ export class ReadingPage {
       resHtml = stripScripts(resHtml, 'img');
 
       callback(getArticleBody(resHtml));
+    }, (error) => {
+      if (error) console.log(error);
+      let toast = this.toastCtrl.create({
+        message: 'Error loading chapter: ' + chapter + '; error="' + error.status + ':' + error.statusText + '"',
+        duration: 3000
+      });
+      toast.present();
+    }, () => {
+      // complete
     })
   }
 
