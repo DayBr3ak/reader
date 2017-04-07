@@ -214,7 +214,6 @@ export class ReadingPage {
         const htmlTagRegex = /(<([^>]+)>)/ig
 
         let txt = para[i].innerHTML.replace('&nbsp;', ' ');
-        txt = txt.replace('&nbsp;', ' ')
         txt = txt.replace(htmlTagRegex, '');
         res.push({ strong: i == 0, text: txt });
       }
