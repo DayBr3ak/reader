@@ -1,6 +1,8 @@
 import { ViewChild, Component, ElementRef } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/core';
 
+import { compressToBase64, decompressFromBase64 } from 'lz-string';
+
 import { NavController, NavParams, ModalController,
   Content, Platform, Events, PopoverController, ToastController } from 'ionic-angular';
 import { Http } from '@angular/http';
@@ -47,7 +49,7 @@ export class ReadingPage {
     if (this.platform.is('cordova'))
       return this._maxChapter;
     else
-      return 10;
+      return this._maxChapter;
   }
   set maxChapter(v: number) {
     this._maxChapter = v;
@@ -92,7 +94,7 @@ export class ReadingPage {
   }
 
   resolveUrl(num: number) {
-    return 'http://www.wuxiaworld.com/mga-index/mga-chapter-' + num + '/';
+    return 'http://m.wuxiaworld.com/mga-index/mga-chapter-' + num + '/';
   }
 
   registerEvents() {
@@ -143,7 +145,9 @@ export class ReadingPage {
 
   ionViewDidLoad() {
     this.storage.ready().then(() => {
+      // this.resetDownloadedChapters(1500, () => {
       this.myViewDidLoad();
+      // });
     })
   }
 
@@ -179,17 +183,19 @@ export class ReadingPage {
         if (changeChapter) {
           this.paragraphs = paragraphs;
         }
-
-        // TODO maybe store scroll so when you get back it's the same?
-        this.setStored('chapter-txt-' + chapter, paragraphs)
+        let data = JSON.stringify(paragraphs);
+        let compressed = compressToBase64(data);
+        this.setStored('chapter-txt-' + chapter, compressed)
         afterLoad();
       });
     }
 
     this.getStored('chapter-txt-' + chapter).then((data) => {
       if (data) {
+        console.log(data);
         if (changeChapter) {
-          this.paragraphs = data;
+          let uncompressed = decompressFromBase64(data);
+          this.paragraphs = JSON.parse(uncompressed);
         }
         afterLoad();
       } else {
@@ -289,14 +295,16 @@ export class ReadingPage {
     this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
   }
 
-  resetDownloadedChapters(complete=null) {
+  resetDownloadedChapters(m: number = -1, complete=null) {
+    if (m == -1) m = this.maxChapter;
     let resetChapter = (i) => {
-      if (i > this.maxChapter) {
+      if (i > m) {
         this.textToast('Chapters removed');
         console.log('data reseted!')
         complete && complete();
         return;
       }
+      console.log('rm ' + i);
       this.setStored('chapter-txt-' + i, null).then(() => {
         resetChapter(i + 1);
       })
