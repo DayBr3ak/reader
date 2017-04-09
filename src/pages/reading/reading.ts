@@ -253,10 +253,10 @@ export class ReadingPage {
     })
   }
 
-  loadAhead(chapter, ahead, maxChapter, notify=(step: number) => {}, complete=() => {}) {
+  loadAhead(chapter, ahead, maxChapter, notify=null, complete=null) {
     let finish = () => {
       console.log('lookAhead over');
-      complete();
+      complete && complete();
     };
     let syncLook = (i) => {
       if (i >= ahead || i + chapter >= maxChapter) {
@@ -265,7 +265,7 @@ export class ReadingPage {
       }
       this.loadChapter(chapter + i, () => {
         syncLook(i + 1);
-        notify(i);
+        notify && notify(i);
       }, false);
     };
     syncLook(0);
@@ -280,7 +280,7 @@ export class ReadingPage {
 
   nextChapter() {
     this.loadChapter(this.currentChapter + 1);
-    this.loadAhead(this.currentChapter + 1, 2, this.maxChapter);
+    this.loadAhead(this.currentChapter + 2, 2, this.maxChapter);
   }
 
   prevChapter() {
