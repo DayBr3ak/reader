@@ -35,6 +35,7 @@ export class ReadingPage {
   @ViewChild('articleBody', { read: ElementRef }) textEref: ElementRef;
 
   public novelName: string = 'MGA';
+  public novelId: string = 'mga'
   public paragraphs: any;
   public readerSettings: any;
   public currentChapter: number;
@@ -64,9 +65,15 @@ export class ReadingPage {
     // this.statusBar.show();
   }
 
+  getStored(property: string, prefix: string = this.novelId) {
+    return this.storage.get(prefix + '-' + property);
+  }
 
+  setStored(property: string, val: any, prefix: string = this.novelId) {
+    return this.storage.set(prefix + '-' + property, val);
+  }
 
-  resolveUrl(num) {
+  resolveUrl(num: number) {
     return 'http://www.wuxiaworld.com/mga-index/mga-chapter-' + num + '/';
   }
 
@@ -83,7 +90,7 @@ export class ReadingPage {
 
     this.content.enableScrollListener();
     this.content.ionScrollEnd.subscribe((event) => {
-      this.storage.set('mga-chapter-scroll-' + this.currentChapter, event.scrollTop);
+      this.setStored('chapter-scroll-' + this.currentChapter, event.scrollTop);
     });
 
     this.events.subscribe('change:background', (bg) => {
@@ -101,7 +108,7 @@ export class ReadingPage {
     });
 
     console.log('ionViewDidLoad ReadingPage');
-    this.storage.get('mga-current-chapter').then((val) => {
+    this.getStored('current-chapter').then((val) => {
       let currentChapter;
       if (val) {
         currentChapter = val;
@@ -110,7 +117,7 @@ export class ReadingPage {
       }
       this.loadChapter(currentChapter, () => {
         this.content.fullscreen = true;
-        this.loadAhead(currentChapter, 3);
+        this.loadAhead(currentChapter, 2, this.maxChapter);
       });
     })
     this.getNbChapter();
@@ -136,11 +143,11 @@ export class ReadingPage {
     let afterLoad = () => {
       if (changeChapter) {
         this.currentChapter = chapter;
-        this.storage.set('mga-current-chapter', this.currentChapter);
+        this.setStored('current-chapter', this.currentChapter);
 
 
         // view loaded, should scroll to saved scroll point if available
-        this.storage.get('mga-chapter-scroll-' + this.currentChapter).then((scroll) => {
+        this.getStored('chapter-scroll-' + this.currentChapter).then((scroll) => {
           console.log('scroll: ' + scroll)
           this.content.scrollTop = scroll? scroll: 0;
           if (callback) {
@@ -160,12 +167,12 @@ export class ReadingPage {
         }
 
         // TODO maybe store scroll so when you get back it's the same?
-        this.storage.set('mga-chapter-txt-' + chapter, paragraphs)
+        this.setStored('chapter-txt-' + chapter, paragraphs)
         afterLoad();
       });
     }
 
-    this.storage.get('mga-chapter-txt-' + chapter).then((data) => {
+    this.getStored('chapter-txt-' + chapter).then((data) => {
       if (data) {
         if (changeChapter) {
           this.paragraphs = data;
@@ -246,17 +253,34 @@ export class ReadingPage {
     })
   }
 
-  loadAhead(chapter, ahead) {
-    if (chapter < 1600) {
-      for (let i = 1; i <= ahead; i++) {
-        this.loadChapter(chapter + i, null, false);
+  loadAhead(chapter, ahead, maxChapter, notify=(step: number) => {}, complete=() => {}) {
+    let finish = () => {
+      console.log('lookAhead over');
+      complete();
+    };
+    let syncLook = (i) => {
+      if (i >= ahead || i + chapter >= maxChapter) {
+        finish();
+        return;
       }
-    }
+      this.loadChapter(chapter + i, () => {
+        syncLook(i + 1);
+        notify(i);
+      }, false);
+    };
+    syncLook(0);
+  }
+
+  downloadOffline(callback, notify) {
+    if (this.platform.is('cordova'))
+      this.loadAhead(1, this.maxChapter, this.maxChapter, notify, callback);
+    else
+      this.loadAhead(1, 10, this.maxChapter);
   }
 
   nextChapter() {
     this.loadChapter(this.currentChapter + 1);
-    this.loadAhead(this.currentChapter + 1, 3);
+    this.loadAhead(this.currentChapter + 1, 2, this.maxChapter);
   }
 
   prevChapter() {
