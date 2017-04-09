@@ -39,9 +39,19 @@ export class ReadingPage {
   public paragraphs: any;
   public readerSettings: any;
   public currentChapter: number;
-  public maxChapter: number;
   public hideUi: boolean;
   public chapList: Array<number>;
+
+  private _maxChapter: number;
+  get maxChapter(): number {
+    if (this.platform.is('cordova'))
+      return this._maxChapter;
+    else
+      return 10;
+  }
+  set maxChapter(v: number) {
+    this._maxChapter = v;
+  }
 
   constructor(public statusBar: StatusBar,
     public navCtrl: NavController,
@@ -63,6 +73,14 @@ export class ReadingPage {
       bgClass: 'bg-black'
     }
     // this.statusBar.show();
+  }
+
+  textToast(text: string, time: number = 2000) {
+    let toast = this.toastCtrl.create({
+      message: text,
+      duration: time
+    });
+    toast.present();
   }
 
   getStored(property: string, prefix: string = this.novelId) {
@@ -132,11 +150,7 @@ export class ReadingPage {
   loadChapter(chapter, callback=null, changeChapter=true) {
     console.log('loadchapter ' + chapter);
     if (chapter < 1) {
-      let toast = this.toastCtrl.create({
-        message: "Chapter " + chapter + " doesn't exist.",
-        duration: 3000
-      });
-      toast.present();
+      this.textToast("Chapter " + chapter + " doesn't exist.");
       return;
     }
 
@@ -243,11 +257,7 @@ export class ReadingPage {
       callback(getArticleBody(resHtml));
     }, (error) => {
       if (error) console.log(error);
-      let toast = this.toastCtrl.create({
-        message: 'Error loading chapter: ' + chapter + '; error="' + error.status + ':' + error.statusText + '"',
-        duration: 3000
-      });
-      toast.present();
+      this.textToast('Error loading chapter: ' + chapter + '; error="' + error.status + ':' + error.statusText + '"');
     }, () => {
       // complete
     })
@@ -271,11 +281,27 @@ export class ReadingPage {
     syncLook(0);
   }
 
-  downloadOffline(callback, notify) {
-    if (this.platform.is('cordova'))
-      this.loadAhead(1, this.maxChapter, this.maxChapter, notify, callback);
-    else
-      this.loadAhead(1, 10, this.maxChapter);
+  downloadOffline(complete=null) {
+    let finish = () => {
+      this.textToast('Successfully downloaded ' + this.maxChapter + ' chapters');
+      complete && complete();
+    };
+    this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
+  }
+
+  resetDownloadedChapters(complete=null) {
+    let resetChapter = (i) => {
+      if (i > this.maxChapter) {
+        this.textToast('Chapters removed');
+        console.log('data reseted!')
+        complete && complete();
+        return;
+      }
+      this.setStored('chapter-txt-' + i, null).then(() => {
+        resetChapter(i + 1);
+      })
+    }
+    resetChapter(1);
   }
 
   nextChapter() {
