@@ -25,8 +25,6 @@
 
 <ion-content #pageContent padding
   (swipe)="onSwipe($event)"
-  [class.hidden]="hideContent=='start'"
-  [@changeChapter]="hideContent"
   [ngClass]="{'bg-black': (readerSettings.bgClass == 'bg-black'),
               'bg-white': (readerSettings.bgClass == 'bg-white'),
               'bg-grey': (readerSettings.bgClass == 'bg-grey'),
@@ -36,31 +34,13 @@
 
   <div class="before-novel"></div>
 
-  <p class="reader-nav">
-    <button ion-button outline color="secondary"
-      *ngIf="currentChapter != 1"
-      [disabled]="disableNav"
-      icon-left (click)="prevChapter()"
-    >
-      <ion-icon name='arrow-back'></ion-icon>
-      Back
-    </button>
-
-    <button ion-button outline color="secondary"
-      [disabled]="disableNav"
-      icon-only (click)="presentPopoverChapter()"
-    >
-      <ion-icon name='search'></ion-icon>
-    </button>
-
-    <button ion-button outline color="secondary"
-      [disabled]="disableNav"
-      icon-right (click)="nextChapter()"
-    >
-      Next
-      <ion-icon name='arrow-forward'></ion-icon>
-    </button>
-  </p>
+  <nav-btn
+    [displayPrevBtn]="currentChapter != 1"
+    [disable]="disableNav"
+    (nextClick)="nextChapter()"
+    (selClick)="presentPopoverChapter()"
+    (prevClick)="prevChapter()"
+  ></nav-btn>
 
   <div #articleBody class="article-body" (click)="hideInterface()"
     [style.fontFamily]="readerSettings.fontFamily"
@@ -69,31 +49,13 @@
     <p *ngFor="let paragraph of paragraphs" [class.bold]="paragraph.strong" [innerHTML]="paragraph.text"></p>
   </div>
 
-  <p class="reader-nav">
-    <button ion-button outline color="secondary"
-      *ngIf="currentChapter != 1"
-      [disabled]="disableNav"
-      icon-left (click)="prevChapter()"
-    >
-      <ion-icon name='arrow-back'></ion-icon>
-      Back
-    </button>
-
-    <button ion-button outline color="secondary"
-      [disabled]="disableNav"
-      icon-only (click)="presentPopoverChapter()"
-    >
-      <ion-icon name='search'></ion-icon>
-    </button>
-
-    <button ion-button outline color="secondary"
-      [disabled]="disableNav"
-      icon-right (click)="nextChapter()"
-    >
-      Next
-      <ion-icon name='arrow-forward'></ion-icon>
-    </button>
-  </p>
+  <nav-btn
+    [displayPrevBtn]="currentChapter != 1"
+    [disable]="disableNav"
+    (nextClick)="nextChapter()"
+    (selClick)="presentPopoverChapter()"
+    (prevClick)="prevChapter()"
+  ></nav-btn>
 
   <div class="after-novel"></div>
 

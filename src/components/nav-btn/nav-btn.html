@@ -1,0 +1,26 @@
+
+<p class="reader-nav">
+  <button ion-button outline color="secondary"
+    *ngIf="displayPrevBtn"
+    [disabled]="disable"
+    icon-left (click)="prev()"
+  >
+    <ion-icon name='arrow-back'></ion-icon>
+    Back
+  </button>
+
+  <button ion-button outline color="secondary"
+    [disabled]="disable"
+    icon-only (click)="select()"
+  >
+    <ion-icon name='search'></ion-icon>
+  </button>
+
+  <button ion-button outline color="secondary"
+    [disabled]="disable"
+    icon-right (click)="next()"
+  >
+    Next
+    <ion-icon name='arrow-forward'></ion-icon>
+  </button>
+</p>

@@ -1,4 +1,4 @@
-import { ViewChild, Component, ElementRef } from '@angular/core';
+import { Directive, ViewChild, Component, ElementRef } from '@angular/core';
 import { trigger, transition, style, animate, state } from '@angular/core';
 
 import { compressToBase64, decompressFromBase64 } from 'lz-string';
@@ -18,31 +18,6 @@ const ST_CURRENT_CHAPTER = 'current-chapter';
 const ST_CHAPTER_TXT = 'chapter-txt-';
 const ST_CHAPTER_SCROLL = 'chapter-scroll-';
 
-const ANIMATE_TIME = 400;
-
-const CONTENT_NEXT_ANIMATION: (t: any, c: any) => void = (self, callback) => {
-  self.hideContent = 'next-out';
-  setTimeout(() => {
-    self.hideContent = 'in';
-    callback && callback();
-  }, ANIMATE_TIME);
-}
-
-const CONTENT_PREV_ANIMATION: (t: any, c: any) => void = (self, callback) => {
-  self.hideContent = 'prev-out';
-  setTimeout(() => {
-    self.hideContent = 'in';
-    callback && callback();
-  }, ANIMATE_TIME);
-}
-
-const CONTENT_FADE_ANIMATION: (t: any, c: any) => void = (self, callback) => {
-  setTimeout(() => {
-    self.hideContent = 'in';
-    callback && callback();
-  }, ANIMATE_TIME);
-}
-
 @Component({
   selector: 'page-reading',
   templateUrl: 'reading.html',
@@ -50,12 +25,12 @@ const CONTENT_FADE_ANIMATION: (t: any, c: any) => void = (self, callback) => {
     trigger(
       'enterAnimation', [
         transition(':enter', [
-          style({transform: 'translateY(0)', opacity: 0}),
-          animate('100ms', style({transform: 'translateY(0)', opacity: 1}))
+          style({ opacity: 0 }),
+          animate('100ms', style({ opacity: 1 }))
         ]),
         transition(':leave', [
-          style({transform: 'translateY(0)', opacity: 1}),
-          animate('100ms', style({transform: 'translateY(0)', opacity: 0}))
+          style({ opacity: 1 }),
+          animate('100ms', style({ opacity: 0 }))
         ])
       ]
     ),
@@ -95,20 +70,7 @@ const CONTENT_FADE_ANIMATION: (t: any, c: any) => void = (self, callback) => {
         opacity: 0
       })),
       transition('in <=> out', animate('200ms linear'))
-    ]),
-
-    trigger(
-      'contentAnimation', [
-        transition(':enter', [
-          style({transform: 'translateY(0)', opacity: 0}),
-          animate('300ms', style({transform: 'translateY(0)', opacity: 1}))
-        ]),
-        transition(':leave', [
-          style({transform: 'translateY(0)', opacity: 1}),
-          animate('300ms', style({transform: 'translateY(0)', opacity: 0}))
-        ])
-      ]
-    ),
+    ])
   ],
 })
 export class ReadingPage {
@@ -194,6 +156,7 @@ export class ReadingPage {
 
     this.content.enableScrollListener();
     this.content.ionScrollEnd.subscribe((event) => {
+      // console.log(event.scrollTop);
       this.setStored(ST_CHAPTER_SCROLL + this.currentChapter, event.scrollTop);
     });
 
@@ -236,11 +199,6 @@ export class ReadingPage {
         this.loadChapter(n);
       });
     }
-    window['toggleContent'] = () => {
-      this.platform.zone.run(() => {
-        this.hideContent = this.hideContent === 'in'? 'out' : 'in';
-      });
-    }
     window['thiz'] = this;
 
     this.storage.ready().then(() => {
@@ -254,16 +212,14 @@ export class ReadingPage {
     })
   }
 
-  hideContent: string = 'start';
-
   setChapterContent(content: any, scroll: number, callback=null) {
-    let animation = this.animation || CONTENT_FADE_ANIMATION;
-    animation(this, () => {
-      this.paragraphs = content;
+    this.paragraphs = content;
+    setTimeout(() => {
       this.content.scrollTop = scroll;
-      this.animation = null;
+      console.log('scroll= ' + scroll + ', chapter= ' + this.currentChapter);
+      console.log('ss= ' + this.content.scrollTop);
       callback && callback();
-    });
+    }, 100)
   }
 
   loadChapter(chapter, callback=null, changeChapter=true) {
@@ -276,17 +232,17 @@ export class ReadingPage {
 
     let afterLoad = (content: any) => {
       this.currentChapter = chapter;
-      this.setStored(ST_CURRENT_CHAPTER, this.currentChapter);
+      this.setStored(ST_CURRENT_CHAPTER, chapter);
 
       // view loaded, should scroll to saved scroll point if available
-      this.getStored(ST_CHAPTER_SCROLL + chapter).then((scroll) => {
-        scroll = scroll? scroll: 0
-        console.log('scroll: ' + scroll)
-        this.setChapterContent(content, scroll, callback);
+      this.getStored(ST_CHAPTER_SCROLL + chapter).then((chScroll) => {
+        let _scroll = chScroll? chScroll: 0;
+        console.log('scroll: ' + _scroll)
+        this.setChapterContent(content, _scroll, callback);
       });
     }
 
-    let scrap = (chapter) => {
+    let scrap = () => {
       this.scrap(chapter, (paragraphs) => {
         let data = JSON.stringify(paragraphs);
         let compressed = compressToBase64(data);
@@ -306,7 +262,7 @@ export class ReadingPage {
         }
         callback && callback();
       } else {
-        scrap(chapter);
+        scrap();
       }
     });
   }
@@ -434,24 +390,22 @@ export class ReadingPage {
   }
 
   nextChapter() {
-    this.animation = CONTENT_NEXT_ANIMATION;
     this.disableNav = true;
     this.loadChapter(this.currentChapter + 1, () => {
       setTimeout(() => {
         this.disableNav = false;
-      }, ANIMATE_TIME)
+      }, 200)
     });
     this.loadAhead(this.currentChapter + 2, 2, this.maxChapter);
   }
 
   prevChapter() {
     if (this.currentChapter > 1) {
-      this.animation = CONTENT_PREV_ANIMATION;
       this.disableNav = true;
       this.loadChapter(this.currentChapter - 1, () => {
         setTimeout(() => {
           this.disableNav = false;
-        }, ANIMATE_TIME)
+        }, 200)
       });
     }
   }

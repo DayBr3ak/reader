@@ -7,6 +7,7 @@ import { SettingsPage } from '../pages/settings/settings';
 import { PopoverReadPage } from '../pages/popover-read/popover-read';
 import { PopoverChapterPage } from '../pages/popover-chapter/popover-chapter';
 
+import { NavBtnComponent } from '../components/nav-btn/nav-btn';
 
 import { IonicStorageModule } from '@ionic/storage';
 
@@ -20,7 +21,8 @@ import { SplashScreen } from '@ionic-native/splash-screen';
     ReadModalPage,
     SettingsPage,
     PopoverReadPage,
-    PopoverChapterPage
+    PopoverChapterPage,
+    NavBtnComponent
   ],
   imports: [
     IonicModule.forRoot(MyApp),
