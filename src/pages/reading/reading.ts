@@ -13,6 +13,11 @@ import 'rxjs/add/operator/map';
 import { PopoverChapterPage } from '../popover-chapter/popover-chapter';
 import { PopoverReadPage } from '../popover-read/popover-read';
 
+const ST_R_SETTINGS = 'reader-settings';
+const ST_CURRENT_CHAPTER = 'current-chapter';
+const ST_CHAPTER_TXT = 'chapter-txt-';
+const ST_CHAPTER_SCROLL = 'chapter-scroll-';
+
 @Component({
   selector: 'page-reading',
   templateUrl: 'reading.html',
@@ -49,6 +54,7 @@ export class ReadingPage {
     if (this.platform.is('cordova'))
       return this._maxChapter;
     else
+      // return DEBUG_DOWNLOAD;
       return this._maxChapter;
   }
   set maxChapter(v: number) {
@@ -110,7 +116,7 @@ export class ReadingPage {
 
     this.content.enableScrollListener();
     this.content.ionScrollEnd.subscribe((event) => {
-      this.setStored('chapter-scroll-' + this.currentChapter, event.scrollTop);
+      this.setStored(ST_CHAPTER_SCROLL + this.currentChapter, event.scrollTop);
     });
 
     this.events.subscribe('change:background', (bg) => {
@@ -121,14 +127,14 @@ export class ReadingPage {
   myViewDidLoad() {
     this.registerEvents();
 
-    this.storage.get('reader-settings').then((setts) => {
+    this.storage.get(ST_R_SETTINGS).then((setts) => {
       if (setts) {
         this.readerSettings = setts;
       }
     });
 
     console.log('ionViewDidLoad ReadingPage');
-    this.getStored('current-chapter').then((val) => {
+    this.getStored(ST_CURRENT_CHAPTER).then((val) => {
       let currentChapter;
       if (val) {
         currentChapter = val;
@@ -144,10 +150,24 @@ export class ReadingPage {
   }
 
   ionViewDidLoad() {
+    window['rm'] = () => {
+      this.resetDownloadedChapters();
+    }
+    window['goto'] = (n) => {
+      this.platform.zone.run(() => {
+        this.loadChapter(n);
+      });
+    }
+    window['this'] = this;
+
     this.storage.ready().then(() => {
-      // this.resetDownloadedChapters(1500, () => {
-      this.myViewDidLoad();
-      // });
+      if (this.platform.is('cordova')) {
+        this.myViewDidLoad();
+      } else {
+        this.resetDownloadedChapters(() => {
+          this.myViewDidLoad();
+        });
+      }
     })
   }
 
@@ -161,11 +181,11 @@ export class ReadingPage {
     let afterLoad = () => {
       if (changeChapter) {
         this.currentChapter = chapter;
-        this.setStored('current-chapter', this.currentChapter);
+        this.setStored(ST_CURRENT_CHAPTER, this.currentChapter);
 
 
         // view loaded, should scroll to saved scroll point if available
-        this.getStored('chapter-scroll-' + this.currentChapter).then((scroll) => {
+        this.getStored(ST_CHAPTER_SCROLL + this.currentChapter).then((scroll) => {
           console.log('scroll: ' + scroll)
           this.content.scrollTop = scroll? scroll: 0;
           if (callback) {
@@ -185,12 +205,12 @@ export class ReadingPage {
         }
         let data = JSON.stringify(paragraphs);
         let compressed = compressToBase64(data);
-        this.setStored('chapter-txt-' + chapter, compressed)
+        this.setStored(ST_CHAPTER_TXT + chapter, compressed)
         afterLoad();
       });
     }
 
-    this.getStored('chapter-txt-' + chapter).then((data) => {
+    this.getStored(ST_CHAPTER_TXT + chapter).then((data) => {
       if (data) {
         console.log(data);
         if (changeChapter) {
@@ -295,21 +315,35 @@ export class ReadingPage {
     this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
   }
 
-  resetDownloadedChapters(m: number = -1, complete=null) {
-    if (m == -1) m = this.maxChapter;
-    let resetChapter = (i) => {
-      if (i > m) {
-        this.textToast('Chapters removed');
-        console.log('data reseted!')
-        complete && complete();
-        return;
-      }
-      console.log('rm ' + i);
-      this.setStored('chapter-txt-' + i, null).then(() => {
-        resetChapter(i + 1);
-      })
-    }
-    resetChapter(1);
+  resetDownloadedChapters(complete=null) {
+    let currentChapter;
+    let currentChapterScroll;
+    let rSettings;
+    this.getStored(ST_CURRENT_CHAPTER).then((v) => {
+      currentChapter = v;
+      return this.getStored(ST_CHAPTER_SCROLL + currentChapter);
+    })
+    .then((v) => {
+      currentChapterScroll = v;
+      return this.storage.get(ST_R_SETTINGS);
+    })
+    .then((v) => {
+      rSettings = v;
+      return this.storage.clear();
+    })
+    .then(() => {
+      return this.storage.set(ST_R_SETTINGS, rSettings);
+    })
+    .then(() => {
+      return this.setStored(ST_CURRENT_CHAPTER, currentChapter);
+    })
+    .then(() => {
+      return this.setStored(ST_CHAPTER_SCROLL + currentChapter, currentChapterScroll);
+    })
+    .then(() => {
+      complete && complete();
+      console.log('data reset!')
+    })
   }
 
   nextChapter() {
@@ -354,7 +388,7 @@ export class ReadingPage {
       this.readerSettings.fontSize = this.textEref.nativeElement.style.fontSize;
       //bgClass already set
 
-      this.storage.set('reader-settings', this.readerSettings);
+      this.storage.set(ST_R_SETTINGS, this.readerSettings);
     })
     popover.present();
   }

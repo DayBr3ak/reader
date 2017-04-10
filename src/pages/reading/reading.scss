@@ -23,7 +23,8 @@ page-reading {
 
   .bg-black {
     background-color: map-get($colors, black);
-    color: map-get($colors, white);
+    // color: map-get($colors, white);
+    color: #999;
   }
 
   .bg-white {
