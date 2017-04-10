@@ -124,6 +124,9 @@ export class ReadingPage {
   public hideUi: boolean;
   public chapList: Array<number>;
 
+  animation: (t: any, c: any) => void = null;
+  disableNav: boolean = false;
+
   private _maxChapter: number;
   get maxChapter(): number {
     if (this.platform.is('cordova'))
@@ -429,8 +432,7 @@ export class ReadingPage {
       console.log('data reset!')
     })
   }
-  animation: (t: any, c: any) => void = null;
-  disableNav: boolean = false;
+
   nextChapter() {
     this.animation = CONTENT_NEXT_ANIMATION;
     this.disableNav = true;
