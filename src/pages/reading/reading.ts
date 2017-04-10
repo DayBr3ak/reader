@@ -18,6 +18,31 @@ const ST_CURRENT_CHAPTER = 'current-chapter';
 const ST_CHAPTER_TXT = 'chapter-txt-';
 const ST_CHAPTER_SCROLL = 'chapter-scroll-';
 
+const ANIMATE_TIME = 400;
+
+const CONTENT_NEXT_ANIMATION: (t: any, c: any) => void = (self, callback) => {
+  self.hideContent = 'next-out';
+  setTimeout(() => {
+    self.hideContent = 'in';
+    callback && callback();
+  }, ANIMATE_TIME);
+}
+
+const CONTENT_PREV_ANIMATION: (t: any, c: any) => void = (self, callback) => {
+  self.hideContent = 'prev-out';
+  setTimeout(() => {
+    self.hideContent = 'in';
+    callback && callback();
+  }, ANIMATE_TIME);
+}
+
+const CONTENT_FADE_ANIMATION: (t: any, c: any) => void = (self, callback) => {
+  setTimeout(() => {
+    self.hideContent = 'in';
+    callback && callback();
+  }, ANIMATE_TIME);
+}
+
 @Component({
   selector: 'page-reading',
   templateUrl: 'reading.html',
@@ -44,6 +69,22 @@ const ST_CHAPTER_SCROLL = 'chapter-scroll-';
       })),
       transition('in => out', animate('300ms linear')),
       transition('out => in', animate('300ms linear'))
+    ]),
+
+    trigger('changeChapter', [
+      state('in', style({
+        transform: 'translate3d(0, 0, 0)'
+      })),
+      state('prev-out', style({
+        transform: 'translate3d(150%, 0, 0)'
+      })),
+      state('next-out', style({
+        transform: 'translate3d(-150%, 0, 0)'
+      })),
+      transition('in => next-out', animate('300ms linear')),
+      transition('in => prev-out', animate('300ms linear')),
+      transition('next-out => in', [style({transform: 'translate3d(150%, 0, 0)'}), animate('300ms 10ms linear')]),
+      transition('prev-out => in', [style({transform: 'translate3d(-150%, 0, 0)'}), animate('300ms 10ms linear')]),
     ]),
 
     trigger('fade', [
@@ -212,20 +253,21 @@ export class ReadingPage {
 
   hideContent: string = 'start';
 
-  setChapterContent(content: any, scroll: number) {
-    this.hideContent = 'out';
-
-    setTimeout(() => {
+  setChapterContent(content: any, scroll: number, callback=null) {
+    let animation = this.animation || CONTENT_FADE_ANIMATION;
+    animation(this, () => {
       this.paragraphs = content;
       this.content.scrollTop = scroll;
-      this.hideContent = 'in';
-    }, 350);
+      this.animation = null;
+      callback && callback();
+    });
   }
 
   loadChapter(chapter, callback=null, changeChapter=true) {
     console.log('loadchapter ' + chapter);
     if (chapter < 1) {
       this.textToast("Chapter " + chapter + " doesn't exist.");
+      callback && callback();
       return;
     }
 
@@ -237,8 +279,7 @@ export class ReadingPage {
       this.getStored(ST_CHAPTER_SCROLL + chapter).then((scroll) => {
         scroll = scroll? scroll: 0
         console.log('scroll: ' + scroll)
-        this.setChapterContent(content, scroll);
-        callback && callback();
+        this.setChapterContent(content, scroll, callback);
       });
     }
 
@@ -388,15 +429,28 @@ export class ReadingPage {
       console.log('data reset!')
     })
   }
-
+  animation: (t: any, c: any) => void = null;
+  disableNav: boolean = false;
   nextChapter() {
-    this.loadChapter(this.currentChapter + 1);
+    this.animation = CONTENT_NEXT_ANIMATION;
+    this.disableNav = true;
+    this.loadChapter(this.currentChapter + 1, () => {
+      setTimeout(() => {
+        this.disableNav = false;
+      }, ANIMATE_TIME)
+    });
     this.loadAhead(this.currentChapter + 2, 2, this.maxChapter);
   }
 
   prevChapter() {
     if (this.currentChapter > 1) {
-      this.loadChapter(this.currentChapter - 1);
+      this.animation = CONTENT_PREV_ANIMATION;
+      this.disableNav = true;
+      this.loadChapter(this.currentChapter - 1, () => {
+        setTimeout(() => {
+          this.disableNav = false;
+        }, ANIMATE_TIME)
+      });
     }
   }
 
@@ -410,13 +464,6 @@ export class ReadingPage {
   hideInterface() {
     console.log('tap!!')
     this.hideUi = !this.hideUi;
-    if (this.hideUi) {
-      // this.statusBar.hide();
-      // this.content.resize();
-
-    } else {
-      // this.statusBar.show();
-    }
   }
 
   presentPopoverRead() {
