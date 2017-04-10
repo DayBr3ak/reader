@@ -8,6 +8,7 @@ import { PopoverReadPage } from '../pages/popover-read/popover-read';
 import { PopoverChapterPage } from '../pages/popover-chapter/popover-chapter';
 
 import { NavBtnComponent } from '../components/nav-btn/nav-btn';
+import { Wuxiaco } from '../providers/wuxiaco';
 
 import { IonicStorageModule } from '@ionic/storage';
 
@@ -22,7 +23,7 @@ import { SplashScreen } from '@ionic-native/splash-screen';
     SettingsPage,
     PopoverReadPage,
     PopoverChapterPage,
-    NavBtnComponent
+    NavBtnComponent,
   ],
   imports: [
     IonicModule.forRoot(MyApp),
@@ -40,6 +41,7 @@ import { SplashScreen } from '@ionic-native/splash-screen';
   providers: [
     StatusBar,
     SplashScreen,
+    Wuxiaco,
     {provide: ErrorHandler, useClass: IonicErrorHandler}
   ]
 })

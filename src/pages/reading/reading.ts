@@ -1,4 +1,4 @@
-import { Directive, ViewChild, Component, ElementRef } from '@angular/core';
+import { ViewChild, Component, ElementRef } from '@angular/core';
 import { trigger, transition, style, animate, state } from '@angular/core';
 
 import { compressToBase64, decompressFromBase64 } from 'lz-string';
@@ -12,6 +12,7 @@ import 'rxjs/add/operator/map';
 
 import { PopoverChapterPage } from '../popover-chapter/popover-chapter';
 import { PopoverReadPage } from '../popover-read/popover-read';
+import { Wuxiaco } from '../../providers/wuxiaco';
 
 const ST_R_SETTINGS = 'reader-settings';
 const ST_CURRENT_CHAPTER = 'current-chapter';
@@ -86,8 +87,8 @@ export class ReadingPage {
   public hideUi: boolean;
   public chapList: Array<number>;
 
-  animation: (t: any, c: any) => void = null;
-  disableNav: boolean = false;
+  private disableNav: boolean = false;
+  private parser: DOMParser = new DOMParser();
 
   private _maxChapter: number;
   get maxChapter(): number {
@@ -110,7 +111,9 @@ export class ReadingPage {
     public platform: Platform,
     public events: Events,
     public popoverCtrl: PopoverController,
-    public toastCtrl: ToastController
+    public toastCtrl: ToastController,
+
+    private novelService: Wuxiaco
   ) {
     this.hideUi = false;
     this.maxChapter = null;
@@ -216,8 +219,8 @@ export class ReadingPage {
     this.paragraphs = content;
     setTimeout(() => {
       this.content.scrollTop = scroll;
-      console.log('scroll= ' + scroll + ', chapter= ' + this.currentChapter);
-      console.log('ss= ' + this.content.scrollTop);
+      // console.log('scroll= ' + scroll + ', chapter= ' + this.currentChapter);
+      // console.log('ss= ' + this.content.scrollTop);
       callback && callback();
     }, 100)
   }
@@ -270,24 +273,7 @@ export class ReadingPage {
   scrap(chapter, callback) {
     let url = this.resolveUrl(chapter);
 
-    let stripScripts = (s, tag) => {
-      let div = document.createElement('div');
-      div.innerHTML = s;
-      let scripts = div.getElementsByTagName(tag);
-      let i = scripts.length;
-      while (i--) {
-          scripts[i].parentNode.removeChild(scripts[i]);
-      }
-      return div.innerHTML;
-    }
-
-    let getArticleBody = (resHtml) => {
-      let div = document.createElement('div');
-      div.innerHTML = resHtml;
-
-      let articles = div.getElementsByTagName('article');
-      let articleBody = articles[0].children[0].children[0].children[2];
-
+    let getArticleBody = (articleBody) => {
       let len = articleBody.children.length;
       let elemToDel = [
         articleBody.children[len - 1],
@@ -306,6 +292,7 @@ export class ReadingPage {
 
         let txt = para[i].innerHTML.replace('&nbsp;', ' ');
         txt = txt.replace(htmlTagRegex, '');
+        //TODO get rid of the dict
         res.push({ strong: i == 0, text: txt });
       }
       return res;
@@ -315,15 +302,10 @@ export class ReadingPage {
       let resHtml = data.text();
       let urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
       resHtml = resHtml.replace(urlRegex, '');
-      // resHtml = stripScripts(resHtml, 'script');
-      resHtml = stripScripts(resHtml, 'meta');
-      // resHtml = stripScripts(resHtml, 'link');
-      // resHtml = stripScripts(resHtml, 'style');
-      resHtml = stripScripts(resHtml, 'header');
-      resHtml = stripScripts(resHtml, 'footer');
-      resHtml = stripScripts(resHtml, 'img');
 
-      callback(getArticleBody(resHtml));
+      let doc = this.parser.parseFromString(resHtml, 'text/html');
+      let articleBody = doc.querySelector('div[itemprop="articleBody"]');
+      callback(getArticleBody(articleBody));
     }, (error) => {
       if (error) console.log(error);
       this.textToast('Error loading chapter: ' + chapter + '; error="' + error.status + ':' + error.statusText + '"');
