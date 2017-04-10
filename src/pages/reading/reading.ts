@@ -1,5 +1,5 @@
 import { ViewChild, Component, ElementRef } from '@angular/core';
-import { trigger, transition, style, animate } from '@angular/core';
+import { trigger, transition, style, animate, state } from '@angular/core';
 
 import { compressToBase64, decompressFromBase64 } from 'lz-string';
 
@@ -33,7 +33,41 @@ const ST_CHAPTER_SCROLL = 'chapter-scroll-';
           animate('100ms', style({transform: 'translateY(0)', opacity: 0}))
         ])
       ]
-    )
+    ),
+
+    trigger('flyInOut', [
+      state('in', style({
+        transform: 'translate3d(0, 0, 0)'
+      })),
+      state('out', style({
+        transform: 'translate3d(150%, 0, 0)'
+      })),
+      transition('in => out', animate('300ms linear')),
+      transition('out => in', animate('300ms linear'))
+    ]),
+
+    trigger('fade', [
+      state('in', style({
+        opacity: 1
+      })),
+      state('out', style({
+        opacity: 0
+      })),
+      transition('in <=> out', animate('200ms linear'))
+    ]),
+
+    trigger(
+      'contentAnimation', [
+        transition(':enter', [
+          style({transform: 'translateY(0)', opacity: 0}),
+          animate('300ms', style({transform: 'translateY(0)', opacity: 1}))
+        ]),
+        transition(':leave', [
+          style({transform: 'translateY(0)', opacity: 1}),
+          animate('300ms', style({transform: 'translateY(0)', opacity: 0}))
+        ])
+      ]
+    ),
   ],
 })
 export class ReadingPage {
@@ -158,7 +192,12 @@ export class ReadingPage {
         this.loadChapter(n);
       });
     }
-    window['this'] = this;
+    window['toggleContent'] = () => {
+      this.platform.zone.run(() => {
+        this.hideContent = this.hideContent === 'in'? 'out' : 'in';
+      });
+    }
+    window['thiz'] = this;
 
     this.storage.ready().then(() => {
       if (this.platform.is('cordova')) {
@@ -171,6 +210,18 @@ export class ReadingPage {
     })
   }
 
+  hideContent: string = 'start';
+
+  setChapterContent(content: any, scroll: number) {
+    this.hideContent = 'out';
+
+    setTimeout(() => {
+      this.paragraphs = content;
+      this.content.scrollTop = scroll;
+      this.hideContent = 'in';
+    }, 350);
+  }
+
   loadChapter(chapter, callback=null, changeChapter=true) {
     console.log('loadchapter ' + chapter);
     if (chapter < 1) {
@@ -178,46 +229,38 @@ export class ReadingPage {
       return;
     }
 
-    let afterLoad = () => {
-      if (changeChapter) {
-        this.currentChapter = chapter;
-        this.setStored(ST_CURRENT_CHAPTER, this.currentChapter);
+    let afterLoad = (content: any) => {
+      this.currentChapter = chapter;
+      this.setStored(ST_CURRENT_CHAPTER, this.currentChapter);
 
-
-        // view loaded, should scroll to saved scroll point if available
-        this.getStored(ST_CHAPTER_SCROLL + this.currentChapter).then((scroll) => {
-          console.log('scroll: ' + scroll)
-          this.content.scrollTop = scroll? scroll: 0;
-          if (callback) {
-            callback();
-          }
-        });
-      } else {
-        if (callback)
-          callback();
-      }
+      // view loaded, should scroll to saved scroll point if available
+      this.getStored(ST_CHAPTER_SCROLL + chapter).then((scroll) => {
+        scroll = scroll? scroll: 0
+        console.log('scroll: ' + scroll)
+        this.setChapterContent(content, scroll);
+        callback && callback();
+      });
     }
 
     let scrap = (chapter) => {
       this.scrap(chapter, (paragraphs) => {
-        if (changeChapter) {
-          this.paragraphs = paragraphs;
-        }
         let data = JSON.stringify(paragraphs);
         let compressed = compressToBase64(data);
         this.setStored(ST_CHAPTER_TXT + chapter, compressed)
-        afterLoad();
+        if (changeChapter) {
+          return afterLoad(paragraphs);
+        }
+        callback && callback();
       });
     }
 
     this.getStored(ST_CHAPTER_TXT + chapter).then((data) => {
       if (data) {
-        console.log(data);
         if (changeChapter) {
           let uncompressed = decompressFromBase64(data);
-          this.paragraphs = JSON.parse(uncompressed);
+          return afterLoad(JSON.parse(uncompressed));
         }
-        afterLoad();
+        callback && callback();
       } else {
         scrap(chapter);
       }

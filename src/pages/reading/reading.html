@@ -25,6 +25,8 @@
 
 <ion-content #pageContent padding
   (swipe)="onSwipe($event)"
+  [class.hidden]="hideContent=='start'"
+  [@flyInOut]="hideContent"
   [ngClass]="{'bg-black': (readerSettings.bgClass == 'bg-black'),
               'bg-white': (readerSettings.bgClass == 'bg-white'),
               'bg-grey': (readerSettings.bgClass == 'bg-grey'),
