@@ -286,7 +286,8 @@ export class ReadingPage {
       this.textToast('Successfully downloaded ' + this.maxChapter + ' chapters');
       complete && complete();
     };
-    this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
+    // this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
+    this.novel.download().then(finish);
   }
 
   resetDownloadedChapters(complete=null) {

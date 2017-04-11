@@ -185,6 +185,37 @@ export class Novel {
     })
   }
 
+  download(): Promise<any> {
+    return new Promise(resolve => {
+      this.getDirectory().then(directory => {
+        let complete = () => {
+          resolve();
+        }
+
+        let asyncDl = (i) => {
+          if (i == directory.length) {
+            return complete();
+          }
+          console.log('download chapter ' + i);
+          this.getStored(ST_CHAPTER_TXT + i).then(v => {
+            if (v) {
+              // pass
+              return asyncDl(i + 1);
+            }
+            let chapterElement = directory[i - 1]
+            let url = this.manager.wuxiacoUrl(this.novelId, chapterElement[0]);
+            this.manager.scrapChapter(url, i).then(content => {
+              this.cacheChapterContent(i, content);
+              asyncDl(i + 1);
+            })
+          })
+        }
+
+        asyncDl(1);
+      })
+    })
+  }
+
   getStored(property: string, prefix: string = this.novelId): Promise<any> {
     return this.manager.storage.get(prefix + '-' + property);
   }
