@@ -17,6 +17,7 @@
   </button>
 
   <button ion-button outline color="secondary"
+    *ngIf="displayNextBtn"
     [disabled]="disable"
     icon-right (click)="next()"
   >

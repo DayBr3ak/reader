@@ -35,7 +35,8 @@
   <div class="before-novel"></div>
 
   <nav-btn
-    [displayPrevBtn]="currentChapter != 1"
+    [displayPrevBtn]="(currentChapter > 1)"
+    [displayNextBtn]="(currentChapter < maxChapter)"
     [disable]="disableNav"
     (nextClick)="nextChapter()"
     (selClick)="presentPopoverChapter()"
@@ -50,7 +51,8 @@
   </div>
 
   <nav-btn
-    [displayPrevBtn]="currentChapter != 1"
+    [displayPrevBtn]="(currentChapter > 1)"
+    [displayNextBtn]="(currentChapter < maxChapter)"
     [disable]="disableNav"
     (nextClick)="nextChapter()"
     (selClick)="presentPopoverChapter()"

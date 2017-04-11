@@ -177,6 +177,11 @@ export class Novel {
     return this.getDirectory()
     .then((directory) => {
       if (directory) {
+        if (chapter > directory.length) {
+          return new Promise(resolve => {
+            resolve({ error: "Chapter doesn't " + chapter + " exist yet" });
+          })
+        }
         let chapterElement = directory[chapter - 1]
         let url = this.manager.wuxiacoUrl(this.novelId, chapterElement[0]);
         return this.manager.scrapChapter(url, chapter);
@@ -188,30 +193,37 @@ export class Novel {
   download(): Promise<any> {
     return new Promise(resolve => {
       this.getDirectory().then(directory => {
+        let count = 0;
         let complete = () => {
-          resolve();
+          count++;
+          if (count == 5)
+            resolve();
         }
 
-        let asyncDl = (i) => {
-          if (i == directory.length) {
+        let asyncDl = (i, step) => {
+          if (i >= directory.length) {
             return complete();
           }
           console.log('download chapter ' + i);
           this.getStored(ST_CHAPTER_TXT + i).then(v => {
             if (v) {
               // pass
-              return asyncDl(i + 1);
+              return asyncDl(i + step, step);
             }
             let chapterElement = directory[i - 1]
             let url = this.manager.wuxiacoUrl(this.novelId, chapterElement[0]);
             this.manager.scrapChapter(url, i).then(content => {
               this.cacheChapterContent(i, content);
-              asyncDl(i + 1);
+              asyncDl(i + step, step);
             })
           })
         }
 
-        asyncDl(1);
+        asyncDl(1, 5);
+        asyncDl(2, 5);
+        asyncDl(3, 5);
+        asyncDl(4, 5);
+        asyncDl(5, 5);
       })
     })
   }

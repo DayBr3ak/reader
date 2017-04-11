@@ -32,7 +32,11 @@ export class MyApp {
       this.pages = [
         { title: 'MGA', component: SettingsPage, novel: {name: 'MartialGodAsura', id: 'Martial-God-Asura'}},
         { title: 'TDG', component: null, novel: {name: 'TDG', id: 'Tales-of-Demons-and-Gods'}},
-        { title: 'Warlock', component: null, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}}
+        { title: 'Warlock', component: null, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
+        { title: 'Ancient Godly Monarch', component: null, novel: {name: 'Ancient-Godly-Monarch', id: 'Ancient-Godly-Monarch'}},
+        { title: 'Ze-Tian-Ji', component: null, novel: {name: 'Ze-Tian-Ji', id: 'Ze-Tian-Ji'}},
+        { title: 'Warlock', component: null, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
+        { title: 'Warlock', component: null, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
       ];
 
 

@@ -9,6 +9,8 @@ export class NavBtnComponent {
   @Input()
   displayPrevBtn: boolean = true;
   @Input()
+  displayNextBtn: boolean = true;
+  @Input()
   disable: boolean = false;
 
   @Output() prevClick = new EventEmitter();

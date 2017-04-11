@@ -82,7 +82,6 @@ export class ReadingPage {
   public chapList: Array<number>;
 
   private disableNav: boolean = false;
-
   private _maxChapter: number;
   get maxChapter(): number {
     if (this.platform.is('cordova'))
@@ -224,7 +223,7 @@ export class ReadingPage {
 
   loadChapter(chapter, callback=null, changeChapter=true) {
     console.log('loadchapter ' + chapter);
-    if (chapter < 1) {
+    if (chapter < 1 || (this.maxChapter && chapter > this.maxChapter)) {
       this.textToast("Chapter " + chapter + " doesn't exist.");
       callback && callback();
       return;
@@ -242,8 +241,14 @@ export class ReadingPage {
     }
 
     let scrap = () => {
-      this.novel.scrap(chapter).then((paragraphs) => {
-        this.novel.cacheChapterContent(chapter, paragraphs);
+      this.novel.scrap(chapter).then((data) => {
+        let paragraphs;
+        if (data.error) {
+          paragraphs = [data.error];
+        } else {
+          paragraphs = data;
+          this.novel.cacheChapterContent(chapter, paragraphs);
+        }
         if (changeChapter) {
           return afterLoad(paragraphs);
         }
