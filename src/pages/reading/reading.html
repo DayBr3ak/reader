@@ -5,7 +5,7 @@
         <ion-icon name="menu"></ion-icon>
       </button>
 
-      <ion-title>{{ novelName }} - Chapter {{ currentChapter }}</ion-title>
+      <ion-title *ngIf="novel !== null">Ch{{ currentChapter }} - {{ novel.name }}</ion-title>
 
       <ion-buttons start>
         <button ion-button icon-only (click)='prevChapter()'>
@@ -46,7 +46,7 @@
     [style.fontFamily]="readerSettings.fontFamily"
     [style.fontSize]="readerSettings.fontSize"
   >
-    <p *ngFor="let paragraph of paragraphs" [class.bold]="paragraph.strong" [innerHTML]="paragraph.text"></p>
+    <p *ngFor="let paragraph of paragraphs" [innerHTML]="paragraph"></p>
   </div>
 
   <nav-btn

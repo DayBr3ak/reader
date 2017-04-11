@@ -14,18 +14,25 @@ export class MyApp {
 
   rootPage:any = ReadingPage;
   pages:any;
+  events: any;
 
-  constructor(platform: Platform, statusBar: StatusBar, splashScreen: SplashScreen, events: Events) {
+  constructor(
+    platform: Platform,
+    statusBar: StatusBar,
+    splashScreen: SplashScreen,
+    events: Events
+  ) {
     platform.ready().then(() => {
       // Okay, so the platform is ready and our plugins are available.
       // Here you can do any higher level native things you might need.
       statusBar.styleDefault();
       splashScreen.hide();
+      this.events = events;
 
       this.pages = [
-        { title: 'Settings', component: SettingsPage },
-        { title: 'Select Chapter', component: null },
-        { title: 'Other', component: null}
+        { title: 'MGA', component: SettingsPage, novel: {name: 'MartialGodAsura', id: 'Martial-God-Asura'}},
+        { title: 'TDG', component: null, novel: {name: 'TDG', id: 'Tales-of-Demons-and-Gods'}},
+        { title: 'Warlock', component: null, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}}
       ];
 
 
@@ -47,6 +54,7 @@ export class MyApp {
   openPage(page) {
     // Reset the content nav to have just this page
     // we wouldn't want the back button to show in this scenario
-    this.nav.setRoot(page.component);
+    // this.nav.setRoot(page.component);
+    this.events.publish('change:novel', page.novel);
   }
 }

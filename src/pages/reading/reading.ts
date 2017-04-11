@@ -1,8 +1,6 @@
 import { ViewChild, Component, ElementRef } from '@angular/core';
 import { trigger, transition, style, animate, state } from '@angular/core';
 
-import { compressToBase64, decompressFromBase64 } from 'lz-string';
-
 import { NavController, NavParams, ModalController,
   Content, Platform, Events, PopoverController, ToastController } from 'ionic-angular';
 import { Http } from '@angular/http';
@@ -12,12 +10,10 @@ import 'rxjs/add/operator/map';
 
 import { PopoverChapterPage } from '../popover-chapter/popover-chapter';
 import { PopoverReadPage } from '../popover-read/popover-read';
-import { Wuxiaco } from '../../providers/wuxiaco';
+import { Wuxiaco, Novel } from '../../providers/wuxiaco';
 
 const ST_R_SETTINGS = 'reader-settings';
-const ST_CURRENT_CHAPTER = 'current-chapter';
-const ST_CHAPTER_TXT = 'chapter-txt-';
-const ST_CHAPTER_SCROLL = 'chapter-scroll-';
+const ST_CURRENT_NOVEL = 'current-novel';
 
 @Component({
   selector: 'page-reading',
@@ -79,8 +75,6 @@ export class ReadingPage {
   @ViewChild('pageContent', { read: ElementRef }) contentEref: ElementRef;
   @ViewChild('articleBody', { read: ElementRef }) textEref: ElementRef;
 
-  public novelName: string = 'MGA';
-  public novelId: string = 'mga'
   public paragraphs: any;
   public readerSettings: any;
   public currentChapter: number;
@@ -88,7 +82,6 @@ export class ReadingPage {
   public chapList: Array<number>;
 
   private disableNav: boolean = false;
-  private parser: DOMParser = new DOMParser();
 
   private _maxChapter: number;
   get maxChapter(): number {
@@ -101,6 +94,8 @@ export class ReadingPage {
   set maxChapter(v: number) {
     this._maxChapter = v;
   }
+
+  novel: Novel = null;
 
   constructor(public statusBar: StatusBar,
     public navCtrl: NavController,
@@ -123,7 +118,9 @@ export class ReadingPage {
       fontSize: '4vw',
       bgClass: 'bg-black'
     }
-    // this.statusBar.show();
+
+    // this.novel = novelService.novel({name: 'MGA', id: 'mga'});
+    // this.novel = novelService.novel({name: 'Tales of D&G', id: 'tdg'});
   }
 
   textToast(text: string, time: number = 2000) {
@@ -132,18 +129,6 @@ export class ReadingPage {
       duration: time
     });
     toast.present();
-  }
-
-  getStored(property: string, prefix: string = this.novelId) {
-    return this.storage.get(prefix + '-' + property);
-  }
-
-  setStored(property: string, val: any, prefix: string = this.novelId) {
-    return this.storage.set(prefix + '-' + property, val);
-  }
-
-  resolveUrl(num: number) {
-    return 'http://m.wuxiaworld.com/mga-index/mga-chapter-' + num + '/';
   }
 
   registerEvents() {
@@ -160,37 +145,49 @@ export class ReadingPage {
     this.content.enableScrollListener();
     this.content.ionScrollEnd.subscribe((event) => {
       // console.log(event.scrollTop);
-      this.setStored(ST_CHAPTER_SCROLL + this.currentChapter, event.scrollTop);
+      this.novel.setScroll(this.currentChapter, event.scrollTop);
     });
 
     this.events.subscribe('change:background', (bg) => {
       this.readerSettings.bgClass = bg;
     });
+
+    this.events.subscribe('change:novel', (novel) => {
+      this.novel = this.novelService.novel(novel);
+      this.loadNovel();
+    })
   }
 
-  myViewDidLoad() {
-    this.registerEvents();
-
-    this.storage.get(ST_R_SETTINGS).then((setts) => {
-      if (setts) {
-        this.readerSettings = setts;
-      }
-    });
-
-    console.log('ionViewDidLoad ReadingPage');
-    this.getStored(ST_CURRENT_CHAPTER).then((val) => {
-      let currentChapter;
-      if (val) {
-        currentChapter = val;
-      } else {
-        currentChapter = 1;
-      }
+  loadNovel() {
+    this.storage.set(ST_CURRENT_NOVEL, this.novel.meta());
+    this.novel.getCurrentChapter().then((currentChapter) => {
       this.loadChapter(currentChapter, () => {
         this.content.fullscreen = true;
         this.loadAhead(currentChapter, 2, this.maxChapter);
       });
     })
-    this.getNbChapter();
+    this.novel.getMaxChapter().then((maxChapter) => {
+      this.maxChapter = maxChapter;
+      console.log('maxChapter= ' + maxChapter)
+    })
+  }
+
+  myViewDidLoad() {
+    this.registerEvents();
+    this.storage.get(ST_R_SETTINGS).then((setts) => {
+      if (setts) {
+        this.readerSettings = setts;
+      }
+    });
+    this.storage.get(ST_CURRENT_NOVEL).then(novel => {
+      if (novel) {
+        this.novel = this.novelService.novel(novel);
+      } else {
+        this.novel = this.novelService.novel({name: 'MartialGodAsura', id: 'Martial-God-Asura'});
+      }
+      this.loadNovel();
+    })
+    console.log('ionViewDidLoad ReadingPage');
   }
 
   ionViewDidLoad() {
@@ -205,13 +202,13 @@ export class ReadingPage {
     window['thiz'] = this;
 
     this.storage.ready().then(() => {
-      if (this.platform.is('cordova')) {
+      // if (this.platform.is('cordova')) {
         this.myViewDidLoad();
-      } else {
-        this.resetDownloadedChapters(() => {
-          this.myViewDidLoad();
-        });
-      }
+      // } else {
+        // this.resetDownloadedChapters(() => {
+          // this.myViewDidLoad();
+        // });
+      // }
     })
   }
 
@@ -235,10 +232,9 @@ export class ReadingPage {
 
     let afterLoad = (content: any) => {
       this.currentChapter = chapter;
-      this.setStored(ST_CURRENT_CHAPTER, chapter);
-
+      this.novel.setCurrentChapter(chapter);
       // view loaded, should scroll to saved scroll point if available
-      this.getStored(ST_CHAPTER_SCROLL + chapter).then((chScroll) => {
+      this.novel.getScroll(chapter).then((chScroll) => {
         let _scroll = chScroll? chScroll: 0;
         console.log('scroll: ' + _scroll)
         this.setChapterContent(content, _scroll, callback);
@@ -246,10 +242,8 @@ export class ReadingPage {
     }
 
     let scrap = () => {
-      this.scrap(chapter, (paragraphs) => {
-        let data = JSON.stringify(paragraphs);
-        let compressed = compressToBase64(data);
-        this.setStored(ST_CHAPTER_TXT + chapter, compressed)
+      this.novel.scrap(chapter).then((paragraphs) => {
+        this.novel.cacheChapterContent(chapter, paragraphs);
         if (changeChapter) {
           return afterLoad(paragraphs);
         }
@@ -257,61 +251,16 @@ export class ReadingPage {
       });
     }
 
-    this.getStored(ST_CHAPTER_TXT + chapter).then((data) => {
-      if (data) {
+    this.novel.getChapterContent(chapter).then((content) => {
+      if (content) {
         if (changeChapter) {
-          let uncompressed = decompressFromBase64(data);
-          return afterLoad(JSON.parse(uncompressed));
+          return afterLoad(content);
         }
         callback && callback();
       } else {
         scrap();
       }
     });
-  }
-
-  scrap(chapter, callback) {
-    let url = this.resolveUrl(chapter);
-
-    let getArticleBody = (articleBody) => {
-      let len = articleBody.children.length;
-      let elemToDel = [
-        articleBody.children[len - 1],
-        articleBody.children[len - 2],
-        articleBody.children[1],
-        articleBody.children[0]
-      ];
-      for (let i = 0; i < elemToDel.length; i++) {
-        articleBody.removeChild(elemToDel[i]);
-      }
-
-      let para = articleBody.getElementsByTagName('p');
-      let res = [];
-      for (let i = 0; i < para.length; i++) {
-        const htmlTagRegex = /(<([^>]+)>)/ig
-
-        let txt = para[i].innerHTML.replace('&nbsp;', ' ');
-        txt = txt.replace(htmlTagRegex, '');
-        //TODO get rid of the dict
-        res.push({ strong: i == 0, text: txt });
-      }
-      return res;
-    }
-
-    this.http.get(url).subscribe((data) => {
-      let resHtml = data.text();
-      let urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-      resHtml = resHtml.replace(urlRegex, '');
-
-      let doc = this.parser.parseFromString(resHtml, 'text/html');
-      let articleBody = doc.querySelector('div[itemprop="articleBody"]');
-      callback(getArticleBody(articleBody));
-    }, (error) => {
-      if (error) console.log(error);
-      this.textToast('Error loading chapter: ' + chapter + '; error="' + error.status + ':' + error.statusText + '"');
-    }, () => {
-      // complete
-    })
   }
 
   loadAhead(chapter, ahead, maxChapter, notify=null, complete=null) {
@@ -344,9 +293,9 @@ export class ReadingPage {
     let currentChapter;
     let currentChapterScroll;
     let rSettings;
-    this.getStored(ST_CURRENT_CHAPTER).then((v) => {
+    this.novel.getCurrentChapter().then((v) => {
       currentChapter = v;
-      return this.getStored(ST_CHAPTER_SCROLL + currentChapter);
+      return this.novel.getScroll(currentChapter);
     })
     .then((v) => {
       currentChapterScroll = v;
@@ -360,10 +309,10 @@ export class ReadingPage {
       return this.storage.set(ST_R_SETTINGS, rSettings);
     })
     .then(() => {
-      return this.setStored(ST_CURRENT_CHAPTER, currentChapter);
+      return this.novel.setCurrentChapter(currentChapter);
     })
     .then(() => {
-      return this.setStored(ST_CHAPTER_SCROLL + currentChapter, currentChapterScroll);
+      return this.novel.setScroll(currentChapter, currentChapterScroll);
     })
     .then(() => {
       complete && complete();
@@ -390,13 +339,6 @@ export class ReadingPage {
         }, 200)
       });
     }
-  }
-
-  getNbChapter() {
-    let url = 'https://gist.githubusercontent.com/ChuTengMga/2b96da48467fa23698da1051fcf5c00a/raw/0b0510521aff26071f22fe825e9fc29ae58c03ff/wu.json';
-    this.http.get(url).map(res => res.json()).subscribe((data) => {
-      this.maxChapter = data.mga;
-    })
   }
 
   hideInterface() {
