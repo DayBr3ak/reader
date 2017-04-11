@@ -222,12 +222,19 @@ export class ReadingPage {
   }
 
   loadChapter(chapter, callback=null, changeChapter=true) {
-    console.log('loadchapter ' + chapter);
     if (chapter < 1 || (this.maxChapter && chapter > this.maxChapter)) {
-      this.textToast("Chapter " + chapter + " doesn't exist.");
-      callback && callback();
-      return;
+      this.textToast("Chapter " + chapter + " doesn't exist. Max is " + this.maxChapter);
+      // callback && callback();
+      // return;
     }
+
+    if (chapter < 1) {
+      chapter = 1;
+    }
+    if (this.maxChapter && chapter > this.maxChapter) {
+      chapter = this.maxChapter;
+    }
+    console.log('loadchapter ' + chapter);
 
     let afterLoad = (content: any) => {
       this.currentChapter = chapter;
