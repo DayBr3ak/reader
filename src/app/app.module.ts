@@ -6,6 +6,7 @@ import { ReadModalPage } from '../pages/read-modal/read-modal';
 import { SettingsPage } from '../pages/settings/settings';
 import { PopoverReadPage } from '../pages/popover-read/popover-read';
 import { PopoverChapterPage } from '../pages/popover-chapter/popover-chapter';
+import { ExplorePage } from '../pages/explore/explore';
 
 import { NavBtnComponent } from '../components/nav-btn/nav-btn';
 import { Wuxiaco } from '../providers/wuxiaco';
@@ -23,6 +24,7 @@ import { SplashScreen } from '@ionic-native/splash-screen';
     SettingsPage,
     PopoverReadPage,
     PopoverChapterPage,
+    ExplorePage,
     NavBtnComponent,
   ],
   imports: [
@@ -36,7 +38,8 @@ import { SplashScreen } from '@ionic-native/splash-screen';
     ReadModalPage,
     SettingsPage,
     PopoverReadPage,
-    PopoverChapterPage
+    PopoverChapterPage,
+    ExplorePage
   ],
   providers: [
     StatusBar,

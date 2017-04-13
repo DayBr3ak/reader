@@ -4,6 +4,7 @@ import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 
 import { ReadingPage } from '../pages/reading/reading';
+import { ExplorePage } from '../pages/explore/explore';
 import { SettingsPage } from '../pages/settings/settings';
 
 @Component({
@@ -30,7 +31,8 @@ export class MyApp {
       this.events = events;
 
       this.pages = [
-        { title: 'MGA', component: SettingsPage, novel: {name: 'MartialGodAsura', id: 'Martial-God-Asura'}},
+        { title: 'Explore', component: ExplorePage },
+        { title: 'MGA', component: null, novel: {name: 'MartialGodAsura', id: 'Martial-God-Asura'}},
         { title: 'TDG', component: null, novel: {name: 'TDG', id: 'Tales-of-Demons-and-Gods'}},
         { title: 'Warlock', component: null, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
         { title: 'Ancient Godly Monarch', component: null, novel: {name: 'Ancient-Godly-Monarch', id: 'Ancient-Godly-Monarch'}},
@@ -58,7 +60,9 @@ export class MyApp {
   openPage(page) {
     // Reset the content nav to have just this page
     // we wouldn't want the back button to show in this scenario
-    // this.nav.setRoot(page.component);
+    if (page.component) {
+      return this.nav.setRoot(page.component);
+    }
     this.events.publish('change:novel', page.novel);
   }
 }
