@@ -32,13 +32,13 @@ export class MyApp {
 
       this.pages = [
         { title: 'Explore', component: ExplorePage },
-        { title: 'MGA', component: null, novel: {name: 'MartialGodAsura', id: 'Martial-God-Asura'}},
-        { title: 'TDG', component: null, novel: {name: 'TDG', id: 'Tales-of-Demons-and-Gods'}},
-        { title: 'Warlock', component: null, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
-        { title: 'Ancient Godly Monarch', component: null, novel: {name: 'Ancient-Godly-Monarch', id: 'Ancient-Godly-Monarch'}},
-        { title: 'Ze-Tian-Ji', component: null, novel: {name: 'Ze-Tian-Ji', id: 'Ze-Tian-Ji'}},
-        { title: 'Warlock', component: null, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
-        { title: 'Warlock', component: null, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
+        { title: 'MGA', component: ReadingPage, novel: {name: 'MartialGodAsura', id: 'Martial-God-Asura'}},
+        { title: 'TDG', component: ReadingPage, novel: {name: 'TDG', id: 'Tales-of-Demons-and-Gods'}},
+        { title: 'Warlock', component: ReadingPage, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
+        { title: 'Ancient Godly Monarch', component: ReadingPage, novel: {name: 'Ancient-Godly-Monarch', id: 'Ancient-Godly-Monarch'}},
+        { title: 'Ze-Tian-Ji', component: ReadingPage, novel: {name: 'Ze-Tian-Ji', id: 'Ze-Tian-Ji'}},
+        { title: 'Warlock', component: ReadingPage, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
+        { title: 'Warlock', component: ReadingPage, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
       ];
 
 
@@ -54,15 +54,20 @@ export class MyApp {
         });
       }, false);
 
+      events.subscribe('change:novel', (novel) => {
+        this.nav.setRoot(ReadingPage, { novel: novel.meta() });
+      })
+
     });
   }
 
   openPage(page) {
     // Reset the content nav to have just this page
     // we wouldn't want the back button to show in this scenario
-    if (page.component) {
-      return this.nav.setRoot(page.component);
-    }
-    this.events.publish('change:novel', page.novel);
+    let param = null;
+    if (page.component == ReadingPage)
+      param = page.novel;
+    this.nav.setRoot(page.component, page);
+      // this.events.publish('change:novel', page.novel);
   }
 }

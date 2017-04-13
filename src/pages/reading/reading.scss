@@ -19,8 +19,7 @@ page-reading {
 
   .bg-black {
     background-color: map-get($colors, black);
-    // color: map-get($colors, white);
-    color: #999;
+    color: map-get($colors, white);
   }
 
   .bg-white {
@@ -29,8 +28,8 @@ page-reading {
   }
 
   .bg-grey {
-    background-color: map-get($colors, grey);
-    color: map-get($colors, white);
+    background-color: map-get($colors, black);
+    color: map-get($colors, dim);
   }
 
   .bg-tan {

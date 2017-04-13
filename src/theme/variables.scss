@@ -18,9 +18,14 @@ $background-color: #000000;
 $text-color: #ffffff;
 $toolbar-background: #000000;
 
-$searchbar-md-input-text-color: #ffffff;
-$searchbar-md-input-background-color: #000000;
-$searchbar-md-input-box-shadow: 0 2px 2px 0 rgba(255, 255, 255, .14), 0 3px 1px -2px rgba(255, 255, 255, .2), 0 1px 5px 0 rgba(255, 255, 255, .12);
+// $searchbar-md-input-text-color: #ffffff;
+// $searchbar-md-input-background-color: #000000;
+// $searchbar-md-input-box-shadow: 0 2px 2px 0 rgba(255, 255, 255, .14), 0 3px 1px -2px rgba(255, 255, 255, .2), 0 1px 5px 0 rgba(255, 255, 255, .12);
+
+// $searchbar-ios-input-text-color: #ffffff;
+// $searchbar-ios-input-background-color: #000000;
+// $searchbar-ios-input-box-shadow: 0 2px 2px 0 rgba(255, 255, 255, .14), 0 3px 1px -2px rgba(255, 255, 255, .2), 0 1px 5px 0 rgba(255, 255, 255, .12);
+
 
 // $content-padding: 0px;
 
@@ -49,8 +54,10 @@ $colors: (
 
   white:      rgb(255, 255, 255),
   grey:       rgb(76,75,80),
+  blackgrey:  #080808,
   black:      rgb(0, 0, 0),
-  tan:        rgb(249, 241, 228)
+  tan:        rgb(249, 241, 228),
+  dim:        #999
 );
 
 // App iOS Variables

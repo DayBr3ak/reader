@@ -3,9 +3,43 @@ page-explore {
   .hidden {
     display: none!important;
   }
+}
 
-  h2.alert-title {
-    color: white;
-
+.alert-ios, .alert-md {
+  .alert-title {
+    color: map-get($colors, secondary);
   }
+
+  .alert-wrapper {
+    background-color: map-get($colors, blackgrey);
+  }
+
+  [aria-checked=true] .alert-radio-label {
+    color: map-get($colors, secondary);
+  }
+
+  [aria-checked=false] .alert-radio-label {
+    color: map-get($colors, white);
+  }
+}
+
+
+
+
+.card-title-md {
+  color: map-get($colors, white);
+}
+
+.card-md {
+  p {
+    color: map-get($colors, dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    // white-space: nowrap;
+  }
+
+  box-shadow: 0 2px 2px 0 rgba(187, 184, 184, 0.14), 0 3px 1px -2px rgba(187, 184, 184, 0.2), 0 1px 5px 0 rgba(187, 184, 184, 0.12);
+  background: map-get($colors, blackgrey);
+  font-size: 1.4rem;
+
 }

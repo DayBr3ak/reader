@@ -7,30 +7,45 @@
 <ion-header>
 
   <ion-navbar>
+    <ion-toolbar>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+
     <ion-title>Explore</ion-title>
-    <ion-item>
-      <ion-label>Genre Filter</ion-label>
-      <ion-select [(ngModel)]="genreFilter">
-        <ion-option *ngFor="let genre of genres" [value]="genre.val" (ionInput)="selGenre($event)"> {{ genre.text }}</ion-option>
-      </ion-select>
-    </ion-item>
+    </ion-toolbar>
+    <ion-toolbar>
+      <ion-item>
+        <ion-label>Genre Filter</ion-label>
+        <ion-select [(ngModel)]="genreFilter" (ionChange)="genreFilterChange($event)">
+          <ion-option *ngFor="let genre of genres" [value]="genre[0]"> {{ genre[1] }}</ion-option>
+        </ion-select>
+      </ion-item>
+    </ion-toolbar>
   </ion-navbar>
 
 </ion-header>
 
 
-<ion-content padding>
+<ion-content padding #content>
 
   <ion-searchbar (ionInput)="getItems($event)"></ion-searchbar>
   <ion-list>
-    <ion-item *ngFor="let novel of novelList" [class.hidden]="genreFilterFn(novel)">
-      <ion-avatar item-left>
-        <img [src]="">
-      </ion-avatar>
-      <h2>{{ novel.name }}</h2>
-      <h3>Don't Know What To Do!</h3>
-      <p>I've had a pretty messed up day. If we just...</p>
-    </ion-item>
+
+    <ion-card *ngFor="let novel of novelList">
+      <ion-card-content>
+        <ion-card-title (click)="selNovel(novel)">
+          {{ novel.title }}
+          </ion-card-title>
+        <p (click)="novel.moreDesc = !novel.moreDesc" [style.whiteSpace]="novel.moreDesc? '' : 'nowrap'">
+          {{ novel.desc }}
+        </p>
+      </ion-card-content>
+    </ion-card>
   </ion-list>
+
+  <ion-infinite-scroll *ngIf="enableInfiniteScroll" (ionInfinite)="doInfinite($event)">
+   <ion-infinite-scroll-content></ion-infinite-scroll-content>
+  </ion-infinite-scroll>
 
 </ion-content>

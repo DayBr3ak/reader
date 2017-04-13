@@ -18,6 +18,16 @@ const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&
 @Injectable()
 export class Wuxiaco {
   private parser: DOMParser = new DOMParser();
+  private URL: string = 'http://m.wuxiaworld.co';
+  public GENRE = [
+    [0, 'All'],
+    [1, 'Fantasy'],
+    [2, 'Xianxia'],
+    [3, 'Romantic'],
+    [4, 'Historical'],
+    [5, 'Sci-fi'],
+    [6, 'Game']
+  ]
 
   constructor(
     public http: Http,
@@ -40,7 +50,7 @@ export class Wuxiaco {
   }
 
   wuxiacoUrl(novelId: string, suffix: string) {
-    return `http://m.wuxiaworld.co/${novelId}/${suffix}`
+    return `${this.URL}/${novelId}/${suffix}`
   }
 
   scrap(url: string, chapter: number, callback) {
@@ -134,6 +144,52 @@ export class Wuxiaco {
     if (opts.name && opts.id) {
       return new Novel(this, name, id);
     }
+  }
+
+  getNovelList(genre, page=1): Promise<any> {
+    let parseAuthor = (div): string => {
+      let author = div.querySelector('p.author').innerText.trim();
+      author = author.split('Author：')[1];
+      return author;
+    }
+    let parseDesc = (div): string => {
+      let desc = div.querySelector('p.review').innerText.trim();
+      const x = 'Introduce:Description '.length;
+      return desc.substring(x);
+    }
+    let parseNovelId = (href: string): string => {
+      return href.replace(new RegExp('/', 'g'), '')
+    }
+
+    let parseNovelList = doc => {
+      let divList = doc.querySelectorAll('div.hot_sale');
+      let result = [];
+      for (let i = 0; i < divList.length; i++) {
+        let div = divList[i];
+        let item = {
+          href: div.querySelector('a').getAttribute('href'),
+          title: div.querySelector('p.title').innerText.trim(),
+          author: parseAuthor(div),
+          desc: parseDesc(div)
+        };
+        item['novelObject'] = this.novel({ name: item.title, id: parseNovelId(item.href) });
+        result.push(item);
+      }
+      let nbPages = doc.querySelector('input[name=txtPage]').getAttribute('value').split('/')[1];
+      return { max: parseInt(nbPages), currentPage: page, list: result };
+    };
+
+    return new Promise((resolve, reject) => {
+      let genreId: number = genre[0];
+      let url = `${this.URL}/category/${genreId}/${page}.html`;
+      this.http.get(url).subscribe((data) => {
+        let doc = this.parser.parseFromString(data.text(), 'text/html');
+        let list = parseNovelList(doc);
+        resolve(list);
+      }, error => {
+        reject(error);
+      })
+    })
   }
 }
 

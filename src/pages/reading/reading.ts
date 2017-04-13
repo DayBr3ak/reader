@@ -150,11 +150,6 @@ export class ReadingPage {
     this.events.subscribe('change:background', (bg) => {
       this.readerSettings.bgClass = bg;
     });
-
-    this.events.subscribe('change:novel', (novel) => {
-      this.novel = this.novelService.novel(novel);
-      this.loadNovel();
-    })
   }
 
   loadNovel() {
@@ -178,18 +173,47 @@ export class ReadingPage {
         this.readerSettings = setts;
       }
     });
-    this.storage.get(ST_CURRENT_NOVEL).then(novel => {
-      if (novel) {
-        this.novel = this.novelService.novel(novel);
-      } else {
-        this.novel = this.novelService.novel({name: 'MartialGodAsura', id: 'Martial-God-Asura'});
-      }
+
+    if (this.navParams.data && this.navParams.data.novel) {
+      this.novel = this.novelService.novel(this.navParams.data.novel);
       this.loadNovel();
-    })
+    } else {
+      this.storage.get(ST_CURRENT_NOVEL).then(novel => {
+        if (novel) {
+          this.novel = this.novelService.novel(novel);
+        } else {
+          this.novel = this.novelService.novel({name: 'MartialGodAsura', id: 'Martial-God-Asura'});
+        }
+        this.loadNovel();
+      })
+    }
     console.log('ionViewDidLoad ReadingPage');
   }
 
-  ionViewDidLoad() {
+  // ionViewDidLoad() {
+  //   window['rm'] = () => {
+  //     this.resetDownloadedChapters();
+  //   }
+  //   window['goto'] = (n) => {
+  //     this.platform.zone.run(() => {
+  //       this.loadChapter(n);
+  //     });
+  //   }
+  //   window['thiz'] = this;
+
+  //   this.storage.ready().then(() => {
+  //     // if (this.platform.is('cordova')) {
+  //       this.myViewDidLoad();
+  //     // } else {
+  //       // this.resetDownloadedChapters(() => {
+  //         // this.myViewDidLoad();
+  //       // });
+  //     // }
+  //   })
+  // }
+
+  ionViewDidEnter() {
+    console.log('enter!!!')
     window['rm'] = () => {
       this.resetDownloadedChapters();
     }
