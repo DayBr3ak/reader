@@ -16,16 +16,39 @@
   <ion-list *ngIf="bookmarkKeys.length > 0">
 
     <ion-card *ngFor="let key of bookmarkKeys">
-      <ion-card-content>
-        <ion-card-title (click)="selNovel(key)">
+      <ion-card-content (click)="moreDesc[key] = !moreDesc[key]" >
+        <ion-card-title>
           {{ bookmarkList[key].title }}
           </ion-card-title>
+          <h2>
+        <ion-row no-padding *ngFor="let m of _formatMeta(key)">
+          <ion-col text-left class="label">
+            {{ m[0] }}:
+          </ion-col>
+          <ion-col text-right class="content">
+            {{ m[1] }}
+          </ion-col>
+        </ion-row>
+      </h2>
         <!-- <p> -->
-        <p  (click)="moreDesc[key] = !moreDesc[key]" [style.whiteSpace]="moreDesc[key]? '' : 'nowrap'">
+        <p [style.whiteSpace]="moreDesc[key]? '' : 'nowrap'">
 
           {{ bookmarkList[key].desc }}
         </p>
       </ion-card-content>
+
+      <ion-row no-padding>
+      <ion-col text-left>
+        <button ion-button clear small color="danger" icon-left (click)="remove(key)">
+          <ion-icon name='close'></ion-icon> Remove
+        </button>
+      </ion-col>
+      <ion-col text-right>
+        <button ion-button clear small color="danger" icon-left (click)="read(key)">
+          <ion-icon name='musical-notes'></ion-icon> Read
+        </button>
+      </ion-col>
+    </ion-row>
     </ion-card>
   </ion-list>
 

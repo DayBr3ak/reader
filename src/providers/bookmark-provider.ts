@@ -52,4 +52,14 @@ export class BookmarkProvider {
       }
     })
   }
+
+  remove(bookmark: any): Promise<any> {
+    return this.bookmarks().then((bs) => {
+      delete bs[bookmark.title]
+      return this.storage.set(ST_BOOKMARK, bs);
+    })
+  }
 }
+
+
+

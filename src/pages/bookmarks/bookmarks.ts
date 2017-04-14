@@ -40,17 +40,51 @@ export class BookmarksPage {
     });
   }
 
+  _formatMeta(key: string) {
+     let bookmark = this.bookmarkList[key];
+     if (!bookmark.metas)
+       return [];
+
+     let ar = Object.keys(bookmark.metas);
+     let res = []
+     for (let i = 0; i < ar.length; i++) {
+       let key = ar[i];
+       if (key[0] === '_') continue;
+       let item = bookmark.metas[key];
+       res.push([key, item]);
+     }
+
+     return res;
+  }
+
   didLoad() {
     this.bookmarkProvider.bookmarks().then((bookmarks) => {
       if (bookmarks) {
         this.bookmarkList = bookmarks;
+
+
+        this.bookmarkKeys.forEach((key) => {
+          let bookmark = this.bookmarkList[key];
+          let novel: Novel = this.novelService.novelKwargs(bookmark);
+          novel.getMoreMeta(true).then((metas) => {
+            bookmark.metas = metas;
+          })
+        })
+
       }
     })
   }
 
-  selNovel(key) {
-    let novel = this.bookmarkList[key];
-    this.events.publish('change:novel', this.novelService.novelKwargs(novel));
+  read(key: string) {
+    let bookmark = this.bookmarkList[key];
+    this.events.publish('change:novel', this.novelService.novelKwargs(bookmark));
+  }
+
+  remove(key: string) {
+    let bookmark = this.bookmarkList[key];
+    this.bookmarkProvider.remove(bookmark).then((newBookmarks) => {
+      this.bookmarkList = newBookmarks;
+    })
   }
 
 }
