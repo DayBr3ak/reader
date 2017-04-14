@@ -1,10 +1,10 @@
 import { Component, ViewChild } from '@angular/core';
 import { NavController, NavParams, Events, Content } from 'ionic-angular';
-import { Wuxiaco, Novel } from '../../providers/wuxiaco';
+import { Wuxiaco } from '../../providers/wuxiaco';
 
 @Component({
   selector: 'page-explore',
-  templateUrl: 'explore.html'
+  templateUrl: 'explore.html',
 })
 export class ExplorePage {
   @ViewChild('content') content: Content;
@@ -36,7 +36,6 @@ export class ExplorePage {
 
     this.loadListAll().then((search) => {
       console.log('loadListAll over')
-      console.log(search)
     });
   }
 
@@ -45,10 +44,16 @@ export class ExplorePage {
   }
 
   loadListAll(force=false): Promise<any> {
+    let complete = () => {
+      this.sortNovelList('title');
+      console.log('sorted');
+    }
     let asyncLoad = (page): Promise<any> => {
       return this.loadList(page, force).then((search) => {
         if (search.currentPage < search.max) {
           return asyncLoad(page + 1);
+        } else {
+          return complete();
         }
       })
     }
@@ -69,13 +74,23 @@ export class ExplorePage {
     })
   }
 
+  sortNovelList(field: string) {
+    this.novelListDefault.sort((a, b) => {
+      if (a[field] < b[field]) return -1;
+      if (a[field] > b[field]) return 1;
+      return 0;
+    })
+    this.novelList = this.novelListDefault;
+  }
+
   _loadList(search: any) {
     if (search.currentPage == 1) {
-      this.novelListDefault = this.novelList = search.list;
+      this.novelListDefault = search.list;
     } else {
-      this.novelListDefault = this.novelList = this.novelListDefault.concat(search.list);
+      this.novelListDefault = this.novelListDefault.concat(search.list);
     }
     this.novelSearch = search;
+    this.novelList = this.novelListDefault;
   }
 
   getItems(event) {

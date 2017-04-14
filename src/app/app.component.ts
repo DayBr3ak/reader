@@ -32,13 +32,13 @@ export class MyApp {
 
       this.pages = [
         { title: 'Explore', component: ExplorePage },
-        { title: 'MGA', component: ReadingPage, novel: {name: 'MartialGodAsura', id: 'Martial-God-Asura'}},
-        { title: 'TDG', component: ReadingPage, novel: {name: 'TDG', id: 'Tales-of-Demons-and-Gods'}},
-        { title: 'Warlock', component: ReadingPage, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
-        { title: 'Ancient Godly Monarch', component: ReadingPage, novel: {name: 'Ancient-Godly-Monarch', id: 'Ancient-Godly-Monarch'}},
-        { title: 'Ze-Tian-Ji', component: ReadingPage, novel: {name: 'Ze-Tian-Ji', id: 'Ze-Tian-Ji'}},
-        { title: 'Warlock', component: ReadingPage, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
-        { title: 'Warlock', component: ReadingPage, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
+        // { title: 'MGA', component: ReadingPage, novel: {name: 'MartialGodAsura', id: 'Martial-God-Asura'}},
+        // { title: 'TDG', component: ReadingPage, novel: {name: 'TDG', id: 'Tales-of-Demons-and-Gods'}},
+        // { title: 'Warlock', component: ReadingPage, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
+        // { title: 'Ancient Godly Monarch', component: ReadingPage, novel: {name: 'Ancient-Godly-Monarch', id: 'Ancient-Godly-Monarch'}},
+        // { title: 'Ze-Tian-Ji', component: ReadingPage, novel: {name: 'Ze-Tian-Ji', id: 'Ze-Tian-Ji'}},
+        // { title: 'Warlock', component: ReadingPage, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
+        // { title: 'Warlock', component: ReadingPage, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
       ];
 
 
