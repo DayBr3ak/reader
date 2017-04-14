@@ -22,6 +22,10 @@
         </ion-select>
       </ion-item>
     </ion-toolbar>
+    <ion-toolbar>
+      <ion-searchbar (ionInput)="getItems($event)"></ion-searchbar>
+
+    </ion-toolbar>
   </ion-navbar>
 
 </ion-header>
@@ -29,7 +33,10 @@
 
 <ion-content padding #content>
 
-  <ion-searchbar (ionInput)="getItems($event)"></ion-searchbar>
+  <ion-refresher (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
   <ion-list>
 
     <ion-card *ngFor="let novel of novelList">
@@ -43,9 +50,5 @@
       </ion-card-content>
     </ion-card>
   </ion-list>
-
-  <ion-infinite-scroll *ngIf="enableInfiniteScroll" (ionInfinite)="doInfinite($event)">
-   <ion-infinite-scroll-content></ion-infinite-scroll-content>
-  </ion-infinite-scroll>
 
 </ion-content>

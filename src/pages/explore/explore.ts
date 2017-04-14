@@ -1,5 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
-import { NavController, NavParams, Events, InfiniteScroll, Content } from 'ionic-angular';
+import { NavController, NavParams, Events, Content } from 'ionic-angular';
 import { Wuxiaco, Novel } from '../../providers/wuxiaco';
 
 @Component({
@@ -34,16 +34,34 @@ export class ExplorePage {
     window['thiz'] = this;
     console.log('ionViewDidLoad ExplorePage');
 
-    this.loadList();
+    this.loadListAll().then((search) => {
+      console.log('loadListAll over')
+      console.log(search)
+    });
   }
 
-  loadList(page: number=1): Promise<any> {
+  loadListAllForce(): Promise<any> {
+    return this.loadListAll(true);
+  }
+
+  loadListAll(force=false): Promise<any> {
+    let asyncLoad = (page): Promise<any> => {
+      return this.loadList(page, force).then((search) => {
+        if (search.currentPage < search.max) {
+          return asyncLoad(page + 1);
+        }
+      })
+    }
+    return asyncLoad(1);
+  }
+
+  loadList(page: number=1, force=false): Promise<any> {
     let genre = this.genres[this.genreFilter];
     return new Promise((resolve, reject) => {
-      this.novelService.getNovelList(genre, page).then((novelSearch) => {
+      this.novelService.getNovelList(genre, page, force).then((novelSearch) => {
         this._loadList(novelSearch);
         console.log(novelSearch);
-        resolve();
+        resolve(novelSearch);
       }, (error) => {
         reject(error);
         console.error(error);
@@ -72,25 +90,20 @@ export class ExplorePage {
     }
   }
 
-  enableInfiniteScroll = true;
-
   genreFilterChange(event) {
-    this.enableInfiniteScroll = true;
     this.content.scrollTop = 0;
-    this.loadList();
+    this.loadListAll();
   }
 
   selNovel(novel) {
-    this.events.publish('change:novel', novel.novelObject);
+    this.events.publish('change:novel', this.novelService.novel(novel.novelObject));
   }
 
-  doInfinite(infiniteScroll) {
-    if (this.novelSearch.currentPage < this.novelSearch.max) {
-      this.loadList(this.novelSearch.currentPage + 1).then(() => {
-        infiniteScroll.complete();
-      })
-    } else {
-      this.enableInfiniteScroll = false;
-    }
+  doRefresh(refresher) {
+    console.log('Begin async operation', refresher);
+    this.loadListAllForce().then(() => {
+      console.log('Async operation has ended');
+      refresher.complete();
+    });
   }
 }

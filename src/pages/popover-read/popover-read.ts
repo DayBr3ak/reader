@@ -17,8 +17,8 @@ export class PopoverReadPage {
       label: 'Roboto'
     },
     {
-      family: 'arial',
-      label: 'Arial'
+      family: 'noto-sans',
+      label: 'Noto Sans'
     }
   ];
 

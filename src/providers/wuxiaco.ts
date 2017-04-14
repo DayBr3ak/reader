@@ -17,6 +17,7 @@ const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&
 
 @Injectable()
 export class Wuxiaco {
+  private name = 'WUXIACO';
   private parser: DOMParser = new DOMParser();
   private URL: string = 'http://m.wuxiaworld.co';
   public GENRE = [
@@ -146,7 +147,7 @@ export class Wuxiaco {
     }
   }
 
-  getNovelList(genre, page=1): Promise<any> {
+  getNovelList(genre, page=1, force=false): Promise<any> {
     let parseAuthor = (div): string => {
       let author = div.querySelector('p.author').innerText.trim();
       author = author.split('Author：')[1];
@@ -172,24 +173,44 @@ export class Wuxiaco {
           author: parseAuthor(div),
           desc: parseDesc(div)
         };
-        item['novelObject'] = this.novel({ name: item.title, id: parseNovelId(item.href) });
+        item['novelObject'] = { name: item.title, id: parseNovelId(item.href) };
         result.push(item);
       }
       let nbPages = doc.querySelector('input[name=txtPage]').getAttribute('value').split('/')[1];
       return { max: parseInt(nbPages), currentPage: page, list: result };
     };
 
-    return new Promise((resolve, reject) => {
+    let resolveStName = () => {
+      return `${this.name}-${genre[0]}-${page}`;
+    }
+
+    let request = (resolve, reject) => {
       let genreId: number = genre[0];
       let url = `${this.URL}/category/${genreId}/${page}.html`;
       this.http.get(url).subscribe((data) => {
         let doc = this.parser.parseFromString(data.text(), 'text/html');
         let list = parseNovelList(doc);
+        this.storage.set(resolveStName(), list);
         resolve(list);
       }, error => {
         reject(error);
       })
-    })
+    }
+
+    return new Promise((resolve, reject) => {
+      if (force) {
+        return request(resolve, reject);
+      }
+      this.storage.get(resolveStName()).then((v) => {
+        if (v) {
+          console.log('cachehit!')
+          resolve(v);
+        }
+        else {
+          return request(resolve, reject);
+        }
+      })
+    }) // promise
   }
 }
 

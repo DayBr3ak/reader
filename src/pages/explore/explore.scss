@@ -23,14 +23,20 @@ page-explore {
   }
 }
 
-
-
-
-.card-title-md {
+.refresher-pulling-icon, .refresher-refreshing-icon {
   color: map-get($colors, white);
 }
 
-.card-md {
+.refresher-refreshing .spinner-ios line, .refresher-refreshing .spinner-ios-small line, .refresher-refreshing .spinner-crescent circle {
+  stroke: map-get($colors, white);
+}
+
+
+.card-title-md, .card-title-ios {
+  color: map-get($colors, white);
+}
+
+.card-md, .card-ios {
   p {
     color: map-get($colors, dim);
     overflow: hidden;
@@ -42,4 +48,12 @@ page-explore {
   background: map-get($colors, blackgrey);
   font-size: 1.4rem;
 
+}
+
+.searchbar-ios .searchbar-input {
+  color: map-get($colors, black);
+}
+
+.toolbar .searchbar-ios .searchbar-input {
+  background: map-get($colors, white);
 }
