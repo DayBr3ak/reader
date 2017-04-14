@@ -1,9 +1,12 @@
+// 33 Warlock
+// 422 mga
+
 import { Component } from '@angular/core';
 import { NavController, NavParams, ToastController, Events } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
 
-import { Wuxiaco } from '../../providers/wuxiaco';
-import { ST_BOOKMARK } from '../reading/reading';
+import { Wuxiaco, Novel } from '../../providers/wuxiaco';
+import { BookmarkProvider } from '../../providers/bookmark-provider';
 
 @Component({
   selector: 'page-bookmarks',
@@ -23,7 +26,8 @@ export class BookmarksPage {
     private storage: Storage,
     private toastCtrl: ToastController,
     private events: Events,
-    private novelService: Wuxiaco
+    private novelService: Wuxiaco,
+    private bookmarkProvider: BookmarkProvider
   ) {
 
   }
@@ -37,19 +41,11 @@ export class BookmarksPage {
   }
 
   didLoad() {
-    this.storage.get(ST_BOOKMARK).then((v) => {
-      if (v) {
-        this.bookmarkList = v;
+    this.bookmarkProvider.bookmarks().then((bookmarks) => {
+      if (bookmarks) {
+        this.bookmarkList = bookmarks;
       }
     })
-  }
-
-  textToast(text: string, time: number = 2000) {
-    let toast = this.toastCtrl.create({
-      message: text,
-      duration: time
-    });
-    toast.present();
   }
 
   selNovel(key) {

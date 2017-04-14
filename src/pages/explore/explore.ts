@@ -1,6 +1,9 @@
 import { Component, ViewChild } from '@angular/core';
-import { NavController, NavParams, Events, Content } from 'ionic-angular';
+import { NavController, NavParams, Events, Content, Platform, PopoverController } from 'ionic-angular';
 import { Wuxiaco } from '../../providers/wuxiaco';
+import { GoogleAnalytics } from '@ionic-native/google-analytics';
+
+import { PopoverNovelPage } from '../popover-novel/popover-novel';
 
 @Component({
   selector: 'page-explore',
@@ -19,6 +22,10 @@ export class ExplorePage {
     public navCtrl: NavController,
     public navParams: NavParams,
     private events: Events,
+    private plt: Platform,
+    public popoverCtrl: PopoverController,
+
+    private ga: GoogleAnalytics,
     private novelService: Wuxiaco
   ) {
     this.novelListDefault = [
@@ -28,13 +35,14 @@ export class ExplorePage {
     this.novelList = this.novelListDefault;
     this.genres = this.novelService.GENRE;
     this.genreFilter = this.genres[0][0];
+    this.ga.trackView("Explore Page");
   }
 
   ionViewDidLoad() {
     window['thiz'] = this;
     console.log('ionViewDidLoad ExplorePage');
 
-    this.loadListAll().then((search) => {
+    this.loadListAll(true).then((search) => {
       console.log('loadListAll over')
     });
   }
@@ -45,8 +53,8 @@ export class ExplorePage {
 
   loadListAll(force=false): Promise<any> {
     let complete = () => {
-      this.sortNovelList('title');
-      console.log('sorted');
+      // this.sortNovelList('title');
+      // console.log('sorted');
     }
     let asyncLoad = (page): Promise<any> => {
       return this.loadList(page, force).then((search) => {
@@ -107,11 +115,25 @@ export class ExplorePage {
 
   genreFilterChange(event) {
     this.content.scrollTop = 0;
-    this.loadListAll();
+    this.loadListAll(true);
   }
 
   selNovel(novel) {
-    this.events.publish('change:novel', this.novelService.novelKwargs(novel));
+    // let popover = this.popoverCtrl.create(PopoverNovelPage, {
+    //   novel: novel,
+    // });
+    // popover.onDidDismiss(data => {
+    //   if (data) {
+
+    //   }
+    // });
+    // popover.present();
+    // this.events.publish('change:novel', this.novelService.novelKwargs(novel));
+    this.navCtrl.push(PopoverNovelPage, {
+      novel: this.novelService.novelKwargs(novel)
+    }).then((data) => {
+      console.log(data)
+    })
   }
 
   doRefresh(refresher) {

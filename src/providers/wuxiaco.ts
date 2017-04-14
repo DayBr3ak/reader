@@ -17,7 +17,7 @@ const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&
 
 @Injectable()
 export class Wuxiaco {
-  private name = 'WUXIACO';
+  private NAME = 'WUXIACO';
   private parser: DOMParser = new DOMParser();
   private URL: string = 'http://m.wuxiaworld.co';
   public GENRE = [
@@ -142,13 +142,13 @@ export class Wuxiaco {
   getNovelList(genre, page=1, force=false): Promise<any> {
     let parseAuthor = (div): string => {
       let author = div.querySelector('p.author').innerText.trim();
-      author = author.split('Author：')[1];
+      author = author.split('Author：')[1].trim();
       return author;
     }
     let parseDesc = (div): string => {
       let desc = div.querySelector('p.review').innerText.trim();
       const x = 'Introduce:Description '.length;
-      return desc.substring(x);
+      return desc.substring(x).trim();
     }
     let parseNovelId = (div): string => {
       let href = div.querySelector('a').getAttribute('href');
@@ -174,7 +174,7 @@ export class Wuxiaco {
     };
 
     let resolveStName = () => {
-      return `${this.name}-${genre[0]}-${page}`;
+      return `${this.NAME}-${genre[0]}-${page}`;
     }
 
     let request = (resolve, reject) => {
@@ -183,7 +183,8 @@ export class Wuxiaco {
       this.http.get(url).subscribe((data) => {
         let doc = this.parser.parseFromString(data.text(), 'text/html');
         let list = parseNovelList(doc);
-        this.storage.set(resolveStName(), list);
+        let compressed = compressToBase64(JSON.stringify(list));
+        this.storage.set(resolveStName(), compressed);
         resolve(list);
       }, error => {
         reject(error);
@@ -197,7 +198,8 @@ export class Wuxiaco {
       this.storage.get(resolveStName()).then((v) => {
         if (v) {
           console.log('cachehit!')
-          resolve(v);
+          let uncompressed = decompressFromBase64(v);
+          resolve(JSON.parse(uncompressed));
         }
         else {
           return request(resolve, reject);
@@ -206,6 +208,61 @@ export class Wuxiaco {
     }) // promise
   }
 
+  getNovelMeta(novel: Novel, force: boolean=false) {
+    let resolveStName = () => {
+      return `${this.NAME}-meta-${novel.id}`;
+    }
+
+    let parseNovelMetaData = (doc) => {
+      let meta = {};
+      let categoryEle = doc.querySelector('p.sort');
+      meta['Category'] = categoryEle.innerText.trim().substring('Category:'.length).trim();
+      meta['Status'] = categoryEle.nextElementSibling
+        .innerText.trim().substring('Status:'.length).trim();
+      let updateTime = categoryEle.nextElementSibling.nextElementSibling
+        .innerText.trim().substring('UpdateTime:'.length).trim();
+      let p = new Date(Date.parse(updateTime));
+      meta['Updated'] = p.toISOString().split('T')[0];
+
+      let lastChapterEle= doc.querySelector('div.synopsisArea_detail>p>a');
+      meta['Last Released'] = parseInt(lastChapterEle.innerText.trim().split(':')[0].substring('Chapter '.length));
+
+      meta['_Title'] = doc.querySelector('span.title').innerText.trim();
+      meta['_Desc'] = doc.querySelector('p.review').innerText.trim().substring('Description\n'.length);
+
+      novel.title = meta['_Title'];
+      novel.desc = meta['_Desc'];
+      return meta;
+    }
+
+    let request = (resolve, reject) => {
+      let url = `${this.URL}/${novel.href()}`;
+      this.http.get(url).subscribe((data) => {
+        let doc = this.parser.parseFromString(data.text(), 'text/html');
+        let meta = parseNovelMetaData(doc);
+        let compressed = compressToBase64(JSON.stringify(meta));
+        this.storage.set(resolveStName(), compressed);
+        resolve(meta);
+      }, error => {
+        reject(error);
+      })
+    }
+
+    return new Promise((resolve, reject) => {
+      if (force) {
+        return request(resolve, reject);
+      }
+      this.storage.get(resolveStName()).then((v) => {
+        if (v) {
+          let uncompressed = decompressFromBase64(v);
+          resolve(JSON.parse(uncompressed));
+        }
+        else {
+          return request(resolve, reject);
+        }
+      })
+    }) // promise
+  }
 
   novelKwargs(opts: any): Novel {
     return new Novel(this, opts);
@@ -248,6 +305,10 @@ export class Novel {
       author: this.author,
       desc: this.desc
     };
+  }
+
+  href(): string {
+    return `/${this.id}/`;
   }
 
   resolveUrl(chapter) {
@@ -318,6 +379,10 @@ export class Novel {
         asyncDl(5, 5);
       })
     })
+  }
+
+  getMoreMeta(force: boolean=false): Promise<any> {
+    return this.manager.getNovelMeta(this, force);
   }
 
   getStored(property: string, prefix: string = this.id): Promise<any> {

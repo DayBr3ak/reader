@@ -1,0 +1,61 @@
+
+<ion-header>
+  <ion-navbar>
+    <ion-toolbar>
+
+    <ion-title>Novel Details</ion-title>
+
+    </ion-toolbar>
+  </ion-navbar>
+
+</ion-header>
+
+<ion-content padding>
+  <ion-card>
+
+  <ion-card-content  (click)="moreDesc[novel.id] = !moreDesc[novel.id]">
+      <ion-card-title>
+        {{ novel.title }}
+      </ion-card-title>
+      <h2>
+        <ion-row no-padding *ngFor="let m of novelMeta">
+          <ion-col text-left class="label">
+            {{ m[0] }}:
+          </ion-col>
+          <ion-col text-right class="content">
+            {{ m[1] }}
+          </ion-col>
+        </ion-row>
+      </h2>
+      <p [style.whiteSpace]="!moreDesc[novel.id]? '' : 'nowrap'">
+      {{ novel.desc }}
+      </p>
+    </ion-card-content>
+
+    <ion-row no-padding>
+      <ion-col text-left>
+        <button ion-button clear small color="danger" icon-left (click)="bookmark()">
+          <ion-icon name='star'></ion-icon> Bookmark
+        </button>
+      </ion-col>
+      <ion-col text-right>
+        <button ion-button clear small color="danger" icon-left (click)="read()">
+          <ion-icon name='musical-notes'></ion-icon> Read
+        </button>
+      </ion-col>
+    </ion-row>
+    <ion-row no-padding>
+      <ion-col text-left>
+        <button ion-button clear small color="danger" icon-left (click)="share()">
+          <ion-icon name='share-alt'></ion-icon> Share
+        </button>
+      </ion-col>
+      <ion-col text-right>
+        <button ion-button clear small color="danger" icon-left (click)="share()">
+          <ion-icon name='share-alt'></ion-icon> Share
+        </button>
+      </ion-col>
+    </ion-row>
+
+  </ion-card>
+</ion-content>

@@ -11,10 +11,12 @@ import 'rxjs/add/operator/map';
 import { PopoverChapterPage } from '../popover-chapter/popover-chapter';
 import { PopoverReadPage } from '../popover-read/popover-read';
 import { Wuxiaco, Novel } from '../../providers/wuxiaco';
+import { BookmarkProvider } from '../../providers/bookmark-provider';
+import { GoogleAnalytics } from '@ionic-native/google-analytics';
+
 
 const ST_R_SETTINGS = 'reader-settings';
 const ST_CURRENT_NOVEL = 'current-novel';
-export const ST_BOOKMARK = 'app-bookmarks';
 
 @Component({
   selector: 'page-reading',
@@ -108,7 +110,9 @@ export class ReadingPage {
     public popoverCtrl: PopoverController,
     public toastCtrl: ToastController,
 
-    private novelService: Wuxiaco
+    private ga: GoogleAnalytics,
+    private novelService: Wuxiaco,
+    private bookmarkProvider: BookmarkProvider
   ) {
     this.hideUi = false;
     this.maxChapter = null;
@@ -119,6 +123,7 @@ export class ReadingPage {
       bgClass: 'bg-black'
     }
 
+    this.ga.trackView("Reading Page");
     // this.novel = novelService.novel({name: 'MGA', id: 'mga'});
     // this.novel = novelService.novel({name: 'Tales of D&G', id: 'tdg'});
   }
@@ -187,6 +192,7 @@ export class ReadingPage {
             title: 'MartialGodAsura',
             id: 'Martial-God-Asura'
           });
+          this.novel.getMoreMeta(true)
         }
         this.loadNovel();
       })
@@ -365,6 +371,7 @@ export class ReadingPage {
     this.disableNav = true;
     this.loadChapter(this.currentChapter + 1, () => {
       setTimeout(() => {
+        this.ga.trackEvent("Reading", "NextChapter");
         this.disableNav = false;
       }, 200)
     });
@@ -419,20 +426,8 @@ export class ReadingPage {
     }
   }
 
-  addBookmark() {
-    let setBM = (v) => {
-      v[this.novel.title] = this.novel.meta();
-      this.textToast(`Added ${this.novel.title} to your bookmarks!`);
-      return this.storage.set(ST_BOOKMARK, v);
-    }
-
-    return this.storage.get(ST_BOOKMARK).then((v) => {
-      if (v) {
-        return setBM(v);
-      } else {
-        return setBM({})
-      }
-    })
+  addBookmark(novel: Novel) {
+    this.events.publish('add:bookmark', this.novel);
   }
 }
 

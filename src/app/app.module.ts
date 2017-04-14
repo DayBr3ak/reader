@@ -8,14 +8,17 @@ import { PopoverReadPage } from '../pages/popover-read/popover-read';
 import { PopoverChapterPage } from '../pages/popover-chapter/popover-chapter';
 import { ExplorePage } from '../pages/explore/explore';
 import { BookmarksPage } from '../pages/bookmarks/bookmarks';
+import { PopoverNovelPage } from '../pages/popover-novel/popover-novel';
 
 import { NavBtnComponent } from '../components/nav-btn/nav-btn';
 import { Wuxiaco } from '../providers/wuxiaco';
+import { BookmarkProvider } from '../providers/bookmark-provider';
 
 import { IonicStorageModule } from '@ionic/storage';
 
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
+import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 @NgModule({
   declarations: [
@@ -28,6 +31,7 @@ import { SplashScreen } from '@ionic-native/splash-screen';
     ExplorePage,
     BookmarksPage,
     NavBtnComponent,
+    PopoverNovelPage
   ],
   imports: [
     IonicModule.forRoot(MyApp),
@@ -42,12 +46,15 @@ import { SplashScreen } from '@ionic-native/splash-screen';
     PopoverReadPage,
     PopoverChapterPage,
     BookmarksPage,
-    ExplorePage
+    ExplorePage,
+    PopoverNovelPage
   ],
   providers: [
     StatusBar,
     SplashScreen,
     Wuxiaco,
+    BookmarkProvider,
+    GoogleAnalytics,
     {provide: ErrorHandler, useClass: IonicErrorHandler}
   ]
 })

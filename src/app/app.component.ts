@@ -5,8 +5,11 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 
 import { ReadingPage } from '../pages/reading/reading';
 import { ExplorePage } from '../pages/explore/explore';
-import { SettingsPage } from '../pages/settings/settings';
+// import { SettingsPage } from '../pages/settings/settings';
 import { BookmarksPage } from '../pages/bookmarks/bookmarks';
+import { GoogleAnalytics } from '@ionic-native/google-analytics';
+
+const appVersion = '0.1a';
 
 @Component({
   templateUrl: 'app.html'
@@ -22,7 +25,8 @@ export class MyApp {
     platform: Platform,
     statusBar: StatusBar,
     splashScreen: SplashScreen,
-    events: Events
+    events: Events,
+    ga: GoogleAnalytics
   ) {
     platform.ready().then(() => {
       // Okay, so the platform is ready and our plugins are available.
@@ -30,6 +34,13 @@ export class MyApp {
       statusBar.styleDefault();
       splashScreen.hide();
       this.events = events;
+
+      ga.startTrackerWithId("UA-97415917-1").then((data) => {
+          console.log('Google Analytics Tracker started', data);
+          ga.setAppVersion(appVersion);
+      }, (err) => {
+        console.log('Google Analytics', err);
+      })
 
       this.pages = [
         { title: 'Explore', component: ExplorePage },
