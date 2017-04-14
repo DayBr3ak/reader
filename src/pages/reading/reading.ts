@@ -14,6 +14,7 @@ import { Wuxiaco, Novel } from '../../providers/wuxiaco';
 
 const ST_R_SETTINGS = 'reader-settings';
 const ST_CURRENT_NOVEL = 'current-novel';
+export const ST_BOOKMARK = 'app-bookmarks';
 
 @Component({
   selector: 'page-reading',
@@ -175,14 +176,17 @@ export class ReadingPage {
     });
 
     if (this.navParams.data && this.navParams.data.novel) {
-      this.novel = this.novelService.novel(this.navParams.data.novel);
+      this.novel = this.novelService.novelKwargs(this.navParams.data.novel);
       this.loadNovel();
     } else {
       this.storage.get(ST_CURRENT_NOVEL).then(novel => {
         if (novel) {
-          this.novel = this.novelService.novel(novel);
+          this.novel = this.novelService.novelKwargs(novel);
         } else {
-          this.novel = this.novelService.novel({name: 'MartialGodAsura', id: 'Martial-God-Asura'});
+          this.novel = this.novelService.novelKwargs({
+            title: 'MartialGodAsura',
+            id: 'Martial-God-Asura'
+          });
         }
         this.loadNovel();
       })
@@ -413,6 +417,22 @@ export class ReadingPage {
       });
       popover.present();
     }
+  }
+
+  addBookmark() {
+    let setBM = (v) => {
+      v[this.novel.title] = this.novel.meta();
+      this.textToast(`Added ${this.novel.title} to your bookmarks!`);
+      return this.storage.set(ST_BOOKMARK, v);
+    }
+
+    return this.storage.get(ST_BOOKMARK).then((v) => {
+      if (v) {
+        return setBM(v);
+      } else {
+        return setBM({})
+      }
+    })
   }
 }
 

@@ -6,6 +6,7 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { ReadingPage } from '../pages/reading/reading';
 import { ExplorePage } from '../pages/explore/explore';
 import { SettingsPage } from '../pages/settings/settings';
+import { BookmarksPage } from '../pages/bookmarks/bookmarks';
 
 @Component({
   templateUrl: 'app.html'
@@ -32,6 +33,8 @@ export class MyApp {
 
       this.pages = [
         { title: 'Explore', component: ExplorePage },
+        { title: 'Back To Reading', component: ReadingPage },
+        { title: 'Bookmarks', component: BookmarksPage },
         // { title: 'MGA', component: ReadingPage, novel: {name: 'MartialGodAsura', id: 'Martial-God-Asura'}},
         // { title: 'TDG', component: ReadingPage, novel: {name: 'TDG', id: 'Tales-of-Demons-and-Gods'}},
         // { title: 'Warlock', component: ReadingPage, novel: {name: 'Warlock-of-the-Magus-World', id: 'Warlock-of-the-Magus-World'}},
@@ -55,7 +58,7 @@ export class MyApp {
       }, false);
 
       events.subscribe('change:novel', (novel) => {
-        this.nav.setRoot(ReadingPage, { novel: novel.meta() });
+        this.nav.setRoot(ReadingPage, { novel: novel });
       })
 
     });

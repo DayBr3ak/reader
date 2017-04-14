@@ -111,7 +111,7 @@ export class ExplorePage {
   }
 
   selNovel(novel) {
-    this.events.publish('change:novel', this.novelService.novel(novel.novelObject));
+    this.events.publish('change:novel', this.novelService.novelKwargs(novel));
   }
 
   doRefresh(refresher) {

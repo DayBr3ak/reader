@@ -5,7 +5,7 @@
         <ion-icon name="menu"></ion-icon>
       </button>
 
-      <ion-title *ngIf="novel !== null">Ch{{ currentChapter }} - {{ novel.name }}</ion-title>
+      <ion-title *ngIf="novel !== null">Ch{{ currentChapter }} - {{ novel.title }}</ion-title>
 
       <ion-buttons start>
         <button ion-button icon-only (click)='prevChapter()'>
@@ -66,6 +66,13 @@
 <ion-footer  *ngIf="!hideUi" [@enterAnimation]="hideUi">
   <ion-toolbar>
     <!-- <ion-title>Footer</ion-title> -->
+
+      <ion-buttons start>
+        <button ion-button icon-only (click)='addBookmark()'>
+          <ion-icon name="star"></ion-icon>
+        </button>
+      </ion-buttons>
+
       <ion-buttons start>
         <button ion-button icon-only (click)='presentPopoverChapter()'>
           <ion-icon name="search"></ion-icon>

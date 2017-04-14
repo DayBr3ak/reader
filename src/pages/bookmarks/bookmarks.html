@@ -1,0 +1,46 @@
+<ion-header>
+
+  <ion-navbar>
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+
+    <ion-title>Bookmarks</ion-title>
+  </ion-navbar>
+
+</ion-header>
+
+
+<ion-content padding>
+
+  <ion-list *ngIf="bookmarkKeys.length > 0">
+
+    <ion-card *ngFor="let key of bookmarkKeys">
+      <ion-card-content>
+        <ion-card-title (click)="selNovel(key)">
+          {{ bookmarkList[key].title }}
+          </ion-card-title>
+        <!-- <p> -->
+        <p  (click)="moreDesc[key] = !moreDesc[key]" [style.whiteSpace]="moreDesc[key]? '' : 'nowrap'">
+
+          {{ bookmarkList[key].desc }}
+        </p>
+      </ion-card-content>
+    </ion-card>
+  </ion-list>
+
+  <ion-list *ngIf="bookmarkKeys.length == 0">
+
+    <ion-card>
+      <ion-card-content>
+        <ion-card-title >
+          You have no bookmarks
+          </ion-card-title>
+        <p>
+          Add your favorites novels to your bookmarks!
+        </p>
+      </ion-card-content>
+    </ion-card>
+  </ion-list>
+
+</ion-content>

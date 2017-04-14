@@ -46,12 +46,12 @@ export class Wuxiaco {
     toast.present();
   }
 
-  resolveUrl(num: number, novelId: string) {
-    return `http://m.wuxiaworld.com/${novelId}-index/${novelId}-chapter-${num}/`;
+  resolveUrl(num: number, id: string) {
+    return `http://m.wuxiaworld.com/${id}-index/${id}-chapter-${num}/`;
   }
 
-  wuxiacoUrl(novelId: string, suffix: string) {
-    return `${this.URL}/${novelId}/${suffix}`
+  wuxiacoUrl(id: string, suffix: string) {
+    return `${this.URL}/${id}/${suffix}`
   }
 
   scrap(url: string, chapter: number, callback) {
@@ -139,14 +139,6 @@ export class Wuxiaco {
     })
   }
 
-  novel(opts: any): Novel {
-    let name: string = opts.name;
-    let id: string = opts.id;
-    if (opts.name && opts.id) {
-      return new Novel(this, name, id);
-    }
-  }
-
   getNovelList(genre, page=1, force=false): Promise<any> {
     let parseAuthor = (div): string => {
       let author = div.querySelector('p.author').innerText.trim();
@@ -158,7 +150,8 @@ export class Wuxiaco {
       const x = 'Introduce:Description '.length;
       return desc.substring(x);
     }
-    let parseNovelId = (href: string): string => {
+    let parseNovelId = (div): string => {
+      let href = div.querySelector('a').getAttribute('href');
       return href.replace(new RegExp('/', 'g'), '')
     }
 
@@ -171,9 +164,9 @@ export class Wuxiaco {
           href: div.querySelector('a').getAttribute('href'),
           title: div.querySelector('p.title').innerText.trim(),
           author: parseAuthor(div),
-          desc: parseDesc(div)
+          desc: parseDesc(div),
+          id: parseNovelId(div)
         };
-        item['novelObject'] = { name: item.title, id: parseNovelId(item.href) };
         result.push(item);
       }
       let nbPages = doc.querySelector('input[name=txtPage]').getAttribute('value').split('/')[1];
@@ -212,35 +205,57 @@ export class Wuxiaco {
       })
     }) // promise
   }
+
+
+  novelKwargs(opts: any): Novel {
+    return new Novel(this, opts);
+  }
+
+  novel(title: string, id: string) {
+    return this.novelKwargs({ title: title, id: id });
+  }
+
 }
 
 export class Novel {
   public manager: Wuxiaco;
-  public novelId: string;
-  public name: string;
+  public id: string;
+  public title: string;
+  public author: string;
+  public desc: string;
   public directoryObservable: any;
 
   constructor(
     manager: Wuxiaco,
-    name: string,
-    novelId: string
+    opts: any
   ) {
     this.manager = manager;
-    this.novelId = novelId;
-    this.name = name;
+    if (!opts.id || !opts.title) {
+      opts.error = 'need title and id'
+      console.error(opts)
+      throw opts
+    }
+    this.id = opts.id;
+    this.title = opts.title;
+    this.author = opts.author || 'Unknown';
+    this.desc = opts.desc || 'None';
   }
 
   meta() {
-    return {name: this.name, id: this.novelId};
+    return {
+      title: this.title,
+      id: this.id,
+      author: this.author,
+      desc: this.desc
+    };
   }
 
   resolveUrl(chapter) {
-    return this.manager.resolveUrl(chapter, this.novelId);
+    return this.manager.resolveUrl(chapter, this.id);
   }
 
   getDirectory(): Promise<any> {
-    let url = this.manager.wuxiacoUrl(this.novelId, 'all.html');
-
+    let url = this.manager.wuxiacoUrl(this.id, 'all.html');
     return this.manager.scrapDirectory(url).then((directory) => {
       return this.setStoredCompressed(ST_NOVEL_DIR, directory);
     }, (error) => {
@@ -260,7 +275,7 @@ export class Novel {
           })
         }
         let chapterElement = directory[chapter - 1]
-        let url = this.manager.wuxiacoUrl(this.novelId, chapterElement[0]);
+        let url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
         return this.manager.scrapChapter(url, chapter);
       }
       throw "offline or can't reach directory";
@@ -288,7 +303,7 @@ export class Novel {
               return asyncDl(i + step, step);
             }
             let chapterElement = directory[i - 1]
-            let url = this.manager.wuxiacoUrl(this.novelId, chapterElement[0]);
+            let url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
             this.manager.scrapChapter(url, i).then(content => {
               this.cacheChapterContent(i, content);
               asyncDl(i + step, step);
@@ -305,11 +320,11 @@ export class Novel {
     })
   }
 
-  getStored(property: string, prefix: string = this.novelId): Promise<any> {
+  getStored(property: string, prefix: string = this.id): Promise<any> {
     return this.manager.storage.get(prefix + '-' + property);
   }
 
-  setStored(property: string, val: any, prefix: string = this.novelId): Promise<any> {
+  setStored(property: string, val: any, prefix: string = this.id): Promise<any> {
     return this.manager.storage.set(prefix + '-' + property, val);
   }
 
