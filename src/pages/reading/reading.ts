@@ -18,6 +18,10 @@ import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 const ST_R_SETTINGS = 'reader-settings';
 const ST_CURRENT_NOVEL = 'current-novel';
+const DEFAULT_NOVEL = {
+  title: 'MartialGodAsura',
+  id: 'Martial-God-Asura'
+};
 
 @Component({
   selector: 'page-reading',
@@ -158,18 +162,30 @@ export class ReadingPage {
     });
   }
 
-  loadNovel() {
+  loadNovel(novel: Novel) {
+    this.novel = novel;
     this.storage.set(ST_CURRENT_NOVEL, this.novel.meta());
-    this.novel.getCurrentChapter().then((currentChapter) => {
-      this.loadChapter(currentChapter, () => {
-        this.content.fullscreen = true;
+
+    let promise1 = new Promise((resolve, reject) => {
+      this.novel.getCurrentChapter().then((currentChapter) => {
         this.loadAhead(currentChapter, 2, this.maxChapter);
-      });
+        return this.loadChapter(currentChapter)
+      })
+      .then(() => {
+        this.content.fullscreen = true;
+        resolve();
+      })
     })
-    this.novel.getMaxChapter().then((maxChapter) => {
-      this.maxChapter = maxChapter;
-      console.log('maxChapter= ' + maxChapter)
+
+    let promise2 = new Promise((resolve, reject) => {
+      this.novel.getMaxChapter().then((maxChapter) => {
+        this.maxChapter = maxChapter;
+        console.log('maxChapter= ' + maxChapter)
+        resolve();
+      })
     })
+
+    return Promise.all([promise1, promise2]);
   }
 
   myViewDidLoad() {
@@ -180,47 +196,41 @@ export class ReadingPage {
       }
     });
 
-    if (this.navParams.data && this.navParams.data.novel) {
-      this.novel = this.novelService.novelKwargs(this.navParams.data.novel);
-      this.loadNovel();
-    } else {
-      this.storage.get(ST_CURRENT_NOVEL).then(novel => {
-        if (novel) {
-          this.novel = this.novelService.novelKwargs(novel);
-        } else {
-          this.novel = this.novelService.novelKwargs({
-            title: 'MartialGodAsura',
-            id: 'Martial-God-Asura'
-          });
-          this.novel.getMoreMeta(true)
-        }
-        this.loadNovel();
-      })
-    }
-    console.log('ionViewDidLoad ReadingPage');
+
+    this.initNovel().then((novel) => {
+      if (novel)
+        this.loadNovel(novel);
+    });
   }
 
-  // ionViewDidLoad() {
-  //   window['rm'] = () => {
-  //     this.resetDownloadedChapters();
-  //   }
-  //   window['goto'] = (n) => {
-  //     this.platform.zone.run(() => {
-  //       this.loadChapter(n);
-  //     });
-  //   }
-  //   window['thiz'] = this;
-
-  //   this.storage.ready().then(() => {
-  //     // if (this.platform.is('cordova')) {
-  //       this.myViewDidLoad();
-  //     // } else {
-  //       // this.resetDownloadedChapters(() => {
-  //         // this.myViewDidLoad();
-  //       // });
-  //     // }
-  //   })
-  // }
+  initNovel(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if (this.navParams.data && this.navParams.data.novel) {
+        let novel = this.novelService.novelKwargs(this.navParams.data.novel);
+        resolve(novel);
+      } else {
+        this.storage.get(ST_CURRENT_NOVEL).then(novel => {
+          if (novel) {
+            resolve(this.novelService.novelKwargs(novel));
+          } else {
+            let novel = this.novelService.novelKwargs(DEFAULT_NOVEL);
+            novel.getMoreMeta(true)
+            .then(() => {
+              resolve(novel);
+            })
+            .catch((error) => {
+              this.textToast('You have no internet access :(')
+              console.log(error);
+              this.paragraphs = ['You have no internet access :(']
+              this.novel = null;
+              resolve(null);
+            });
+          }
+        })
+      }
+      console.log('ionViewDidLoad ReadingPage');
+    })
+  }
 
   ionViewDidEnter() {
     console.log('enter!!!')
@@ -245,21 +255,24 @@ export class ReadingPage {
     })
   }
 
-  setChapterContent(content: any, scroll: number, callback=null) {
-    this.paragraphs = content;
-    setTimeout(() => {
-      this.content.scrollTop = scroll;
-      // console.log('scroll= ' + scroll + ', chapter= ' + this.currentChapter);
-      // console.log('ss= ' + this.content.scrollTop);
-      callback && callback();
-    }, 100)
+  setChapterContent(content: any, scroll: number): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.paragraphs = content;
+      setTimeout(() => {
+        this.content.scrollTop = scroll;
+        // console.log('scroll= ' + scroll + ', chapter= ' + this.currentChapter);
+        // console.log('ss= ' + this.content.scrollTop);
+        resolve();
+      }, 100);
+    })
   }
 
-  loadChapter(chapter, callback=null, changeChapter=true) {
+  loadChapter(chapter, changeChapter=true): Promise<any> {
+    let resolve = null;
+    let reject = null;
+
     if (chapter < 1 || (this.maxChapter && chapter > this.maxChapter)) {
       this.textToast("Chapter " + chapter + " doesn't exist. Max is " + this.maxChapter);
-      // callback && callback();
-      // return;
     }
 
     if (chapter < 1) {
@@ -277,23 +290,28 @@ export class ReadingPage {
       this.novel.getScroll(chapter).then((chScroll) => {
         let _scroll = chScroll? chScroll: 0;
         console.log('scroll: ' + _scroll)
-        this.setChapterContent(content, _scroll, callback);
+        this.setChapterContent(content, _scroll).then(() => {
+          resolve();
+        });
       });
     }
 
     let scrap = () => {
       this.novel.scrap(chapter).then((data) => {
         let paragraphs;
-        if (data.error) {
-          paragraphs = [data.error];
-        } else {
-          paragraphs = data;
-          this.novel.cacheChapterContent(chapter, paragraphs);
-        }
+        paragraphs = data;
+        this.novel.cacheChapterContent(chapter, paragraphs);
         if (changeChapter) {
           return afterLoad(paragraphs);
         }
-        callback && callback();
+        resolve();
+      })
+      .catch((error) => {
+        if (changeChapter) {
+          this.textToast('You have no internet access :(');
+          return afterLoad([error.message]);
+        }
+        resolve();
       });
     }
 
@@ -302,38 +320,50 @@ export class ReadingPage {
         if (changeChapter) {
           return afterLoad(content);
         }
-        callback && callback();
+        resolve();
       } else {
         scrap();
       }
     });
+
+    return new Promise((_resolve, _reject) => {
+      resolve = _resolve;
+      reject = _reject;
+    })
   }
 
-  loadAhead(chapter, ahead, maxChapter, notify=null, complete=null) {
-    let finish = () => {
-      console.log('lookAhead over');
-      complete && complete();
-    };
-    let syncLook = (i) => {
-      if (i >= ahead || i + chapter >= maxChapter) {
-        finish();
-        return;
-      }
-      this.loadChapter(chapter + i, () => {
-        syncLook(i + 1);
-        notify && notify(i);
-      }, false);
-    };
-    syncLook(0);
+  loadAhead(chapter, ahead, maxChapter, notify=null): Promise<any> {
+    return new Promise((resolve, reject) => {
+      let finish = () => {
+        console.log('lookAhead over');
+        resolve();
+      };
+      let syncLook = (i) => {
+        if (i >= ahead || i + chapter >= maxChapter) {
+          finish();
+          return;
+        }
+        this.loadChapter(chapter + i, false).then(() => {
+          syncLook(i + 1);
+          notify && notify(i);
+        })
+        .catch((error) => {
+          reject(error);
+        });
+      };
+      syncLook(0);
+    })
   }
 
-  downloadOffline(complete=null) {
-    let finish = () => {
-      this.textToast('Successfully downloaded ' + this.maxChapter + ' chapters');
-      complete && complete();
-    };
-    // this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
-    this.novel.download().then(finish);
+  downloadOffline(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      let finish = () => {
+        this.textToast('Successfully downloaded ' + this.maxChapter + ' chapters');
+        resolve();
+      };
+      // this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
+      this.novel.download().then(finish).catch(reject);
+    })
   }
 
   resetDownloadedChapters(complete=null) {
@@ -369,7 +399,7 @@ export class ReadingPage {
 
   nextChapter() {
     this.disableNav = true;
-    this.loadChapter(this.currentChapter + 1, () => {
+    this.loadChapter(this.currentChapter + 1).then(() => {
       setTimeout(() => {
         this.ga.trackEvent("Reading", "NextChapter");
         this.disableNav = false;
@@ -381,7 +411,7 @@ export class ReadingPage {
   prevChapter() {
     if (this.currentChapter > 1) {
       this.disableNav = true;
-      this.loadChapter(this.currentChapter - 1, () => {
+      this.loadChapter(this.currentChapter - 1).then(() => {
         setTimeout(() => {
           this.disableNav = false;
         }, 200)
@@ -428,14 +458,39 @@ export class ReadingPage {
   }
 
   addBookmark(novel: Novel) {
+    if (!this.novel)
+      return;
     this.events.publish('add:bookmark', this.novel);
   }
 
   openDetails() {
+    if (!this.novel)
+      return;
     this.navCtrl.push(PopoverNovelPage, {
       novel: this.novel,
       origin: 'reading'
     });
+  }
+
+  doRefresh(refresher) {
+    console.log('Begin async operation', refresher);
+
+    if (this.novel) {
+      this.loadChapter(this.currentChapter).then(() => {
+        console.log('Async operation has ended');
+        refresher.complete();
+      });
+    } else {
+      this.initNovel().then((novel) => {
+        if (novel) {
+          return this.loadNovel(novel).then(() => {
+            refresher.complete();
+          });
+        } else {
+          refresher.complete();
+        }
+      });
+    }
   }
 }
 

@@ -128,12 +128,14 @@ export class Wuxiaco {
       return content;
     }
 
+    console.log(url)
     return new Promise((resolve, reject) => {
       this.http.get(url).subscribe((data) => {
         let doc = this.parser.parseFromString(data.text(), 'text/html');
         let content = parseChapterContent(doc);
         resolve(content);
       }, (error) => {
+        console.log("scrapChapter Error")
         reject(error);
       })
     })
@@ -177,41 +179,46 @@ export class Wuxiaco {
       return `${this.NAME}-${genre[0]}-${page}`;
     }
 
-    let request = (resolve, reject) => {
-      let genreId: number = genre[0];
-      let url = `${this.URL}/category/${genreId}/${page}.html`;
-      this.http.get(url).subscribe((data) => {
-        let doc = this.parser.parseFromString(data.text(), 'text/html');
-        let list = parseNovelList(doc);
-        let compressed = compressToBase64(JSON.stringify(list));
-        this.storage.set(resolveStName(), compressed);
-        resolve(list);
-      }, error => {
-        reject(error);
+    let request = () => {
+      return new Promise((resolve, reject) => {
+        let genreId: number = genre[0];
+        let url = `${this.URL}/category/${genreId}/${page}.html`;
+        this.http.get(url).subscribe((data) => {
+          let doc = this.parser.parseFromString(data.text(), 'text/html');
+          let list = parseNovelList(doc);
+          let compressed = compressToBase64(JSON.stringify(list));
+          this.storage.set(resolveStName(), compressed);
+          resolve(list);
+        }, error => {
+          reject({ url: url, error: error });
+        })
       })
     }
 
     return new Promise((resolve, reject) => {
-      if (force) {
-        return request(resolve, reject);
-      }
-      this.storage.get(resolveStName()).then((v) => {
-        if (v) {
-          console.log('cachehit!')
-          let uncompressed = decompressFromBase64(v);
-          resolve(JSON.parse(uncompressed));
-        }
-        else {
-          return request(resolve, reject);
-        }
+      request().then((list) => {
+        resolve(list);
       })
-    }) // promise
+      .catch((error) => {
+        this.storage.get(resolveStName()).then((v) => {
+          if (v) {
+            console.log('cachehit!')
+            let uncompressed = decompressFromBase64(v);
+            resolve(JSON.parse(uncompressed));
+          }
+          else {
+            reject({ fn: 'getNovelList', error: `can't access ${error.url}` })
+          }
+        })
+      })
+    })
   }
 
   getNovelMeta(novel: Novel, force: boolean=false) {
     let resolveStName = () => {
       return `${this.NAME}-meta-${novel.id}`;
     }
+    let url = `${this.URL}/${novel.href()}`;
 
     let parseNovelMetaData = (doc) => {
       let meta = {};
@@ -235,31 +242,37 @@ export class Wuxiaco {
       return meta;
     }
 
-    let request = (resolve, reject) => {
-      let url = `${this.URL}/${novel.href()}`;
-      this.http.get(url).subscribe((data) => {
-        let doc = this.parser.parseFromString(data.text(), 'text/html');
-        let meta = parseNovelMetaData(doc);
-        let compressed = compressToBase64(JSON.stringify(meta));
-        this.storage.set(resolveStName(), compressed);
-        resolve(meta);
-      }, error => {
-        reject(error);
+    let request = () => {
+      return new Promise((resolve, reject) => {
+        this.http.get(url).subscribe((data) => {
+          let doc = this.parser.parseFromString(data.text(), 'text/html');
+          let meta = parseNovelMetaData(doc);
+          let compressed = compressToBase64(JSON.stringify(meta));
+          this.storage.set(resolveStName(), compressed);
+          resolve(meta);
+        }, error => {
+          reject(error);
+        })
       })
     }
 
     return new Promise((resolve, reject) => {
-      if (force) {
-        return request(resolve, reject);
-      }
-      this.storage.get(resolveStName()).then((v) => {
-        if (v) {
-          let uncompressed = decompressFromBase64(v);
-          resolve(JSON.parse(uncompressed));
-        }
-        else {
-          return request(resolve, reject);
-        }
+      // if (force) {
+        // return request(resolve, reject);
+      // }
+      request().then((meta) => {
+        resolve(meta);
+      })
+      .catch((error) => {
+        this.storage.get(resolveStName()).then((v) => {
+          if (v) {
+            let uncompressed = decompressFromBase64(v);
+            resolve(JSON.parse(uncompressed));
+          }
+          else {
+            reject({ fn: 'getNovelMeta', error: `can't access ${url}` });
+          }
+        })
       })
     }) // promise
   }
@@ -318,9 +331,17 @@ export class Novel {
     let url = this.manager.wuxiacoUrl(this.id, 'all.html');
     return this.manager.scrapDirectory(url).then((directory) => {
       return this.setStoredCompressed(ST_NOVEL_DIR, directory);
-    }, (error) => {
-      console.log(error);
-      return this.getStoredCompressed(ST_NOVEL_DIR);
+    })
+    .catch((error) => {
+      return this.getStoredCompressed(ST_NOVEL_DIR).then((directory) => {
+        return new Promise((resolve, reject) => {
+          if (directory) {
+            resolve(directory);
+          } else {
+            reject('no directory')
+          }
+        })
+      })
     })
   }
 
@@ -328,17 +349,18 @@ export class Novel {
     // let url = this.resolveUrl(chapter);
     return this.getDirectory()
     .then((directory) => {
-      if (directory) {
-        if (chapter > directory.length) {
-          return new Promise(resolve => {
-            resolve({ error: "Chapter doesn't " + chapter + " exist yet" });
-          })
-        }
-        let chapterElement = directory[chapter - 1]
-        let url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
-        return this.manager.scrapChapter(url, chapter);
+      if (chapter > directory.length) {
+        return new Promise(resolve => {
+          resolve({ error: "Chapter doesn't " + chapter + " exist yet" });
+        })
       }
-      throw "offline or can't reach directory";
+      let chapterElement = directory[chapter - 1]
+      let url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
+      return this.manager.scrapChapter(url, chapter);
+    }).catch((error) => {
+      let mes = 'Download error: ' + chapter + ' ' + this.title;
+      console.log(mes);
+      return Promise.reject({ message: mes, error: error });
     })
   }
 
@@ -367,6 +389,9 @@ export class Novel {
             this.manager.scrapChapter(url, i).then(content => {
               this.cacheChapterContent(i, content);
               asyncDl(i + step, step);
+            }).catch((error) => {
+              console.log('Error download ' + i);
+              resolve(-1);
             })
           })
         }
@@ -382,10 +407,10 @@ export class Novel {
 
   removeDownload(): Promise<any> {
     return new Promise(resolve => {
-      this.getDirectory().then(directory => {
+      this.getMaxChapter().then(max => {
 
         let prList = [];
-        for (let i = 0; i < directory.length; i++) {
+        for (let i = 0; i < max; i++) {
           let chapter = i + 1;
           let pr = this.manager.storage.remove(this.id + '-' + ST_CHAPTER_TXT + chapter);
           prList.push(pr);
@@ -467,6 +492,8 @@ export class Novel {
     return new Promise(resolve => {
       this.getDirectory().then((directory) => {
         resolve(directory.length);
+      }).catch((error) => {
+        resolve(20000)
       });
     })
   }

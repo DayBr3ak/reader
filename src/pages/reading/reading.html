@@ -6,14 +6,15 @@
       </button>
 
       <ion-title *ngIf="novel !== null">Ch{{ currentChapter }} - {{ novel.title }}</ion-title>
+      <ion-title *ngIf="novel === null">No internet!</ion-title>
 
-      <ion-buttons start>
+      <ion-buttons start *ngIf="novel !== null">
         <button ion-button icon-only (click)='prevChapter()'>
           <ion-icon name="arrow-back"></ion-icon>
         </button>
       </ion-buttons>
 
-      <ion-buttons end>
+      <ion-buttons end *ngIf="novel !== null">
         <button ion-button icon-only (click)='nextChapter()'>
           <ion-icon name="arrow-forward"></ion-icon>
         </button>
@@ -31,6 +32,10 @@
               'bg-tan': (readerSettings.bgClass == 'bg-tan')
              }"
   >
+
+  <ion-refresher (ionRefresh)="doRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
 
   <div class="before-novel"></div>
 
@@ -67,13 +72,13 @@
   <ion-toolbar>
     <!-- <ion-title>Footer</ion-title> -->
 
-      <ion-buttons end>
+      <ion-buttons end *ngIf="novel !== null">
         <button ion-button icon-only (click)='addBookmark(novel)'>
           <ion-icon name="star"></ion-icon> Bookmark
         </button>
       </ion-buttons>
 
-      <ion-buttons end>
+      <ion-buttons end *ngIf="novel !== null">
         <button ion-button icon-only (click)='presentPopoverChapter()'>
           <ion-icon name="search"></ion-icon> Select
         </button>
@@ -91,7 +96,7 @@
         </button>
       </ion-buttons>
  -->
-      <ion-buttons end>
+      <ion-buttons end *ngIf="novel !== null">
         <button ion-button icon-only (click)='openDetails()'>
           <ion-icon name="information-circle"></ion-icon> Infos
         </button>

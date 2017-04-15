@@ -1,5 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
-import { NavController, NavParams, Events, Content, Platform, PopoverController } from 'ionic-angular';
+import { NavController, NavParams, Events, Content, Platform, PopoverController, ToastController } from 'ionic-angular';
 import { Wuxiaco } from '../../providers/wuxiaco';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
@@ -24,45 +24,57 @@ export class ExplorePage {
     private events: Events,
     private plt: Platform,
     public popoverCtrl: PopoverController,
+    public toastCtrl: ToastController,
 
     private ga: GoogleAnalytics,
     private novelService: Wuxiaco
   ) {
-    this.novelListDefault = [
-      { title: 'Test'},
-      { title: 'Thiz'},
-    ]
+    this.novelListDefault = [{ title: 'Dummy', desc: 'This is a dummy'}];
     this.novelList = this.novelListDefault;
     this.genres = this.novelService.GENRE;
     this.genreFilter = this.genres[0][0];
     this.ga.trackView("Explore Page");
   }
 
+  textToast(text: string, time: number = 2000) {
+    let toast = this.toastCtrl.create({
+      message: text,
+      duration: time
+    });
+    toast.present();
+  }
+
   ionViewDidLoad() {
     window['thiz'] = this;
     console.log('ionViewDidLoad ExplorePage');
 
-    this.loadListAll(true).then((search) => {
+    this.loadListAll().then(() => {
       console.log('loadListAll over')
     });
   }
 
-  loadListAllForce(): Promise<any> {
-    return this.loadListAll(true);
-  }
-
-  loadListAll(force=false): Promise<any> {
+  loadListAll(): Promise<any> {
+    this.novelListDefault = [];
+    this.novelList = [];
     let complete = () => {
       // this.sortNovelList('title');
       // console.log('sorted');
+      return Promise.resolve();
     }
     let asyncLoad = (page): Promise<any> => {
-      return this.loadList(page, force).then((search) => {
+      return this.loadList(page).then((search) => {
         if (search.currentPage < search.max) {
           return asyncLoad(page + 1);
         } else {
           return complete();
         }
+      })
+      .catch((error) => {
+        this.textToast('You have no internet access :(')
+        let list = this.novelListDefault.concat([{ title: 'Sorry', desc: 'You have no internet access :(', error: error }]);
+        this.novelListDefault = list;
+        this.novelList = this.novelListDefault;
+        return complete();
       })
     }
     return asyncLoad(1);
@@ -75,7 +87,8 @@ export class ExplorePage {
         this._loadList(novelSearch);
         console.log(novelSearch);
         resolve(novelSearch);
-      }, (error) => {
+      })
+      .catch((error) => {
         reject(error);
         console.error(error);
       });
@@ -92,11 +105,7 @@ export class ExplorePage {
   }
 
   _loadList(search: any) {
-    if (search.currentPage == 1) {
-      this.novelListDefault = search.list;
-    } else {
-      this.novelListDefault = this.novelListDefault.concat(search.list);
-    }
+    this.novelListDefault = this.novelListDefault.concat(search.list);
     this.novelSearch = search;
     this.novelList = this.novelListDefault;
   }
@@ -115,20 +124,13 @@ export class ExplorePage {
 
   genreFilterChange(event) {
     this.content.scrollTop = 0;
-    this.loadListAll(true);
+    this.loadListAll();
   }
 
   selNovel(novel) {
-    // let popover = this.popoverCtrl.create(PopoverNovelPage, {
-    //   novel: novel,
-    // });
-    // popover.onDidDismiss(data => {
-    //   if (data) {
+    if (novel.error)
+      return;
 
-    //   }
-    // });
-    // popover.present();
-    // this.events.publish('change:novel', this.novelService.novelKwargs(novel));
     this.navCtrl.push(PopoverNovelPage, {
       novel: this.novelService.novelKwargs(novel),
       origin: 'explore'
@@ -137,7 +139,7 @@ export class ExplorePage {
 
   doRefresh(refresher) {
     console.log('Begin async operation', refresher);
-    this.loadListAllForce().then(() => {
+    this.loadListAll().then(() => {
       console.log('Async operation has ended');
       refresher.complete();
     });

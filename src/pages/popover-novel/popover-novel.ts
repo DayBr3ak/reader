@@ -53,6 +53,10 @@ export class PopoverNovelPage {
           let item = meta[key];
           this.novelMeta.push([key, item]);
         }
+      })
+      .catch((error) => {
+        console.log(error);
+        this.textToast('You have no internet access :(')
       });
     }
     window['thiz'] = this;

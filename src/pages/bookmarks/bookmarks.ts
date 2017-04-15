@@ -76,6 +76,9 @@ export class BookmarksPage {
           let novel: Novel = this.novelService.novelKwargs(bookmark);
           novel.getMoreMeta(true).then((metas) => {
             bookmark.metas = metas;
+          }).catch((error) => {
+            console.log(error);
+            this.textToast('You have no internet access :(')
           })
         })
 
