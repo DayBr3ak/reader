@@ -1,20 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Http } from '@angular/http';
-import 'rxjs/add/operator/map';
 import { Platform } from 'ionic-angular';
 
-/*
-  Generated class for the Locktask provider.
-
-  See https://angular.io/docs/ts/latest/guide/dependency-injection.html
-  for more info on providers and Angular 2 DI.
-*/
 @Injectable()
 export class LockTask {
 
   private _locktask: any = null;
 
-  constructor(public http: Http, private plt: Platform) {
+  constructor(private plt: Platform) {
     plt.ready().then(() => {
       if (plt.is('cordova'))
         this._locktask = (<any>window).plugins.locktask;

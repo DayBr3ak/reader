@@ -517,6 +517,34 @@ export class ReadingPage {
       });
     }
   }
+
+  private timoutHandle: number = 0;
+  private tapHandleCnt: number = 0;
+  tapHandle(handler) {
+    let cancelTimeout = () => {
+      if (this.timoutHandle) {
+        clearTimeout(this.timoutHandle);
+        this.timoutHandle = 0;
+      }
+      this.tapHandleCnt = 0;
+    }
+    if (this.timoutHandle == 0) {
+      // first tap, enable timer
+      this.timoutHandle = setTimeout(() => {
+        cancelTimeout();
+        console.log('taphandler timeout')
+      }, 600);
+      return;
+    }
+
+    if (this.timoutHandle) {
+      this.tapHandleCnt++;
+      if (this.tapHandleCnt >= 2) {
+        cancelTimeout();
+        handler.bind(this)();
+      }
+    }
+  }
 }
 
 `
