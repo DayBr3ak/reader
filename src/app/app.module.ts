@@ -13,6 +13,7 @@ import { PopoverNovelPage } from '../pages/popover-novel/popover-novel';
 import { NavBtnComponent } from '../components/nav-btn/nav-btn';
 import { Wuxiaco } from '../providers/wuxiaco';
 import { BookmarkProvider } from '../providers/bookmark-provider';
+import { LockTask } from '../providers/lock-task';
 
 import { IonicStorageModule } from '@ionic/storage';
 
@@ -55,6 +56,7 @@ import { GoogleAnalytics } from '@ionic-native/google-analytics';
     Wuxiaco,
     BookmarkProvider,
     GoogleAnalytics,
+    LockTask,
     {provide: ErrorHandler, useClass: IonicErrorHandler}
   ]
 })

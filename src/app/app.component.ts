@@ -28,6 +28,14 @@ export class MyApp {
     events: Events,
     ga: GoogleAnalytics
   ) {
+
+    let resolve = null;
+    let reject = null;
+    (<any>window).gaTrackerStarted = new Promise((_resolve, _reject) => {
+      resolve = _resolve;
+      reject = _reject;
+    });
+
     platform.ready().then(() => {
       // Okay, so the platform is ready and our plugins are available.
       // Here you can do any higher level native things you might need.
@@ -36,10 +44,12 @@ export class MyApp {
       this.events = events;
 
       ga.startTrackerWithId("UA-97415917-1").then((data) => {
-          console.log('Google Analytics Tracker started', data);
-          ga.setAppVersion(appVersion);
+        console.log('Google Analytics Tracker started', data);
+        ga.setAppVersion(appVersion);
+        resolve(true);
       }, (err) => {
         console.log('Google Analytics', err);
+        resolve(false);
       })
 
       this.pages = [
@@ -67,6 +77,17 @@ export class MyApp {
           events.publish('volume:up');
         });
       }, false);
+
+      //Registration of push in Android and Windows Phone
+      platform.registerBackButtonAction(() => {
+        if (this.nav.canGoBack()){ //Can we go back?
+          this.nav.pop();
+        }else{
+          // platform.exitApp(); //Exit from app
+          // this.nav.setRoot(ReadingPage);
+          // do nothing
+        }
+      });
 
       events.subscribe('change:novel', (novel) => {
         this.nav.setRoot(ReadingPage, { novel: novel });

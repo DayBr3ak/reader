@@ -13,6 +13,7 @@ import { PopoverReadPage } from '../popover-read/popover-read';
 import { PopoverNovelPage } from '../popover-novel/popover-novel';
 import { Wuxiaco, Novel } from '../../providers/wuxiaco';
 import { BookmarkProvider } from '../../providers/bookmark-provider';
+import { LockTask } from '../../providers/lock-task';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 
@@ -118,7 +119,8 @@ export class ReadingPage {
 
     private ga: GoogleAnalytics,
     private novelService: Wuxiaco,
-    private bookmarkProvider: BookmarkProvider
+    private bookmarkProvider: BookmarkProvider,
+    private lockTask: LockTask
   ) {
     this.hideUi = false;
     this.maxChapter = null;
@@ -127,9 +129,13 @@ export class ReadingPage {
       fontFamily: 'roboto',
       fontSize: '4vw',
       bgClass: 'bg-black'
-    }
+    };
+  }
 
-    this.ga.trackView("Reading Page");
+  ionViewDidLoad() {
+    (<any>window).gaTrackerStarted.then(() => {
+      this.ga.trackView("Reading Page");
+    })
   }
 
   textToast(text: string, time: number = 2000) {
@@ -424,6 +430,21 @@ export class ReadingPage {
     console.log('tap!!')
     this.hideUi = !this.hideUi;
     this.menuCtrl.swipeEnable(!this.hideUi);
+
+    if (this.hideUi)
+      this.lockTask.start().then(() => {
+        console.log('app is pinned');
+      })
+      .catch((error) => {
+        console.log(error)
+      });
+    else
+      this.lockTask.stop().then(() => {
+        console.log('app is UNpinned');
+      })
+      .catch((error) => {
+        console.log(error)
+      });
   }
 
   presentPopoverRead() {
