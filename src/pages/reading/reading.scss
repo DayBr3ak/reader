@@ -17,6 +17,10 @@ page-reading {
     margin-bottom: 0px!important;
   }
 
+  .has-refresher > .scroll-content {
+      border-top: 0px solid #ddd
+  }
+
   .bg-black {
     background-color: map-get($colors, black);
     color: map-get($colors, white);
