@@ -67,15 +67,15 @@
   <ion-toolbar>
     <!-- <ion-title>Footer</ion-title> -->
 
-      <ion-buttons start>
+      <ion-buttons end>
         <button ion-button icon-only (click)='addBookmark(novel)'>
-          <ion-icon name="star"></ion-icon>
+          <ion-icon name="star"></ion-icon> Bookmark
         </button>
       </ion-buttons>
 
-      <ion-buttons start>
+      <ion-buttons end>
         <button ion-button icon-only (click)='presentPopoverChapter()'>
-          <ion-icon name="search"></ion-icon>
+          <ion-icon name="search"></ion-icon> Select
         </button>
       </ion-buttons>
 
@@ -85,9 +85,15 @@
         </button>
       </ion-buttons>
  -->
-      <ion-buttons end>
+    <!--   <ion-buttons end>
         <button ion-button icon-only (click)='downloadOffline()'>
-          <ion-icon name="download"></ion-icon>
+          <ion-icon name="download"></ion-icon> Download
+        </button>
+      </ion-buttons>
+ -->
+      <ion-buttons end>
+        <button ion-button icon-only (click)='openDetails()'>
+          <ion-icon name="information-circle"></ion-icon> Infos
         </button>
       </ion-buttons>
 

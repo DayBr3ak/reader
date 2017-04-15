@@ -280,7 +280,6 @@ export class Novel {
   public title: string;
   public author: string;
   public desc: string;
-  public directoryObservable: any;
 
   constructor(
     manager: Wuxiaco,
@@ -343,18 +342,18 @@ export class Novel {
     })
   }
 
-  download(): Promise<any> {
+  download(): Promise<any> { // todo maybe move to manager
     return new Promise(resolve => {
       this.getDirectory().then(directory => {
         let count = 0;
         let complete = () => {
           count++;
           if (count == 5)
-            resolve();
+            resolve(directory.length);
         }
 
         let asyncDl = (i, step) => {
-          if (i >= directory.length) {
+          if (i > directory.length) {
             return complete();
           }
           console.log('download chapter ' + i);
@@ -379,6 +378,23 @@ export class Novel {
         asyncDl(5, 5);
       })
     })
+  }
+
+  removeDownload(): Promise<any> {
+    return new Promise(resolve => {
+      this.getDirectory().then(directory => {
+
+        let prList = [];
+        for (let i = 0; i < directory.length; i++) {
+          let chapter = i + 1;
+          let pr = this.manager.storage.remove(this.id + '-' + ST_CHAPTER_TXT + chapter);
+          prList.push(pr);
+        }
+        Promise.all(prList).then(() => {
+          resolve();
+        })
+      });
+    });
   }
 
   getMoreMeta(force: boolean=false): Promise<any> {

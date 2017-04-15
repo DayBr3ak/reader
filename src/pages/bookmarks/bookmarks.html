@@ -49,6 +49,20 @@
         </button>
       </ion-col>
     </ion-row>
+
+    <ion-row no-padding>
+      <ion-col text-left>
+        <button ion-button clear small color="danger" icon-left (click)="download(key)">
+          <ion-icon name='download'></ion-icon> Download
+        </button>
+      </ion-col>
+      <ion-col text-right>
+        <button ion-button clear small color="danger" icon-left (click)="rm(key)">
+          <ion-icon name='md-trash'></ion-icon> Remove
+        </button>
+      </ion-col>
+    </ion-row>
+
     </ion-card>
   </ion-list>
 

@@ -1,7 +1,7 @@
 import { ViewChild, Component, ElementRef } from '@angular/core';
 import { trigger, transition, style, animate, state } from '@angular/core';
 
-import { NavController, NavParams, ModalController,
+import { NavController, NavParams, ModalController, MenuController,
   Content, Platform, Events, PopoverController, ToastController } from 'ionic-angular';
 import { Http } from '@angular/http';
 import { StatusBar } from '@ionic-native/status-bar';
@@ -10,6 +10,7 @@ import 'rxjs/add/operator/map';
 
 import { PopoverChapterPage } from '../popover-chapter/popover-chapter';
 import { PopoverReadPage } from '../popover-read/popover-read';
+import { PopoverNovelPage } from '../popover-novel/popover-novel';
 import { Wuxiaco, Novel } from '../../providers/wuxiaco';
 import { BookmarkProvider } from '../../providers/bookmark-provider';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
@@ -104,6 +105,7 @@ export class ReadingPage {
     public navParams: NavParams,
     private http: Http,
     public modalCtrl: ModalController,
+    public menuCtrl: MenuController,
     public storage: Storage,
     public platform: Platform,
     public events: Events,
@@ -124,8 +126,6 @@ export class ReadingPage {
     }
 
     this.ga.trackView("Reading Page");
-    // this.novel = novelService.novel({name: 'MGA', id: 'mga'});
-    // this.novel = novelService.novel({name: 'Tales of D&G', id: 'tdg'});
   }
 
   textToast(text: string, time: number = 2000) {
@@ -392,6 +392,7 @@ export class ReadingPage {
   hideInterface() {
     console.log('tap!!')
     this.hideUi = !this.hideUi;
+    this.menuCtrl.swipeEnable(!this.hideUi);
   }
 
   presentPopoverRead() {
@@ -428,6 +429,13 @@ export class ReadingPage {
 
   addBookmark(novel: Novel) {
     this.events.publish('add:bookmark', this.novel);
+  }
+
+  openDetails() {
+    this.navCtrl.push(PopoverNovelPage, {
+      novel: this.novel,
+      origin: 'reading'
+    });
   }
 }
 

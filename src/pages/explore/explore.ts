@@ -130,9 +130,8 @@ export class ExplorePage {
     // popover.present();
     // this.events.publish('change:novel', this.novelService.novelKwargs(novel));
     this.navCtrl.push(PopoverNovelPage, {
-      novel: this.novelService.novelKwargs(novel)
-    }).then((data) => {
-      console.log(data)
+      novel: this.novelService.novelKwargs(novel),
+      origin: 'explore'
     })
   }
 

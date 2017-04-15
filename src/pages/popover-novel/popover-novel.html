@@ -39,20 +39,34 @@
         </button>
       </ion-col>
       <ion-col text-right>
-        <button ion-button clear small color="danger" icon-left (click)="read()">
-          <ion-icon name='musical-notes'></ion-icon> Read
+        <button ion-button clear small color="danger" icon-left (click)="share()">
+          <ion-icon name='share-alt'></ion-icon> Share
         </button>
       </ion-col>
     </ion-row>
-    <ion-row no-padding>
+
+    <ion-row no-padding *ngIf="origin=='explore'">
       <ion-col text-left>
-        <button ion-button clear small color="danger" icon-left (click)="share()">
-          <ion-icon name='share-alt'></ion-icon> Share
+        <button ion-button clear small color="danger" icon-left (click)="read()">
+          <ion-icon name='musical-notes'></ion-icon> Read
         </button>
       </ion-col>
       <ion-col text-right>
         <button ion-button clear small color="danger" icon-left (click)="share()">
           <ion-icon name='share-alt'></ion-icon> Share
+        </button>
+      </ion-col>
+    </ion-row>
+
+    <ion-row no-padding *ngIf="origin=='reading'">
+      <ion-col text-left>
+        <button ion-button clear small color="danger" icon-left (click)="download()">
+          <ion-icon name='download'></ion-icon> Download
+        </button>
+      </ion-col>
+      <ion-col text-right>
+        <button ion-button clear small color="danger" icon-left (click)="rm()">
+          <ion-icon name='md-trash'></ion-icon> Remove
         </button>
       </ion-col>
     </ion-row>

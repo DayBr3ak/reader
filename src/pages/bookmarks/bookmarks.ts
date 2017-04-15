@@ -32,6 +32,14 @@ export class BookmarksPage {
 
   }
 
+  textToast(text: string, time: number = 2000) {
+    let toast = this.toastCtrl.create({
+      message: text,
+      duration: time
+    });
+    toast.present();
+  }
+
   ionViewDidEnter() {
     window['thiz'] = this;
     console.log('ionViewDidLoad BookmarksPage');
@@ -75,9 +83,15 @@ export class BookmarksPage {
     })
   }
 
-  read(key: string) {
+  b2novel(key: string): Novel {
     let bookmark = this.bookmarkList[key];
-    this.events.publish('change:novel', this.novelService.novelKwargs(bookmark));
+    let novel = this.novelService.novelKwargs(bookmark);
+    return novel;
+  }
+
+  read(key: string) {
+    let novel = this.b2novel(key);
+    this.events.publish('change:novel', novel);
   }
 
   remove(key: string) {
@@ -87,5 +101,21 @@ export class BookmarksPage {
     })
   }
 
+  download(key: string) {
+    let novel = this.b2novel(key);
+    let finish = (downloaded) => {
+      this.textToast(`Downloaded ${downloaded} chapters of '${novel.title}'`);
+    };
+      // this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
+    novel.download().then(finish);
+  }
+
+  rm (key: string) {
+    let novel = this.b2novel(key);
+    novel.removeDownload().then(() => {
+      console.log('deleted')
+      this.textToast(`Deleted offline data of '${novel.title}'`);
+    });
+  }
 }
 
