@@ -173,6 +173,7 @@ export class ReadingPage {
       })
       .then(() => {
         this.content.fullscreen = true;
+        this.ga.trackEvent('novel', 'load', novel.title);
         resolve();
       })
     })
