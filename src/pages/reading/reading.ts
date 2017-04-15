@@ -438,6 +438,9 @@ export class ReadingPage {
       //bgClass already set
 
       this.storage.set(ST_R_SETTINGS, this.readerSettings);
+      this.ga.trackEvent('settings', 'setFont', this.readerSettings.fontFamily);
+      this.ga.trackEvent('settings', 'setSize', '' + this.readerSettings.fontSize);
+      this.ga.trackEvent('settings', 'setBgClass', this.readerSettings.bgClass);
     })
     popover.present();
   }

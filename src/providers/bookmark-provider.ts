@@ -3,6 +3,7 @@ import { Http } from '@angular/http';
 import { Events, ToastController } from 'ionic-angular';
 import 'rxjs/add/operator/map';
 import { Storage } from '@ionic/storage';
+import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 import { Novel } from './wuxiaco';
 
@@ -14,7 +15,8 @@ export class BookmarkProvider {
   constructor(public http: Http,
     public events: Events,
     public storage: Storage,
-    public toastCtrl: ToastController
+    public toastCtrl: ToastController,
+    private ga: GoogleAnalytics
   ) {
     console.log('Hello BookmarkProvider Provider');
 
@@ -38,6 +40,8 @@ export class BookmarkProvider {
 
   addBookmark(novel: Novel) {
     console.log('add bookmark', novel.id);
+    this.ga.trackEvent('bookmark', 'add-bookmark', novel.id);
+
     let setBM = (v) => {
       v[novel.title] = novel.meta();
       this.textToast(`Added "${novel.title}" to your bookmarks!`);
@@ -55,6 +59,8 @@ export class BookmarkProvider {
 
   remove(bookmark: any): Promise<any> {
     return this.bookmarks().then((bs) => {
+      this.ga.trackEvent('bookmark', 'remove-bookmark', bookmark.title);
+
       delete bs[bookmark.title]
       return this.storage.set(ST_BOOKMARK, bs);
     })
