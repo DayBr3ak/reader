@@ -3,6 +3,10 @@ import { Platform, Nav, Events } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 
+// import { ReadingPage } from '../pages/reading/reading';
+// import { ExplorePage } from '../pages/explore/explore';
+// import { SettingsPage } from '../pages/settings/settings';
+// import { BookmarksPage } from '../pages/bookmarks/bookmarks';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 declare var window: any;
@@ -26,6 +30,13 @@ export class MyApp {
     ga: GoogleAnalytics
   ) {
 
+    let resolve = null;
+    let reject = null;
+    window.gaTrackerStarted = new Promise((_resolve, _reject) => {
+      resolve = _resolve;
+      reject = _reject;
+    });
+
     platform.ready().then(() => {
       // Okay, so the platform is ready and our plugins are available.
       // Here you can do any higher level native things you might need.
@@ -33,16 +44,14 @@ export class MyApp {
       splashScreen.hide();
       this.events = events;
 
-      window.gaTrackerStarted = new Promise((resolve, reject) => {
-        ga.startTrackerWithId("UA-97415917-1").then((data) => {
-          console.log('Google Analytics Tracker started', data);
-          ga.setAppVersion(appVersion);
-          resolve(true);
-        }, (err) => {
-          console.log('Google Analytics', err);
-          resolve(false);
-        })
-      });
+      ga.startTrackerWithId("UA-97415917-1").then((data) => {
+        console.log('Google Analytics Tracker started', data);
+        ga.setAppVersion(appVersion);
+        resolve(true);
+      }, (err) => {
+        console.log('Google Analytics', err);
+        resolve(false);
+      })
 
       this.pages = [
         { title: 'Explore', component: 'ExplorePage' },
