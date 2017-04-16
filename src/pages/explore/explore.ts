@@ -53,13 +53,12 @@ export class ExplorePage {
   }
 
   loadListAll(): Promise<any> {
-    console.log('new ')
     this.novelListDefault = [];
     this.novelList = [];
 
-    let sequence = Promise.resolve();
-    return this.loadList(1).then((search) => {
-      for (let i = 2; i <= search.max; i++) {
+    let sequence: Promise<number> = Promise.resolve(1);
+    return this.loadList(1).then((maxPage) => {
+      for (let i = 2; i <= maxPage; i++) {
         sequence = sequence.then(() => {
           return this.loadList(i);
         });
@@ -76,13 +75,13 @@ export class ExplorePage {
     });
   }
 
-  loadList(page: number=1, force=false): Promise<any> {
+  loadList(page: number=1, force=false): Promise<number> {
     let genre = this.genres[this.genreFilter];
     return new Promise((resolve, reject) => {
       this.novelService.getNovelList(genre, page, force).then((novelSearch) => {
         this._loadList(novelSearch);
         console.log(novelSearch);
-        resolve(novelSearch);
+        resolve(novelSearch.max);
       })
       .catch((error) => {
         reject(error);
