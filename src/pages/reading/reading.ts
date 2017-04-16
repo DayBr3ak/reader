@@ -156,7 +156,7 @@ export class ReadingPage {
 
     // this.content.enableScrollListener();
     this.content.ionScrollEnd.subscribe((event) => {
-      console.log("It's scrolling !! " + event.scrollTop);
+      // console.log("It's scrolling !! " + event.scrollTop);
       this.novel.setScroll(this.currentChapter, event.scrollTop);
     });
 
