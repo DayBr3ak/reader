@@ -53,30 +53,27 @@ export class ExplorePage {
   }
 
   loadListAll(): Promise<any> {
+    console.log('new ')
     this.novelListDefault = [];
     this.novelList = [];
-    let complete = () => {
-      // this.sortNovelList('title');
-      // console.log('sorted');
-      return Promise.resolve();
-    }
-    let asyncLoad = (page): Promise<any> => {
-      return this.loadList(page).then((search) => {
-        if (search.currentPage < search.max) {
-          return asyncLoad(page + 1);
-        } else {
-          return complete();
-        }
-      })
-      .catch((error) => {
-        this.textToast('You have no internet access :(')
-        let list = this.novelListDefault.concat([{ title: 'Sorry', desc: 'You have no internet access :(', error: error }]);
-        this.novelListDefault = list;
-        this.novelList = this.novelListDefault;
-        return complete();
-      })
-    }
-    return asyncLoad(1);
+
+    let sequence = Promise.resolve();
+    return this.loadList(1).then((search) => {
+      for (let i = 2; i <= search.max; i++) {
+        sequence = sequence.then(() => {
+          return this.loadList(i);
+        });
+      }
+
+      return sequence;
+    })
+    .catch((error) => {
+      this.textToast('You have no internet access :(')
+      let list = this.novelListDefault.concat([{ title: 'Sorry', desc: 'You have no internet access :(', error: error }]);
+      this.novelListDefault = list;
+      this.novelList = this.novelListDefault;
+      return sequence;
+    });
   }
 
   loadList(page: number=1, force=false): Promise<any> {

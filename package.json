@@ -4,10 +4,10 @@
   "homepage": "http://ionicframework.com/",
   "private": true,
   "scripts": {
+    "lint": "ionic-app-scripts lint",
     "clean": "ionic-app-scripts clean",
     "build": "ionic-app-scripts build",
-    "ionic:build": "ionic-app-scripts build",
-    "ionic:serve": "ionic-app-scripts serve"
+    "serve": "ionic-app-scripts serve"
   },
   "dependencies": {
     "@angular/animations": "4.0.0",

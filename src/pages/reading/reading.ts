@@ -270,7 +270,7 @@ export class ReadingPage {
     })
   }
 
-  loadChapter(chapter, changeChapter=true): Promise<any> {
+  loadChapter(chapter: number, changeChapter: boolean=true, refresh: boolean=false): Promise<any> {
     let resolve = null;
     let reject = null;
 
@@ -319,7 +319,7 @@ export class ReadingPage {
     }
 
     this.novel.getChapterContent(chapter).then((content) => {
-      if (content) {
+      if (content && !refresh) {
         if (changeChapter) {
           return afterLoad(content);
         }
@@ -497,7 +497,7 @@ export class ReadingPage {
     console.log('Begin async operation', refresher);
 
     if (this.novel) {
-      this.loadChapter(this.currentChapter).then(() => {
+      this.loadChapter(this.currentChapter, true, true).then(() => {
         console.log('Async operation has ended');
         refresher.complete();
       });
