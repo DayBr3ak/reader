@@ -12,7 +12,6 @@ import { PopoverChapterPage } from '../pages/popover-chapter/popover-chapter';
 // import { BookmarksPage } from '../pages/bookmarks/bookmarks';
 // import { PopoverNovelPage } from '../pages/popover-novel/popover-novel';
 
-import { NavBtn } from '../components/nav-btn/nav-btn';
 import { Wuxiaco } from '../providers/wuxiaco';
 import { HttpModule } from '@angular/http';
 
@@ -28,23 +27,21 @@ import { GoogleAnalytics } from '@ionic-native/google-analytics';
 @NgModule({
   declarations: [
     MyApp,
-    NavBtn,
     PopoverReadPage,
-    PopoverChapterPage
+    PopoverChapterPage,
   ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
     HttpModule,
     IonicModule.forRoot(MyApp),
-    IonicStorageModule.forRoot()
+    IonicStorageModule.forRoot(),
   ],
   bootstrap: [IonicApp],
   entryComponents: [
     MyApp,
-    NavBtn,
     PopoverReadPage,
-    PopoverChapterPage
+    PopoverChapterPage,
   ],
   providers: [
     StatusBar,
