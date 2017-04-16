@@ -359,13 +359,8 @@ export class ReadingPage {
   }
 
   downloadOffline(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      let finish = () => {
-        this.textToast('Successfully downloaded ' + this.maxChapter + ' chapters');
-        resolve();
-      };
-      // this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
-      this.novel.download().then(finish).catch(reject);
+    return this.novel.download().then((max) => {
+      this.textToast('Successfully downloaded ' + max + ' chapters');
     })
   }
 

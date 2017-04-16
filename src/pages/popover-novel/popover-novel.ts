@@ -77,11 +77,11 @@ export class PopoverNovelPage {
   }
 
   download() {
-    let finish = (downloaded) => {
-      this.textToast(`Downloaded ${downloaded} chapters of '${this.novel.title}'`);
-    };
-      // this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
-    this.novel.download().then(finish);
+    this.novel.download().then((max) => {
+      const mes = `Downloaded ${max} chapters of '${this.novel.title}'`;
+      this.textToast(mes);
+      console.log(mes);
+    });
   }
 
   rm () {

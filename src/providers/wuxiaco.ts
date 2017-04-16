@@ -126,7 +126,7 @@ export class Wuxiaco {
     });
   }
 
-  scrapChapter(url: string, chapter: number): Promise<any> {
+  scrapChapter(url: string): Promise<any> {
     let parseChapterContent = (doc) => {
       let content = doc.querySelector('#chaptercontent').innerHTML.trim();
       content = this.wordFilter(content, /\*ck/, 'uck');
@@ -362,7 +362,7 @@ export class Novel {
       }
       let chapterElement = directory[chapter - 1]
       let url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
-      return this.manager.scrapChapter(url, chapter);
+      return this.manager.scrapChapter(url);
     }).catch((error) => {
       let mes = 'Download error: ' + chapter + ' ' + this.title;
       console.log(mes);
@@ -370,44 +370,43 @@ export class Novel {
     })
   }
 
-  download(): Promise<any> { // todo maybe move to manager
-    return new Promise(resolve => {
-      this.getDirectory().then(directory => {
-        let count = 0;
-        let complete = () => {
-          count++;
-          if (count == 5)
-            resolve(directory.length);
-        }
 
-        let asyncDl = (i, step) => {
-          if (i > directory.length) {
-            return complete();
-          }
-          console.log('download chapter ' + i);
-          this.getStored(ST_CHAPTER_TXT + i).then(v => {
-            if (v) {
-              // pass
-              return asyncDl(i + step, step);
-            }
-            let chapterElement = directory[i - 1]
-            let url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
-            this.manager.scrapChapter(url, i).then(content => {
-              this.cacheChapterContent(i, content);
-              asyncDl(i + step, step);
-            }).catch((error) => {
-              console.log('Error download ' + i);
-              resolve(-1);
-            })
-          })
-        }
+  download(): Promise<any> {
+    return this.getDirectory().then((directory: any[]) => {
+      let createSequence = (start: number, step: number): Promise<any> => {
+        let sequence = Promise.resolve();
+        for (let i = start; i < directory.length; i = i + step) {
+          const chapter = i + 1;
+          sequence = sequence.then(() => {
+            console.log('download chapter ' + chapter);
+            return this.getStored(ST_CHAPTER_TXT + chapter).then((v) => {
+              if (v) {
+                return Promise.resolve(v);
+              }
+              const chapterElement = directory[i];
+              const url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
+              return this.manager.scrapChapter(url).then(content => {
+                return this.cacheChapterContent(chapter, content);
+              });
+            });
+          });
+        } // for
+        return sequence
+      }
 
-        asyncDl(1, 5);
-        asyncDl(2, 5);
-        asyncDl(3, 5);
-        asyncDl(4, 5);
-        asyncDl(5, 5);
+      const step = 5
+      const list = [];
+      for (let i = 0; i < step; i++) {
+        list.push(createSequence(i, 5));
+      }
+
+      return Promise.all(list).then(() => {
+        return Promise.resolve(directory.length);
       })
+    })
+    .catch((error) => {
+      console.log('Error download ' + error);
+      return Promise.resolve(-1);
     })
   }
 
