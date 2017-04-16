@@ -3,8 +3,6 @@ import { IonicPage, NavController, NavParams, Events, Content, Platform, Popover
 import { Wuxiaco } from '../../providers/wuxiaco';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
-import { PopoverNovelPage } from '../popover-novel/popover-novel';
-
 @IonicPage()
 @Component({
   selector: 'page-explore',
@@ -132,7 +130,7 @@ export class ExplorePage {
     if (novel.error)
       return;
 
-    this.navCtrl.push(PopoverNovelPage, {
+    this.navCtrl.push('PopoverNovelPage', {
       novel: this.novelService.novelKwargs(novel),
       origin: 'explore'
     })

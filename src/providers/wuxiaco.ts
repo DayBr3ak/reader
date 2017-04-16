@@ -46,6 +46,10 @@ export class Wuxiaco {
     toast.present();
   }
 
+  wordFilter(text: string, pattern: RegExp, replacement: string): string {
+    return text.replace(pattern, replacement);
+  }
+
   resolveUrl(num: number, id: string) {
     return `http://m.wuxiaworld.com/${id}-index/${id}-chapter-${num}/`;
   }
@@ -72,8 +76,9 @@ export class Wuxiaco {
       for (let i = 0; i < para.length; i++) {
         const htmlTagRegex = /(<([^>]+)>)/ig
 
-        let txt = para[i].innerHTML.replace('&nbsp;', ' ');
-        txt = txt.replace(htmlTagRegex, '');
+        let txt = para[i].innerHTML;
+        txt = this.wordFilter(txt, /&nbsp;/, ' ');
+        txt = this.wordFilter(txt, htmlTagRegex, '');
         //TODO get rid of the dict
         res.push({ strong: i == 0, text: txt });
       }
@@ -124,6 +129,7 @@ export class Wuxiaco {
   scrapChapter(url: string, chapter: number): Promise<any> {
     let parseChapterContent = (doc) => {
       let content = doc.querySelector('#chaptercontent').innerHTML.trim();
+      content = this.wordFilter(content, /\*ck/, 'uck');
       content = content.split('<br><br>');
       return content;
     }
