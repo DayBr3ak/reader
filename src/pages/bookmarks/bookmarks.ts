@@ -1,13 +1,12 @@
-// 33 Warlock
-// 422 mga
 
 import { Component } from '@angular/core';
-import { NavController, NavParams, ToastController, Events } from 'ionic-angular';
+import { IonicPage, NavController, NavParams, ToastController, Events } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
 
 import { Wuxiaco, Novel } from '../../providers/wuxiaco';
 import { BookmarkProvider } from '../../providers/bookmark-provider';
 
+@IonicPage()
 @Component({
   selector: 'page-bookmarks',
   templateUrl: 'bookmarks.html'

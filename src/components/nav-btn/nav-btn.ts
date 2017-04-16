@@ -4,7 +4,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
   selector: 'nav-btn',
   templateUrl: 'nav-btn.html'
 })
-export class NavBtnComponent {
+export class NavBtn {
 
   @Input()
   displayPrevBtn: boolean = true;

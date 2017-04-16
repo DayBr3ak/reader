@@ -1,21 +1,18 @@
 import { ViewChild, Component, ElementRef } from '@angular/core';
-import { trigger, transition, style, animate, state } from '@angular/core';
+import { trigger, transition, style, animate, state } from '@angular/animations';
 
-import { NavController, NavParams, ModalController, MenuController,
+import { IonicPage, NavController, NavParams, ModalController, MenuController,
   Content, Platform, Events, PopoverController, ToastController } from 'ionic-angular';
-import { Http } from '@angular/http';
 import { StatusBar } from '@ionic-native/status-bar';
 import { Storage } from '@ionic/storage';
 import 'rxjs/add/operator/map';
 
 import { PopoverChapterPage } from '../popover-chapter/popover-chapter';
 import { PopoverReadPage } from '../popover-read/popover-read';
-import { PopoverNovelPage } from '../popover-novel/popover-novel';
 import { Wuxiaco, Novel } from '../../providers/wuxiaco';
 import { BookmarkProvider } from '../../providers/bookmark-provider';
 import { LockTask } from '../../providers/lock-task';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
-
 
 const ST_R_SETTINGS = 'reader-settings';
 const ST_CURRENT_NOVEL = 'current-novel';
@@ -24,6 +21,7 @@ const DEFAULT_NOVEL = {
   id: 'Martial-God-Asura'
 };
 
+@IonicPage()
 @Component({
   selector: 'page-reading',
   templateUrl: 'reading.html',
@@ -108,7 +106,6 @@ export class ReadingPage {
   constructor(public statusBar: StatusBar,
     public navCtrl: NavController,
     public navParams: NavParams,
-    private http: Http,
     public modalCtrl: ModalController,
     public menuCtrl: MenuController,
     public storage: Storage,
@@ -157,9 +154,9 @@ export class ReadingPage {
       this.nextChapter();
     })
 
-    this.content.enableScrollListener();
+    // this.content.enableScrollListener();
     this.content.ionScrollEnd.subscribe((event) => {
-      // console.log(event.scrollTop);
+      console.log("It's scrolling !! " + event.scrollTop);
       this.novel.setScroll(this.currentChapter, event.scrollTop);
     });
 
@@ -491,7 +488,7 @@ export class ReadingPage {
   openDetails() {
     if (!this.novel)
       return;
-    this.navCtrl.push(PopoverNovelPage, {
+    this.navCtrl.push('PopoverNovelPage', {
       novel: this.novel,
       origin: 'reading'
     });
@@ -518,17 +515,17 @@ export class ReadingPage {
     }
   }
 
-  private timoutHandle: number = 0;
+  private timoutHandle: NodeJS.Timer = null;
   private tapHandleCnt: number = 0;
   tapHandle(handler) {
     let cancelTimeout = () => {
       if (this.timoutHandle) {
         clearTimeout(this.timoutHandle);
-        this.timoutHandle = 0;
+        this.timoutHandle = null;
       }
       this.tapHandleCnt = 0;
     }
-    if (this.timoutHandle == 0) {
+    if (this.timoutHandle === null) {
       // first tap, enable timer
       this.timoutHandle = setTimeout(() => {
         cancelTimeout();

@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Platform } from 'ionic-angular';
 
+declare var window: any;
+
 @Injectable()
 export class LockTask {
 
@@ -9,7 +11,7 @@ export class LockTask {
   constructor(private plt: Platform) {
     plt.ready().then(() => {
       if (plt.is('cordova'))
-        this._locktask = (<any>window).plugins.locktask;
+        this._locktask = window.plugins.locktask;
     })
   }
 

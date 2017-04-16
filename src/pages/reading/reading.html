@@ -39,14 +39,14 @@
 
   <div class="before-novel"></div>
 
-  <nav-btn
+  <!-- <nav-btn
     [displayPrevBtn]="(currentChapter > 1)"
     [displayNextBtn]="(currentChapter < maxChapter)"
     [disable]="disableNav"
     (nextClick)="nextChapter()"
     (selClick)="presentPopoverChapter()"
     (prevClick)="prevChapter()"
-  ></nav-btn>
+  ></nav-btn> -->
 
   <div #articleBody class="article-body" (click)="tapHandle(hideInterface)"
     [style.fontFamily]="readerSettings.fontFamily"
@@ -55,14 +55,14 @@
     <p *ngFor="let paragraph of paragraphs" [innerHTML]="paragraph"></p>
   </div>
 
-  <nav-btn
+  <!-- <nav-btn
     [displayPrevBtn]="(currentChapter > 1)"
     [displayNextBtn]="(currentChapter < maxChapter)"
     [disable]="disableNav"
     (nextClick)="nextChapter()"
     (selClick)="presentPopoverChapter()"
     (prevClick)="prevChapter()"
-  ></nav-btn>
+  ></nav-btn> -->
 
   <div class="after-novel"></div>
 

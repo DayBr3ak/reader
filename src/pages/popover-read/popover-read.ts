@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { NavParams, Events } from 'ionic-angular';
+import { IonicPage, NavParams, Events } from 'ionic-angular';
 
+IonicPage()
 @Component({
   selector: 'page-popover-read',
   templateUrl: 'popover-read.html'

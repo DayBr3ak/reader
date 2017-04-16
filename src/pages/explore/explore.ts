@@ -1,10 +1,11 @@
 import { Component, ViewChild } from '@angular/core';
-import { NavController, NavParams, Events, Content, Platform, PopoverController, ToastController } from 'ionic-angular';
+import { IonicPage, NavController, NavParams, Events, Content, Platform, PopoverController, ToastController } from 'ionic-angular';
 import { Wuxiaco } from '../../providers/wuxiaco';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 import { PopoverNovelPage } from '../popover-novel/popover-novel';
 
+@IonicPage()
 @Component({
   selector: 'page-explore',
   templateUrl: 'explore.html',

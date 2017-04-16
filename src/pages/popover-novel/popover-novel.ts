@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
-import { NavController, NavParams, Events, ToastController } from 'ionic-angular';
+import { IonicPage, NavController, NavParams, Events, ToastController } from 'ionic-angular';
 
 import { Novel } from '../../providers/wuxiaco';
 
+@IonicPage()
 @Component({
   selector: 'page-popover-novel',
   templateUrl: 'popover-novel.html'

@@ -1,17 +1,21 @@
 import { NgModule, ErrorHandler } from '@angular/core';
 import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
+import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MyApp } from './app.component';
-import { ReadingPage } from '../pages/reading/reading';
-import { ReadModalPage } from '../pages/read-modal/read-modal';
-import { SettingsPage } from '../pages/settings/settings';
+// import { ReadingPage } from '../pages/reading/reading';
+// import { ReadModalPage } from '../pages/read-modal/read-modal';
+// import { SettingsPage } from '../pages/settings/settings';
 import { PopoverReadPage } from '../pages/popover-read/popover-read';
 import { PopoverChapterPage } from '../pages/popover-chapter/popover-chapter';
-import { ExplorePage } from '../pages/explore/explore';
-import { BookmarksPage } from '../pages/bookmarks/bookmarks';
-import { PopoverNovelPage } from '../pages/popover-novel/popover-novel';
+// import { ExplorePage } from '../pages/explore/explore';
+// import { BookmarksPage } from '../pages/bookmarks/bookmarks';
+// import { PopoverNovelPage } from '../pages/popover-novel/popover-novel';
 
-import { NavBtnComponent } from '../components/nav-btn/nav-btn';
+import { NavBtn } from '../components/nav-btn/nav-btn';
 import { Wuxiaco } from '../providers/wuxiaco';
+import { HttpModule } from '@angular/http';
+
 import { BookmarkProvider } from '../providers/bookmark-provider';
 import { LockTask } from '../providers/lock-task';
 
@@ -24,40 +28,32 @@ import { GoogleAnalytics } from '@ionic-native/google-analytics';
 @NgModule({
   declarations: [
     MyApp,
-    ReadingPage,
-    ReadModalPage,
-    SettingsPage,
+    NavBtn,
     PopoverReadPage,
-    PopoverChapterPage,
-    ExplorePage,
-    BookmarksPage,
-    NavBtnComponent,
-    PopoverNovelPage
+    PopoverChapterPage
   ],
   imports: [
+    BrowserModule,
+    BrowserAnimationsModule,
+    HttpModule,
     IonicModule.forRoot(MyApp),
     IonicStorageModule.forRoot()
   ],
   bootstrap: [IonicApp],
   entryComponents: [
     MyApp,
-    ReadingPage,
-    ReadModalPage,
-    SettingsPage,
+    NavBtn,
     PopoverReadPage,
-    PopoverChapterPage,
-    BookmarksPage,
-    ExplorePage,
-    PopoverNovelPage
+    PopoverChapterPage
   ],
   providers: [
     StatusBar,
     SplashScreen,
+    { provide: ErrorHandler, useClass: IonicErrorHandler },
+    GoogleAnalytics,
     Wuxiaco,
     BookmarkProvider,
-    GoogleAnalytics,
-    LockTask,
-    {provide: ErrorHandler, useClass: IonicErrorHandler}
+    LockTask
   ]
 })
 export class AppModule {}
