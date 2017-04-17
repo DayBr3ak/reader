@@ -270,7 +270,62 @@ export class ReadingPage {
     })
   }
 
-  loadChapter(chapter: number, changeChapter: boolean=true, refresh: boolean=false): Promise<any> {
+  async loadChapter(chapter: number, changeChapter: boolean=true, refresh: boolean=false) {
+    if (chapter < 1 || (this.maxChapter && chapter > this.maxChapter)) {
+      this.textToast("Chapter " + chapter + " doesn't exist. Max is " + this.maxChapter);
+    }
+
+    if (chapter < 1) {
+      chapter = 1;
+    }
+    if (this.maxChapter && chapter > this.maxChapter) {
+      chapter = this.maxChapter;
+    }
+    console.log('async loadchapter ' + chapter);
+    let getContent = async () => {
+      try {
+        let content = await this.novel.getChapterContent(chapter);
+        if (content && !refresh) {
+          if (changeChapter) {
+            return content;
+          }
+          return null;
+        } else {
+          let paragraphs = await this.novel.scrap(chapter);
+          this.novel.cacheChapterContent(chapter, paragraphs);
+          if (changeChapter) {
+            return paragraphs;
+          }
+          return null;
+        }
+      } catch (error) {
+        if (changeChapter) {
+          this.textToast('You have no internet access :(');
+          let errMessage = error.message || error;
+          throw errMessage;
+        }
+        return null;
+      }
+    };
+
+    let content = null;
+    let scroll = 0;
+    try {
+      content = await getContent();
+      scroll = await this.novel.getScroll(chapter) || scroll;
+    } catch (error) {
+      content = error;
+    }
+    if (content) {
+      this.currentChapter = chapter;
+      this.novel.setCurrentChapter(chapter);
+      // view loaded, should scroll to saved scroll point if available
+      return await this.setChapterContent(content, scroll);
+    }
+    return null;
+  }
+
+  loadChapter0(chapter: number, changeChapter: boolean=true, refresh: boolean=false): Promise<any> {
     if (chapter < 1 || (this.maxChapter && chapter > this.maxChapter)) {
       this.textToast("Chapter " + chapter + " doesn't exist. Max is " + this.maxChapter);
     }
