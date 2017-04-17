@@ -52,7 +52,7 @@ export class ExplorePage {
     });
   }
 
-  loadListAll(): Promise<any> {
+  async loadListAll() {
     this.novelListDefault = [];
     this.novelList = [];
 
@@ -60,36 +60,27 @@ export class ExplorePage {
     // basically all networking promises start simultaneously
     // then they are reduced sequentially to keep the order
     // as they complete the elements are added in the correct order
-    const chapter1Promise = this.loadList(1).then((search: any) => {
+    try {
+      const chapter1Promise = this.loadList(1);
       // need the first chapter to know how many page needs to be loaded
+      const chapter1 = await chapter1Promise;
       const list = [];
-      for (let i = 2; i <= search.max; i++) {
+      for (let i = 2; i <= chapter1.max; i++) {
         list.push(i);
       }
-      const chapterPromiseList = list.map(this.loadList.bind(this));
-      chapterPromiseList.unshift(Promise.resolve(search)); // here we keep the result from the first page as a promise
-      return chapterPromiseList;
-    })
-    .then((chapterPromiseList) => {
-      return chapterPromiseList
-        .reduce((sequence, chapterPromise) => {
-          return sequence.then(() => {
-            return chapterPromise;
-          })
-          .then((chapterSearch) => {
-            this._loadList(chapterSearch);
-          })
-        }, Promise.resolve())
-    })
-    .catch((error) => {
+      const chapterPromises = list.map(this.loadList.bind(this));
+      chapterPromises.unshift(chapter1Promise); // here we keep the result from the first page as a promise
+
+      for (let i = 0; i < chapterPromises.length; i++) {
+        this._loadList(await chapterPromises[i]);
+      }
+
+    } catch (error) {
       this.textToast('You have no internet access :(')
       let list = this.novelListDefault.concat([{ title: 'Sorry', desc: 'You have no internet access :(', error: error }]);
       this.novelListDefault = list;
       this.novelList = this.novelListDefault;
-      return 0;
-    });
-
-    return chapter1Promise;
+    }
   }
 
   loadList(page: number=1): Promise<any> {
@@ -141,11 +132,10 @@ export class ExplorePage {
     })
   }
 
-  doRefresh(refresher) {
+  async doRefresh(refresher) {
     console.log('Begin async operation', refresher);
-    this.loadListAll().then(() => {
-      console.log('Async operation has ended');
-      refresher.complete();
-    });
+    await this.loadListAll();
+    console.log('Async operation has ended');
+    refresher.complete();
   }
 }
