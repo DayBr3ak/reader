@@ -461,15 +461,15 @@ export class Novel {
     })
   }
 
-  setScroll(chapter: number, scroll: number): Promise<void> {
+  setScroll(chapter: number, scroll: number): Promise<any> {
     return this.setStored(ST_CHAPTER_SCROLL + chapter, scroll);
   }
 
-  getScroll(chapter: number): Promise<number> {
+  getScroll(chapter: number): Promise<any> {
     return this.getStored(ST_CHAPTER_SCROLL + chapter);
   }
 
-  getCurrentChapter(): Promise<number> {
+  getCurrentChapter(): Promise<any> {
     return new Promise(resolve => {
       this.getStored(ST_CURRENT_CHAPTER).then((v) => {
         if (v) {
@@ -481,19 +481,19 @@ export class Novel {
     })
   }
 
-  setCurrentChapter(chapter: number): Promise<void> {
+  setCurrentChapter(chapter: number): Promise<any> {
     return this.setStored(ST_CURRENT_CHAPTER, chapter);
   }
 
-  cacheChapterContent(chapter: number, content: string): Promise<void> {
+  cacheChapterContent(chapter: number, content: string): Promise<any> {
     return this.setStoredCompressed(ST_CHAPTER_TXT + chapter, content);
   }
 
-  getChapterContent(chapter: number): Promise<string> {
+  getChapterContent(chapter: number): Promise<any> {
     return this.getStoredCompressed(ST_CHAPTER_TXT + chapter);
   }
 
-  getMaxChapter(): Promise<number> {
+  getMaxChapter(): Promise<any> {
     return new Promise(resolve => {
       this.getDirectory().then((directory) => {
         resolve(directory.length);

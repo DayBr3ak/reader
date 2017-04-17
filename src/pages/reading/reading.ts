@@ -271,9 +271,6 @@ export class ReadingPage {
   }
 
   loadChapter(chapter: number, changeChapter: boolean=true, refresh: boolean=false): Promise<any> {
-    let resolve = null;
-    let reject = null;
-
     if (chapter < 1 || (this.maxChapter && chapter > this.maxChapter)) {
       this.textToast("Chapter " + chapter + " doesn't exist. Max is " + this.maxChapter);
     }
@@ -286,52 +283,63 @@ export class ReadingPage {
     }
     console.log('loadchapter ' + chapter);
 
-    let afterLoad = (content: any) => {
+    return this.novel.getChapterContent(chapter).then((content) => {
+      if (content && !refresh) {
+        if (changeChapter) {
+          return content;
+        }
+        return 'end';
+      } else {
+        return 'scrap'
+      }
+    })
+    .then((content) => {
+      if (content === 'end') {
+        return 'end';
+      }
+      if (content === 'scrap') {
+        return this.novel.scrap(chapter).then((data) => {
+          let paragraphs;
+          paragraphs = data;
+          this.novel.cacheChapterContent(chapter, paragraphs);
+          if (changeChapter) {
+            return paragraphs;
+          }
+          return 'end'
+        })
+      }
+      return content;
+    })
+    .then((content) => {
+      if (content === 'end') {
+        return 'end';
+      }
       this.currentChapter = chapter;
       this.novel.setCurrentChapter(chapter);
       // view loaded, should scroll to saved scroll point if available
-      this.novel.getScroll(chapter).then((chScroll) => {
+      return this.novel.getScroll(chapter).then((chScroll) => {
         let _scroll = chScroll? chScroll: 0;
-        console.log('scroll: ' + _scroll)
-        this.setChapterContent(content, _scroll).then(() => {
-          resolve();
-        });
+        return [content, _scroll];
       });
-    }
-
-    let scrap = () => {
-      this.novel.scrap(chapter).then((data) => {
-        let paragraphs;
-        paragraphs = data;
-        this.novel.cacheChapterContent(chapter, paragraphs);
-        if (changeChapter) {
-          return afterLoad(paragraphs);
-        }
-        resolve();
-      })
-      .catch((error) => {
-        if (changeChapter) {
-          this.textToast('You have no internet access :(');
-          return afterLoad([error.message]);
-        }
-        resolve();
-      });
-    }
-
-    this.novel.getChapterContent(chapter).then((content) => {
-      if (content && !refresh) {
-        if (changeChapter) {
-          return afterLoad(content);
-        }
-        resolve();
-      } else {
-        scrap();
+    })
+    .catch((error) => {
+      if (changeChapter) {
+        this.textToast('You have no internet access :(');
+        let errMessage = error.message || error;
+        return [[errMessage], 0];
       }
-    });
-
-    return new Promise((_resolve, _reject) => {
-      resolve = _resolve;
-      reject = _reject;
+      return 'end';
+    })
+    .then((args) => {
+      if (args === 'end') {
+        return 'end';
+      }
+      const content = args[0];
+      const scroll = args[1];
+      console.log('scroll: ' + scroll)
+      return this.setChapterContent(content, scroll).then(() => {
+        return 'end';
+      });
     })
   }
 
