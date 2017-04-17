@@ -164,31 +164,17 @@ export class ReadingPage {
     });
   }
 
-  loadNovel(novel: Novel) {
+  async loadNovel(novel: Novel) {
     this.novel = novel;
     this.storage.set(ST_CURRENT_NOVEL, this.novel.meta());
 
-    let promise1 = new Promise((resolve, reject) => {
-      this.novel.getCurrentChapter().then((currentChapter) => {
-        this.loadAhead(currentChapter, 2, this.maxChapter);
-        return this.loadChapter(currentChapter)
-      })
-      .then(() => {
-        this.content.fullscreen = true;
-        this.ga.trackEvent('novel', 'load', novel.title);
-        resolve();
-      })
-    })
-
-    let promise2 = new Promise((resolve, reject) => {
-      this.novel.getMaxChapter().then((maxChapter) => {
-        this.maxChapter = maxChapter;
-        console.log('maxChapter= ' + maxChapter)
-        resolve();
-      })
-    })
-
-    return Promise.all([promise1, promise2]);
+    this.maxChapter = await this.novel.getMaxChapter();
+    console.log('maxChapter= ' + this.maxChapter);
+    const currentChapter = await this.novel.getCurrentChapter();
+    this.loadAhead(currentChapter, 2, this.maxChapter);
+    await this.loadChapter(currentChapter);
+    this.content.fullscreen = true;
+    this.ga.trackEvent('novel', 'load', novel.title);
   }
 
   myViewDidLoad() {
@@ -199,47 +185,35 @@ export class ReadingPage {
       }
     });
 
-
     this.initNovel().then((novel) => {
       if (novel)
         this.loadNovel(novel);
     });
   }
 
-  initNovel(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if (this.navParams.data && this.navParams.data.novel) {
-        let novel = this.novelService.novelKwargs(this.navParams.data.novel);
-        resolve(novel);
-      } else {
-        this.storage.get(ST_CURRENT_NOVEL).then(novel => {
-          if (novel) {
-            resolve(this.novelService.novelKwargs(novel));
-          } else {
-            let novel = this.novelService.novelKwargs(DEFAULT_NOVEL);
-            novel.getMoreMeta(true)
-            .then(() => {
-              resolve(novel);
-            })
-            .catch((error) => {
-              this.textToast('You have no internet access :(')
-              console.log(error);
-              this.paragraphs = ['You have no internet access :(']
-              this.novel = null;
-              resolve(null);
-            });
-          }
-        })
-      }
-      console.log('ionViewDidLoad ReadingPage');
-    })
+  async initNovel() {
+    if (this.navParams.data && this.navParams.data.novel) {
+      return this.novelService.novelKwargs(this.navParams.data.novel);
+    }
+    const novelObj = await this.storage.get(ST_CURRENT_NOVEL);
+    if (novelObj) {
+      return this.novelService.novelKwargs(novelObj);
+    }
+    let novel = this.novelService.novelKwargs(DEFAULT_NOVEL);
+    try {
+      await novel.getMoreMeta(true);
+      return novel
+    } catch (error) {
+      this.textToast('You have no internet access :(')
+      console.log(error);
+      this.paragraphs = ['You have no internet access :(']
+      this.novel = null;
+      return null;
+    }
   }
 
   ionViewDidEnter() {
     console.log('enter!!!')
-    window['rm'] = () => {
-      this.resetDownloadedChapters();
-    }
     window['goto'] = (n) => {
       this.platform.zone.run(() => {
         this.loadChapter(n);
@@ -258,16 +232,15 @@ export class ReadingPage {
     })
   }
 
-  setChapterContent(content: any, scroll: number): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.paragraphs = content;
-      setTimeout(() => {
-        this.content.scrollTop = scroll;
-        // console.log('scroll= ' + scroll + ', chapter= ' + this.currentChapter);
-        // console.log('ss= ' + this.content.scrollTop);
-        resolve();
-      }, 100);
-    })
+  async setChapterContent(content: any, scroll: number) {
+    const wait = (to: number) => {
+      return new Promise(r => setTimeout(r, to));
+    }
+    this.paragraphs = content;
+    await wait(100);
+    this.content.scrollTop = scroll;
+    // console.log('scroll= ' + scroll + ', chapter= ' + this.currentChapter);
+    // console.log('ss= ' + this.content.scrollTop);
   }
 
   async loadChapter(chapter: number, changeChapter: boolean=true, refresh: boolean=false) {
@@ -325,127 +298,22 @@ export class ReadingPage {
     return null;
   }
 
-  loadChapter0(chapter: number, changeChapter: boolean=true, refresh: boolean=false): Promise<any> {
-    if (chapter < 1 || (this.maxChapter && chapter > this.maxChapter)) {
-      this.textToast("Chapter " + chapter + " doesn't exist. Max is " + this.maxChapter);
-    }
-
-    if (chapter < 1) {
-      chapter = 1;
-    }
-    if (this.maxChapter && chapter > this.maxChapter) {
-      chapter = this.maxChapter;
-    }
-    console.log('loadchapter ' + chapter);
-
-    return this.novel.getChapterContent(chapter).then((content) => {
-      if (content && !refresh) {
-        if (changeChapter) {
-          return content;
-        }
-        return 'end';
-      } else {
-        return 'scrap'
-      }
-    })
-    .then((content) => {
-      if (content === 'end') {
-        return 'end';
-      }
-      if (content === 'scrap') {
-        return this.novel.scrap(chapter).then((data) => {
-          let paragraphs;
-          paragraphs = data;
-          this.novel.cacheChapterContent(chapter, paragraphs);
-          if (changeChapter) {
-            return paragraphs;
-          }
-          return 'end'
-        })
-      }
-      return content;
-    })
-    .then((content) => {
-      if (content === 'end') {
-        return 'end';
-      }
-      this.currentChapter = chapter;
-      this.novel.setCurrentChapter(chapter);
-      // view loaded, should scroll to saved scroll point if available
-      return this.novel.getScroll(chapter).then((chScroll) => {
-        let _scroll = chScroll? chScroll: 0;
-        return [content, _scroll];
-      });
-    })
-    .catch((error) => {
-      if (changeChapter) {
-        this.textToast('You have no internet access :(');
-        let errMessage = error.message || error;
-        return [[errMessage], 0];
-      }
-      return 'end';
-    })
-    .then((args) => {
-      if (args === 'end') {
-        return 'end';
-      }
-      const content = args[0];
-      const scroll = args[1];
-      console.log('scroll: ' + scroll)
-      return this.setChapterContent(content, scroll).then(() => {
-        return 'end';
-      });
-    })
-  }
-
-  loadAhead(chapter, ahead, maxChapter, notify=null): Promise<any> {
-    const chapterList = [];
+  async loadAhead(chapter, ahead, maxChapter) {
+    const chapters = [];
     for (let i = 0; i < ahead && i + chapter <= maxChapter; i++) {
-      chapterList.push(chapter + i);
+      chapters.push(chapter + i);
     }
-    const chapterPromiseList = chapterList.map((chapterId) => {
+    const chapterPromises = chapters.map((chapterId) => {
       return this.loadChapter(chapterId, false);
     })
-    return Promise.all(chapterPromiseList).then(() => {
-      console.log('lookAhead over');
-    });
+    await Promise.all(chapterPromises);
+    console.log('lookAhead over');
   }
 
-  downloadOffline(): Promise<any> {
-    return this.novel.download().then((max) => {
-      this.textToast('Successfully downloaded ' + max + ' chapters');
-    })
-  }
-
-  resetDownloadedChapters(complete=null) {
-    let currentChapter;
-    let currentChapterScroll;
-    let rSettings;
-    this.novel.getCurrentChapter().then((v) => {
-      currentChapter = v;
-      return this.novel.getScroll(currentChapter);
-    })
-    .then((v) => {
-      currentChapterScroll = v;
-      return this.storage.get(ST_R_SETTINGS);
-    })
-    .then((v) => {
-      rSettings = v;
-      return this.storage.clear();
-    })
-    .then(() => {
-      return this.storage.set(ST_R_SETTINGS, rSettings);
-    })
-    .then(() => {
-      return this.novel.setCurrentChapter(currentChapter);
-    })
-    .then(() => {
-      return this.novel.setScroll(currentChapter, currentChapterScroll);
-    })
-    .then(() => {
-      complete && complete();
-      console.log('data reset!')
-    })
+  async downloadOffline() {
+    const max = await this.novel.download();
+    this.textToast('Successfully downloaded ' + max + ' chapters');
+    return max;
   }
 
   nextChapter() {
@@ -470,25 +338,23 @@ export class ReadingPage {
     }
   }
 
-  hideInterface() {
+  async hideInterface() {
     console.log('tap!!')
     this.hideUi = !this.hideUi;
     this.menuCtrl.swipeEnable(!this.hideUi);
 
-    if (this.hideUi)
-      this.lockTask.start().then(() => {
+    try {
+      if (this.hideUi) {
+        await this.lockTask.start();
         console.log('app is pinned');
-      })
-      .catch((error) => {
-        console.log(error)
-      });
-    else
-      this.lockTask.stop().then(() => {
+
+      } else {
+        await this.lockTask.stop()
         console.log('app is UNpinned');
-      })
-      .catch((error) => {
-        console.log(error)
-      });
+      }
+    } catch(error) {
+      console.log(error)
+    }
   }
 
   presentPopoverRead() {
@@ -541,25 +407,19 @@ export class ReadingPage {
     });
   }
 
-  doRefresh(refresher) {
+  async doRefresh(refresher) {
     console.log('Begin async operation', refresher);
 
     if (this.novel) {
-      this.loadChapter(this.currentChapter, true, true).then(() => {
-        console.log('Async operation has ended');
-        refresher.complete();
-      });
+      await this.loadChapter(this.currentChapter, true, true);
     } else {
-      this.initNovel().then((novel) => {
-        if (novel) {
-          return this.loadNovel(novel).then(() => {
-            refresher.complete();
-          });
-        } else {
-          refresher.complete();
-        }
-      });
+      const novel = await this.initNovel();
+      if (novel) {
+        await this.loadNovel(novel);
+      }
     }
+    console.log('Async operation has ended');
+    refresher.complete();
   }
 
   private timoutHandle: NodeJS.Timer = null;
@@ -591,16 +451,6 @@ export class ReadingPage {
   }
 }
 
-`
-<ion-list [virtualScroll]="chapList" no-lines>
-      <ion-item *virtualItem="let chap" (click)="selectCh(chap)" [attr.id]="createElemId(chap)" [ngClass]="{'current-ch': (isSelected(chap) == true)}">
-      <!--<ion-item *ngFor="let k of chapList" (click)="selectCh(k)" [attr.id]="createElemId(k)">-->
-        Chapter {{ chap }}
-        <ion-note item-right>
-        </ion-note>
-      </ion-item>
-  </ion-list>
-`
 
 
 
