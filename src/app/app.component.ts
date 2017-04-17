@@ -26,11 +26,17 @@ export class MyApp {
     ga: GoogleAnalytics
   ) {
 
-    let resolve = null;
-    let reject = null;
-    window.gaTrackerStarted = new Promise((_resolve, _reject) => {
-      resolve = _resolve;
-      reject = _reject;
+    window.gaTrackerStarted = new Promise((resolve, reject) => {
+      platform.ready().then(() => {
+        ga.startTrackerWithId("UA-97415917-1").then((data) => {
+          console.log('Google Analytics Tracker started', data);
+          ga.setAppVersion(appVersion);
+          resolve(true);
+        }, (err) => {
+          console.log('Google Analytics', err);
+          resolve(false);
+        })
+      });
     });
 
     platform.ready().then(() => {
@@ -39,15 +45,6 @@ export class MyApp {
       statusBar.styleDefault();
       splashScreen.hide();
       this.events = events;
-
-      ga.startTrackerWithId("UA-97415917-1").then((data) => {
-        console.log('Google Analytics Tracker started', data);
-        ga.setAppVersion(appVersion);
-        resolve(true);
-      }, (err) => {
-        console.log('Google Analytics', err);
-        resolve(false);
-      })
 
       this.pages = [
         { title: 'Explore', component: 'ExplorePage' },

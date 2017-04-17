@@ -147,7 +147,7 @@ export class Wuxiaco {
     })
   }
 
-  getNovelList(genre, page=1, force=false): Promise<any> {
+  getNovelList(genre, page=1): Promise<any> {
     let parseAuthor = (div): string => {
       let author = div.querySelector('p.author').innerText.trim();
       author = author.split('Author：')[1].trim();

@@ -56,38 +56,46 @@ export class ExplorePage {
     this.novelListDefault = [];
     this.novelList = [];
 
-    let sequence: Promise<number> = Promise.resolve(1);
-    return this.loadList(1).then((maxPage) => {
-      for (let i = 2; i <= maxPage; i++) {
-        sequence = sequence.then(() => {
-          return this.loadList(i);
-        });
+    // see https://developers.google.com/web/fundamentals/getting-started/primers/promises
+    // basically all networking promises start simultaneously
+    // then they are reduced sequentially to keep the order
+    // as they complete the elements are added in the correct order
+    const chapter1Promise = this.loadList(1).then((search: any) => {
+      // need the first chapter to know how many page needs to be loaded
+      const list = [];
+      for (let i = 2; i <= search.max; i++) {
+        list.push(i);
       }
-
-      return sequence;
+      const chapterPromiseList = list.map(this.loadList.bind(this));
+      chapterPromiseList.unshift(Promise.resolve(search)); // here we keep the result from the first page as a promise
+      return chapterPromiseList;
+    })
+    .then((chapterPromiseList) => {
+      return chapterPromiseList
+        .reduce((sequence, chapterPromise) => {
+          return sequence.then(() => {
+            return chapterPromise;
+          })
+          .then((chapterSearch) => {
+            this._loadList(chapterSearch);
+          })
+        }, Promise.resolve())
     })
     .catch((error) => {
       this.textToast('You have no internet access :(')
       let list = this.novelListDefault.concat([{ title: 'Sorry', desc: 'You have no internet access :(', error: error }]);
       this.novelListDefault = list;
       this.novelList = this.novelListDefault;
-      return sequence;
+      return 0;
     });
+
+    return chapter1Promise;
   }
 
-  loadList(page: number=1, force=false): Promise<number> {
+  loadList(page: number=1): Promise<any> {
+    // console.log(`in loadList(${page})`)
     let genre = this.genres[this.genreFilter];
-    return new Promise((resolve, reject) => {
-      this.novelService.getNovelList(genre, page, force).then((novelSearch) => {
-        this._loadList(novelSearch);
-        console.log(novelSearch);
-        resolve(novelSearch.max);
-      })
-      .catch((error) => {
-        reject(error);
-        console.error(error);
-      });
-    })
+    return this.novelService.getNovelList(genre, page);
   }
 
   sortNovelList(field: string) {
@@ -100,6 +108,7 @@ export class ExplorePage {
   }
 
   _loadList(search: any) {
+    console.log(search);
     this.novelListDefault = this.novelListDefault.concat(search.list);
     this.novelSearch = search;
     this.novelList = this.novelListDefault;

@@ -344,26 +344,16 @@ export class ReadingPage {
   }
 
   loadAhead(chapter, ahead, maxChapter, notify=null): Promise<any> {
-    return new Promise((resolve, reject) => {
-      let finish = () => {
-        console.log('lookAhead over');
-        resolve();
-      };
-      let syncLook = (i) => {
-        if (i >= ahead || i + chapter >= maxChapter) {
-          finish();
-          return;
-        }
-        this.loadChapter(chapter + i, false).then(() => {
-          syncLook(i + 1);
-          notify && notify(i);
-        })
-        .catch((error) => {
-          reject(error);
-        });
-      };
-      syncLook(0);
+    const chapterList = [];
+    for (let i = 0; i < ahead && i + chapter <= maxChapter; i++) {
+      chapterList.push(chapter + i);
+    }
+    const chapterPromiseList = chapterList.map((chapterId) => {
+      return this.loadChapter(chapterId, false);
     })
+    return Promise.all(chapterPromiseList).then(() => {
+      console.log('lookAhead over');
+    });
   }
 
   downloadOffline(): Promise<any> {
