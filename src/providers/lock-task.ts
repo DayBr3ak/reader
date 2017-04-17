@@ -10,13 +10,13 @@ export class LockTask {
 
   constructor(private plt: Platform) {
     plt.ready().then(() => {
-      if (plt.is('cordova'))
+      if (plt.is('cordova') && plt.is('android'))
         this._locktask = window.plugins.locktask;
     })
   }
 
   private _noCordova(): Promise<any> {
-    return Promise.reject('No Cordova');
+    return Promise.reject('No Cordova or Android');
   }
 
   start(className?: string): Promise<any> {

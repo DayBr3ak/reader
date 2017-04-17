@@ -64,25 +64,21 @@ export class BookmarksPage {
      return res;
   }
 
-  didLoad() {
-    this.bookmarkProvider.bookmarks().then((bookmarks) => {
-      if (bookmarks) {
-        this.bookmarkList = bookmarks;
-
-
-        this.bookmarkKeys.forEach((key) => {
-          let bookmark = this.bookmarkList[key];
-          let novel: Novel = this.novelService.novelKwargs(bookmark);
-          novel.getMoreMeta(true).then((metas) => {
-            bookmark.metas = metas;
-          }).catch((error) => {
-            console.log(error);
-            this.textToast('You have no internet access :(')
-          })
-        })
-
-      }
-    })
+  async didLoad() {
+    const bookmarks = await this.bookmarkProvider.bookmarks();
+    if (bookmarks) {
+      this.bookmarkList = bookmarks;
+      this.bookmarkKeys.forEach(async (key) => {
+        let bookmark = this.bookmarkList[key];
+        let novel: Novel = this.novelService.novelKwargs(bookmark);
+        try {
+          bookmark.metas = await novel.getMoreMeta(true);
+        } catch (error) {
+          console.log(error);
+          this.textToast('You have no internet access :(')
+        }
+      });
+    }
   }
 
   b2novel(key: string): Novel {

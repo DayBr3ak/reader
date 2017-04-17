@@ -25,7 +25,6 @@ export class BookmarkProvider {
     })
   }
 
-
   textToast(text: string, time: number = 2000) {
     let toast = this.toastCtrl.create({
       message: text,
@@ -38,32 +37,22 @@ export class BookmarkProvider {
     return this.storage.get(ST_BOOKMARK);
   }
 
-  addBookmark(novel: Novel) {
+  async addBookmark(novel: Novel) {
     console.log('add bookmark', novel.id);
     this.ga.trackEvent('bookmark', 'add-bookmark', novel.id);
 
-    let setBM = (v) => {
-      v[novel.title] = novel.meta();
-      this.textToast(`Added "${novel.title}" to your bookmarks!`);
-      return this.storage.set(ST_BOOKMARK, v);
-    }
-
-    return this.storage.get(ST_BOOKMARK).then((v) => {
-      if (v) {
-        return setBM(v);
-      } else {
-        return setBM({})
-      }
-    })
+    const cachedBm = await this.bookmarks() || {};
+    cachedBm[novel.title] = novel.meta();
+    this.textToast(`Added "${novel.title}" to your bookmarks!`);
+    this.storage.set(ST_BOOKMARK, cachedBm);
   }
 
-  remove(bookmark: any): Promise<any> {
-    return this.bookmarks().then((bs) => {
-      this.ga.trackEvent('bookmark', 'remove-bookmark', bookmark.title);
+  async remove(bookmark: any) {
+    const bs = await this.bookmarks();
+    this.ga.trackEvent('bookmark', 'remove-bookmark', bookmark.title);
 
-      delete bs[bookmark.title]
-      return this.storage.set(ST_BOOKMARK, bs);
-    })
+    delete bs[bookmark.title]
+    return this.storage.set(ST_BOOKMARK, bs);
   }
 }
 

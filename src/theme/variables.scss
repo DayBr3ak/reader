@@ -47,8 +47,10 @@ $toolbar-background: #000000;
 
 $colors: (
   primary:    #ffffff,
-  secondary:  #8f1212,
-  danger:     #610e0e,
+  secondary:  #22ebb7,
+  danger:     #009285,
+  old_secondary:  #8f1212,
+  old_danger:     #610e0e,
   light:      #ffffff,
   dark:       #000000,
 
@@ -104,3 +106,4 @@ $wp-toolbar-spacing: $md-toolbar-spacing;
 
 @import "roboto";
 @import "noto-sans";
+

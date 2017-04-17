@@ -46,6 +46,16 @@ export class Wuxiaco {
     toast.present();
   }
 
+  htmlGet(url: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      this.http.get(url).subscribe((data) => {
+        resolve(data.text());
+      }, (error) => {
+        reject(error);
+      });
+    })
+  }
+
   wordFilter(text: string, pattern: RegExp, replacement: string): string {
     return text.replace(pattern, replacement);
   }
@@ -58,7 +68,7 @@ export class Wuxiaco {
     return `${this.URL}/${id}/${suffix}`
   }
 
-  scrap(url: string, chapter: number, callback) {
+  async scrap(url: string, chapter: number) {
     let getArticleBody = (articleBody) => {
       let len = articleBody.children.length;
       let elemToDel = [
@@ -85,22 +95,19 @@ export class Wuxiaco {
       return res;
     }
 
-    return this.http.get(url).subscribe((data) => {
-      let resHtml = data.text();
+    try {
+      let resHtml = await this.htmlGet(url);
       resHtml = resHtml.replace(urlRegex, '');
-
       let doc = this.parser.parseFromString(resHtml, 'text/html');
       let articleBody = doc.querySelector('div[itemprop="articleBody"]');
-      callback(getArticleBody(articleBody));
-    }, (error) => {
+      return getArticleBody(articleBody);
+    } catch (error) {
       if (error) console.log(error);
       this.textToast('Error loading chapter: ' + chapter + '; error="' + error.status + ':' + error.statusText + '"');
-    }, () => {
-      // complete
-    })
+    }
   }
 
-  scrapDirectory(url: string) {
+  async scrapDirectory(url: string) {
     let parseChapterList = (doc) => {
       let links = doc.querySelectorAll('#chapterlist>p>a');
       var filter = Array.prototype.filter;
@@ -115,39 +122,30 @@ export class Wuxiaco {
       return directory;
     };
 
-    return new Promise((resolve, reject) => {
-      this.http.get(url).subscribe((data) => {
-        let doc = this.parser.parseFromString(data.text(), 'text/html');
-        let directory = parseChapterList(doc);
-        resolve(directory);
-      }, (error) => {
-        reject(error);
-      });
-    });
+    const html = await this.htmlGet(url);
+    let doc = this.parser.parseFromString(html, 'text/html');
+    return parseChapterList(doc);
   }
 
-  scrapChapter(url: string): Promise<any> {
+  async scrapChapter(url: string) {
     let parseChapterContent = (doc) => {
       let content = doc.querySelector('#chaptercontent').innerHTML.trim();
       content = this.wordFilter(content, /\*ck/, 'uck');
       content = content.split('<br><br>');
       return content;
     }
-
     console.log(url)
-    return new Promise((resolve, reject) => {
-      this.http.get(url).subscribe((data) => {
-        let doc = this.parser.parseFromString(data.text(), 'text/html');
-        let content = parseChapterContent(doc);
-        resolve(content);
-      }, (error) => {
-        console.log("scrapChapter Error")
-        reject(error);
-      })
-    })
+    try {
+      const text = await this.htmlGet(url);
+      let doc = this.parser.parseFromString(text, 'text/html');
+      return parseChapterContent(doc);
+    } catch (error) {
+      console.log("scrapChapter Error")
+      throw error
+    }
   }
 
-  getNovelList(genre, page=1): Promise<any> {
+  async getNovelList(genre, page=1) {
     let parseAuthor = (div): string => {
       let author = div.querySelector('p.author').innerText.trim();
       author = author.split('Author：')[1].trim();
@@ -185,42 +183,29 @@ export class Wuxiaco {
       return `${this.NAME}-${genre[0]}-${page}`;
     }
 
-    let request = () => {
-      return new Promise((resolve, reject) => {
-        let genreId: number = genre[0];
-        let url = `${this.URL}/category/${genreId}/${page}.html`;
-        this.http.get(url).subscribe((data) => {
-          let doc = this.parser.parseFromString(data.text(), 'text/html');
-          let list = parseNovelList(doc);
-          let compressed = compressToBase64(JSON.stringify(list));
-          this.storage.set(resolveStName(), compressed);
-          resolve(list);
-        }, error => {
-          reject({ url: url, error: error });
-        })
-      })
-    }
+    let genreId: number = genre[0];
+    let url = `${this.URL}/category/${genreId}/${page}.html`;
 
-    return new Promise((resolve, reject) => {
-      request().then((list) => {
-        resolve(list);
-      })
-      .catch((error) => {
-        this.storage.get(resolveStName()).then((v) => {
-          if (v) {
-            console.log('cachehit!')
-            let uncompressed = decompressFromBase64(v);
-            resolve(JSON.parse(uncompressed));
-          }
-          else {
-            reject({ fn: 'getNovelList', error: `can't access ${error.url}` })
-          }
-        })
-      })
-    })
+    try {
+      let html = await this.htmlGet(url);
+      let doc = this.parser.parseFromString(html, 'text/html');
+      let list = parseNovelList(doc);
+      let compressed = compressToBase64(JSON.stringify(list));
+      this.storage.set(resolveStName(), compressed);
+      return list
+    } catch (error) {
+      const cachedList = await this.storage.get(resolveStName());
+      if (cachedList) {
+        console.log('cachehit!')
+        let uncompressed = decompressFromBase64(cachedList);
+        return JSON.parse(uncompressed);
+      } else {
+        throw { fn: 'getNovelList', error: `can't access ${url}` }
+      }
+    }
   }
 
-  getNovelMeta(novel: Novel, force: boolean=false) {
+  async getNovelMeta(novel: Novel, force: boolean=false) {
     let resolveStName = () => {
       return `${this.NAME}-meta-${novel.id}`;
     }
@@ -248,39 +233,23 @@ export class Wuxiaco {
       return meta;
     }
 
-    let request = () => {
-      return new Promise((resolve, reject) => {
-        this.http.get(url).subscribe((data) => {
-          let doc = this.parser.parseFromString(data.text(), 'text/html');
-          let meta = parseNovelMetaData(doc);
-          let compressed = compressToBase64(JSON.stringify(meta));
-          this.storage.set(resolveStName(), compressed);
-          resolve(meta);
-        }, error => {
-          reject(error);
-        })
-      })
+    try {
+      let html = await this.htmlGet(url);
+      let doc = this.parser.parseFromString(html, 'text/html');
+      let meta = parseNovelMetaData(doc);
+      let compressed = compressToBase64(JSON.stringify(meta));
+      this.storage.set(resolveStName(), compressed);
+      return meta;
+    } catch (error) {
+      let cachedMeta = await this.storage.get(resolveStName());
+      if (cachedMeta) {
+        let uncompressed = decompressFromBase64(cachedMeta);
+        return JSON.parse(uncompressed);
+      }
+      else {
+        throw { fn: 'getNovelMeta', error: `can't access ${url}` };
+      }
     }
-
-    return new Promise((resolve, reject) => {
-      // if (force) {
-        // return request(resolve, reject);
-      // }
-      request().then((meta) => {
-        resolve(meta);
-      })
-      .catch((error) => {
-        this.storage.get(resolveStName()).then((v) => {
-          if (v) {
-            let uncompressed = decompressFromBase64(v);
-            resolve(JSON.parse(uncompressed));
-          }
-          else {
-            reject({ fn: 'getNovelMeta', error: `can't access ${url}` });
-          }
-        })
-      })
-    }) // promise
   }
 
   novelKwargs(opts: any): Novel {
@@ -333,98 +302,78 @@ export class Novel {
     return this.manager.resolveUrl(chapter, this.id);
   }
 
-  getDirectory(): Promise<any> {
+  async getDirectory(): Promise<any[]> {
     let url = this.manager.wuxiacoUrl(this.id, 'all.html');
-    return this.manager.scrapDirectory(url).then((directory) => {
-      return this.setStoredCompressed(ST_NOVEL_DIR, directory);
-    })
-    .catch((error) => {
-      return this.getStoredCompressed(ST_NOVEL_DIR).then((directory) => {
-        return new Promise((resolve, reject) => {
-          if (directory) {
-            resolve(directory);
-          } else {
-            reject('no directory')
-          }
-        })
-      })
-    })
+
+    try {
+      const directory = await this.manager.scrapDirectory(url);
+      this.setStoredCompressed(ST_NOVEL_DIR, directory);
+      return directory;
+    } catch (error) {
+      const cachedDirectory = await this.getStoredCompressed(ST_NOVEL_DIR);
+      if (cachedDirectory) {
+        return cachedDirectory;
+      }
+      throw 'no directory available';
+    }
   }
 
-  scrap(chapter): Promise<any> {
-    // let url = this.resolveUrl(chapter);
-    return this.getDirectory()
-    .then((directory) => {
+  async scrap(chapter) {
+    try {
+      const directory = await this.getDirectory();
       if (chapter > directory.length) {
-        return new Promise(resolve => {
-          resolve({ error: "Chapter doesn't " + chapter + " exist yet" });
-        })
+        return { error: "Chapter doesn't " + chapter + " exist yet" };
       }
-      let chapterElement = directory[chapter - 1]
-      let url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
-      return this.manager.scrapChapter(url);
-    }).catch((error) => {
+      const chapterElement = directory[chapter - 1]
+      const url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
+      return await this.manager.scrapChapter(url);
+    } catch (error) {
       let mes = 'Download error: ' + chapter + ' ' + this.title;
       console.log(mes);
-      return Promise.reject({ message: mes, error: error });
-    })
+      throw { message: mes, error: error };
+    }
   }
 
-
-  download(): Promise<any> {
-    return this.getDirectory().then((directory: any[]) => {
-      let createSequence = (start: number, step: number): Promise<any> => {
-        let sequence = Promise.resolve();
-        for (let i = start; i < directory.length; i = i + step) {
+  async download() {
+    const createSequence = async (start: number, step: number, directory: any[]) => {
+      for (let i = start; i < directory.length; i = i + step) {
           const chapter = i + 1;
-          sequence = sequence.then(() => {
-            console.log('download chapter ' + chapter);
-            return this.getStored(ST_CHAPTER_TXT + chapter).then((v) => {
-              if (v) {
-                return Promise.resolve(v);
-              }
-              const chapterElement = directory[i];
-              const url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
-              return this.manager.scrapChapter(url).then(content => {
-                return this.cacheChapterContent(chapter, content);
-              });
-            });
-          });
-        } // for
-        return sequence
-      }
+          console.log('download chapter ' + chapter);
+          const chachedContent = await this.getStored(ST_CHAPTER_TXT + chapter);
+          if (chachedContent)
+            continue // chapter is already cached so no need to download it
 
+          const chapterElement = directory[i];
+          const url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
+          const content = await this.manager.scrapChapter(url);
+          this.cacheChapterContent(chapter, content);
+      }
+    }
+
+    try {
+      const directory = await this.getDirectory();
       const step = 5
       const list = [];
       for (let i = 0; i < step; i++) {
-        list.push(createSequence(i, 5));
+        list.push(createSequence(i, step, directory));
       }
-
-      return Promise.all(list).then(() => {
-        return Promise.resolve(directory.length);
-      })
-    })
-    .catch((error) => {
+      await Promise.all(list);
+      return directory.length;
+    } catch (error) {
       console.log('Error download ' + error);
-      return Promise.resolve(-1);
-    })
+      return -1
+    }
   }
 
-  removeDownload(): Promise<any> {
-    return new Promise(resolve => {
-      this.getMaxChapter().then(max => {
-
-        let prList = [];
-        for (let i = 0; i < max; i++) {
-          let chapter = i + 1;
-          let pr = this.manager.storage.remove(this.id + '-' + ST_CHAPTER_TXT + chapter);
-          prList.push(pr);
-        }
-        Promise.all(prList).then(() => {
-          resolve();
-        })
-      });
-    });
+  async removeDownload() {
+    const max = await this.getMaxChapter();
+    let prList = [];
+    for (let i = 0; i < max; i++) {
+      let chapter = i + 1;
+      let pr = this.manager.storage.remove(this.id + '-' + ST_CHAPTER_TXT + chapter);
+      prList.push(pr);
+    }
+    await Promise.all(prList);
   }
 
   getMoreMeta(force: boolean=false): Promise<any> {
@@ -440,25 +389,21 @@ export class Novel {
   }
 
   getStoredCompressed(property: string): Promise<any> {
-    return new Promise(resolve => {
-      this.getStored(property).then((data) => {
-        if (data) {
-          let uncompressed = decompressFromBase64(data);
-          resolve(JSON.parse(uncompressed));
-        } else {
-          resolve(null);
-        }
-      })
-    });
+    return this.getStored(property).then((data) => {
+      if (data) {
+        let uncompressed = decompressFromBase64(data);
+        return JSON.parse(uncompressed);
+      } else {
+        return null;
+      }
+    })
   }
 
   setStoredCompressed(property: string, val: any): Promise<any> {
-    return new Promise(resolve => {
-      let compressed = compressToBase64(JSON.stringify(val));
-      this.setStored(property, compressed).then(() => {
-        resolve(val);
-      })
-    })
+    let compressed = compressToBase64(JSON.stringify(val));
+    return this.setStored(property, compressed).then(() => {
+      return val;
+    });
   }
 
   setScroll(chapter: number, scroll: number): Promise<any> {
@@ -467,18 +412,6 @@ export class Novel {
 
   getScroll(chapter: number): Promise<any> {
     return this.getStored(ST_CHAPTER_SCROLL + chapter);
-  }
-
-  getCurrentChapter(): Promise<any> {
-    return new Promise(resolve => {
-      this.getStored(ST_CURRENT_CHAPTER).then((v) => {
-        if (v) {
-          resolve(v);
-        } else {
-          resolve(1);
-        }
-      })
-    })
   }
 
   setCurrentChapter(chapter: number): Promise<any> {
@@ -493,14 +426,20 @@ export class Novel {
     return this.getStoredCompressed(ST_CHAPTER_TXT + chapter);
   }
 
-  getMaxChapter(): Promise<any> {
-    return new Promise(resolve => {
-      this.getDirectory().then((directory) => {
-        resolve(directory.length);
-      }).catch((error) => {
-        resolve(20000)
-      });
-    })
+  async getMaxChapter() {
+    try {
+      const directory = await this.getDirectory();
+      return directory.length;
+    } catch (error) {
+      return 20000;
+    }
+  }
+
+  async getCurrentChapter() {
+    const chapter = await this.getStored(ST_CURRENT_CHAPTER);
+    if (chapter)
+      return chapter
+    return 1
   }
 }
 

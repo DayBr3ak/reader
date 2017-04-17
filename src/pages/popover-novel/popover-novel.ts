@@ -76,18 +76,16 @@ export class PopoverNovelPage {
     console.log(this.novelMetaDict);
   }
 
-  download() {
-    this.novel.download().then((max) => {
-      const mes = `Downloaded ${max} chapters of '${this.novel.title}'`;
-      this.textToast(mes);
-      console.log(mes);
-    });
+  async download() {
+    const max = await this.novel.download();
+    const mes = `Downloaded ${max} chapters of '${this.novel.title}'`;
+    this.textToast(mes);
+    console.log(mes);
   }
 
-  rm () {
-    this.novel.removeDownload().then(() => {
-      console.log('deleted')
-      this.textToast(`Deleted offline data of '${this.novel.title}'`);
-    });
+  async rm () {
+    await this.novel.removeDownload()
+    console.log('deleted')
+    this.textToast(`Deleted offline data of '${this.novel.title}'`);
   }
 }

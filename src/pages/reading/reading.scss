@@ -42,20 +42,3 @@ page-reading {
   }
 
 }
-
-ion-item.current-ch {
-  background-color: map-get($colors, secondary);
-}
-
-ion-content.menu-content {
-  background-color: map-get($colors, secondary);
-
-  button {
-    background-color: map-get($colors, danger);
-  }
-}
-
-.bar-button-md, .bar-button-ios {
-  font-size: 1.2rem;
-  text-transform: uppercase;
-}

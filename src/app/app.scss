@@ -14,3 +14,98 @@
 // To declare rules for a specific mode, create a child rule
 // for the .md, .ios, or .wp mode classes. The mode class is
 // automatically applied to the <body> element in the app.
+
+.hidden {
+  display: none!important;
+}
+
+
+ion-item.current-ch {
+  background-color: map-get($colors, secondary);
+}
+
+ion-content.menu-content {
+  background-color: map-get($colors, danger);
+
+  button {
+    background-color: map-get($colors, danger);
+  }
+}
+
+.bar-button-md, .bar-button-ios {
+  font-size: 1.2rem;
+  text-transform: uppercase;
+}
+
+.toast-md, .toast-ios {
+  .toast-wrapper {
+    background: map-get($colors, danger);
+  }
+  .toast-message {
+    color: map-get($colors, black);
+  }
+}
+
+.alert-ios, .alert-md {
+  .alert-title {
+    color: map-get($colors, secondary);
+  }
+
+  .alert-wrapper {
+    background-color: map-get($colors, blackgrey);
+  }
+
+  [aria-checked=true] .alert-radio-label {
+    color: map-get($colors, secondary);
+  }
+
+  [aria-checked=false] .alert-radio-label {
+    color: map-get($colors, white);
+  }
+}
+
+.refresher-pulling-icon, .refresher-refreshing-icon {
+  color: map-get($colors, white);
+}
+
+.refresher-refreshing .spinner-ios line, .refresher-refreshing .spinner-ios-small line, .refresher-refreshing .spinner-crescent circle {
+  stroke: map-get($colors, white);
+}
+
+
+.card-title-md, .card-title-ios {
+  color: map-get($colors, white);
+}
+
+.card-md, .card-ios {
+  p {
+    color: map-get($colors, dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: justify;
+    // white-space: nowrap;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+    .label {
+      color: map-get($colors, white);
+    }
+    .content {
+      color: map-get($colors, secondary);
+    }
+  }
+
+  box-shadow: 0 2px 2px 0 rgba(187, 184, 184, 0.14), 0 3px 1px -2px rgba(187, 184, 184, 0.2), 0 1px 5px 0 rgba(187, 184, 184, 0.12);
+  background: map-get($colors, blackgrey);
+  font-size: 1.4rem;
+
+}
+
+.searchbar-ios .searchbar-input {
+  color: map-get($colors, black);
+}
+
+.toolbar .searchbar-ios .searchbar-input {
+  background: map-get($colors, white);
+}
