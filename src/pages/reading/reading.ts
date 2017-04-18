@@ -102,6 +102,7 @@ export class ReadingPage {
   }
 
   novel: Novel = null;
+  tapHandler: MultiTapHandler;
 
   constructor(public statusBar: StatusBar,
     public navCtrl: NavController,
@@ -133,6 +134,8 @@ export class ReadingPage {
     (<any>window).gaTrackerStarted.then(() => {
       this.ga.trackView("Reading Page");
     })
+
+    this.registerEvents();
   }
 
   textToast(text: string, time: number = 2000) {
@@ -162,6 +165,11 @@ export class ReadingPage {
     this.events.subscribe('change:background', (bg) => {
       this.readerSettings.bgClass = bg;
     });
+
+    this.tapHandler = new MultiTapHandler(3, 600);
+    this.tapHandler.observable.subscribe(() => {
+      this.hideInterface();
+    });
   }
 
   async loadNovel(novel: Novel) {
@@ -177,8 +185,7 @@ export class ReadingPage {
     this.ga.trackEvent('novel', 'load', novel.title);
   }
 
-  myViewDidLoad() {
-    this.registerEvents();
+  myViewDidEnter() {
     this.storage.get(ST_R_SETTINGS).then((setts) => {
       if (setts) {
         this.readerSettings = setts;
@@ -223,7 +230,7 @@ export class ReadingPage {
 
     this.storage.ready().then(() => {
       // if (this.platform.is('cordova')) {
-        this.myViewDidLoad();
+        this.myViewDidEnter();
       // } else {
         // this.resetDownloadedChapters(() => {
           // this.myViewDidLoad();
@@ -421,36 +428,73 @@ export class ReadingPage {
     console.log('Async operation has ended');
     refresher.complete();
   }
+}
 
-  private timoutHandle: NodeJS.Timer = null;
-  private tapHandleCnt: number = 0;
-  tapHandle(handler) {
-    let cancelTimeout = () => {
-      if (this.timoutHandle) {
-        clearTimeout(this.timoutHandle);
-        this.timoutHandle = null;
+import { Observable } from 'rxjs';
+
+
+export class MultiTapHandler {
+
+  private tapRequired: number;
+  private windowOf: number;
+  private tapObservable: Observable<any>;
+  private tapObserver: any = null;
+  private timeoutHandle: NodeJS.Timer = null;
+  private tapCounter: number = 0;
+
+  constructor (tapRequired: number=2, windowOf: number=600) {
+    if (tapRequired < 1) {
+      throw 'MultiTapHandler needs at least 1 tap';
+    }
+    this.tapRequired = tapRequired;
+    this.windowOf = windowOf;
+    this.tapObservable = Observable.create(observer => {
+      this.tapObserver = observer;
+      return () => {
+        console.log('taphandler disposed');
       }
-      this.tapHandleCnt = 0;
-    }
-    if (this.timoutHandle === null) {
-      // first tap, enable timer
-      this.timoutHandle = setTimeout(() => {
-        cancelTimeout();
-        console.log('taphandler timeout')
-      }, 600);
-      return;
-    }
+    });
+  }
 
-    if (this.timoutHandle) {
-      this.tapHandleCnt++;
-      if (this.tapHandleCnt >= 2) {
-        cancelTimeout();
-        handler.bind(this)();
+  private _cancelTimeout() {
+    if (this.timeoutHandle) {
+      clearTimeout(this.timeoutHandle);
+      this.timeoutHandle = null;
+    }
+    this.tapCounter = 0;
+  }
+
+  private _createTimeout() {
+    this.timeoutHandle = setTimeout(() => {
+        this._cancelTimeout();
+        console.log('taphandler timeout')
+    }, this.windowOf);
+  }
+
+  private _publish() {
+    this._cancelTimeout();
+    this.tapObserver.next(true);
+  }
+
+  tap () {
+    if (this.tapRequired === 1) {
+      return this._publish();
+    }
+    if (this.timeoutHandle === null) {
+      // first tap, enable timer
+      return this._createTimeout();
+    }
+    if (this.timeoutHandle) {
+      this.tapCounter++;
+      if (this.tapCounter >= (this.tapRequired - 1)) {
+        this._publish();
       }
     }
   }
+
+  get observable(): Observable<any> {
+    return this.tapObservable;
+  }
 }
-
-
 
 

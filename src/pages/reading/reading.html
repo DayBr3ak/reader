@@ -48,7 +48,7 @@
     (prevClick)="prevChapter()"
   ></nav-btn>
 
-  <div #articleBody class="article-body" (click)="tapHandle(hideInterface)"
+  <div #articleBody class="article-body" (click)="tapHandler.tap()"
     [style.fontFamily]="readerSettings.fontFamily"
     [style.fontSize]="readerSettings.fontSize"
   >

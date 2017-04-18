@@ -3,7 +3,8 @@ import { ToastController } from 'ionic-angular';
 import { Http } from '@angular/http';
 import { Storage } from '@ionic/storage';
 
-import 'rxjs/add/operator/map';
+// import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/retry';
 // import { Observable } from 'rxjs/Observable';
 
 import { compressToBase64, decompressFromBase64 } from 'lz-string';
@@ -48,7 +49,9 @@ export class Wuxiaco {
 
   htmlGet(url: string): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.http.get(url).subscribe((data) => {
+      this.http.get(url)
+        .retry(5)
+        .subscribe((data) => {
         resolve(data.text());
       }, (error) => {
         reject(error);
@@ -87,7 +90,7 @@ export class Wuxiaco {
         const htmlTagRegex = /(<([^>]+)>)/ig
 
         let txt = para[i].innerHTML;
-        txt = this.wordFilter(txt, /&nbsp;/, ' ');
+        txt = this.wordFilter(txt, /&nbsp;/g, ' ');
         txt = this.wordFilter(txt, htmlTagRegex, '');
         //TODO get rid of the dict
         res.push({ strong: i == 0, text: txt });
@@ -130,7 +133,7 @@ export class Wuxiaco {
   async scrapChapter(url: string) {
     let parseChapterContent = (doc) => {
       let content = doc.querySelector('#chaptercontent').innerHTML.trim();
-      content = this.wordFilter(content, /\*ck/, 'uck');
+      content = this.wordFilter(content, /\*ck/g, 'uck');
       content = content.split('<br><br>');
       return content;
     }
