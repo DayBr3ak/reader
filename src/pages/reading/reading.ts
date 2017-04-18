@@ -128,14 +128,49 @@ export class ReadingPage {
       fontSize: '4vw',
       bgClass: 'bg-black'
     };
+
+    console.log('Hello ReadingPage constructor');
   }
 
-  ionViewDidLoad() {
-    (<any>window).gaTrackerStarted.then(() => {
-      this.ga.trackView("Reading Page");
-    })
+  async ionViewDidLoad() {
+    console.log('VIEW DID LOAD');
+    await window['gaTrackerStarted'];
+    this.ga.trackView("Reading Page");
 
     this.registerEvents();
+    await this.storage.ready();
+    const settings = await this.storage.get(ST_R_SETTINGS);
+    if (settings) {
+      this.readerSettings = settings;
+    }
+    const novel = await this.initNovel();
+    if (novel) {
+      this.loadNovel(novel);
+    }
+  }
+
+  ionViewDidEnter() {
+    console.log('VIEW DID ENTER')
+    window['goto'] = (n) => {
+      this.platform.zone.run(() => {
+        this.loadChapter(n);
+      });
+    }
+    window['thiz'] = this;
+  }
+
+  onEnterSetScroll: () => void = null;
+  async ionViewWillEnter() {
+    console.log('VIEW WILL ENTER');
+    this.onEnterSetScroll && this.onEnterSetScroll();
+  }
+
+  ionViewDidUnload() {
+    console.log('VIEW DID UNLOAD');
+  }
+
+  ionViewDidLeave() {
+    console.log('VIEW DID LEAVE');
   }
 
   textToast(text: string, time: number = 2000) {
@@ -147,6 +182,8 @@ export class ReadingPage {
   }
 
   registerEvents() {
+    console.log('REGISTER EVENTS');
+
     this.events.subscribe('volume:up', () => {
       console.log('VUP, chapter is now ' + (this.currentChapter - 1))
       this.prevChapter();
@@ -168,8 +205,13 @@ export class ReadingPage {
 
     this.tapHandler = new MultiTapHandler(3, 600);
     this.tapHandler.observable.subscribe(() => {
-      this.hideInterface();
+      console.log('tap!!')
+      this.toggleInterface();
     });
+
+    this.platform.pause.subscribe(() => {
+      this.onPause();
+    })
   }
 
   async loadNovel(novel: Novel) {
@@ -183,19 +225,6 @@ export class ReadingPage {
     await this.loadChapter(currentChapter);
     this.content.fullscreen = true;
     this.ga.trackEvent('novel', 'load', novel.title);
-  }
-
-  myViewDidEnter() {
-    this.storage.get(ST_R_SETTINGS).then((setts) => {
-      if (setts) {
-        this.readerSettings = setts;
-      }
-    });
-
-    this.initNovel().then((novel) => {
-      if (novel)
-        this.loadNovel(novel);
-    });
   }
 
   async initNovel() {
@@ -219,35 +248,21 @@ export class ReadingPage {
     }
   }
 
-  ionViewDidEnter() {
-    console.log('enter!!!')
-    window['goto'] = (n) => {
-      this.platform.zone.run(() => {
-        this.loadChapter(n);
-      });
-    }
-    window['thiz'] = this;
-
-    this.storage.ready().then(() => {
-      // if (this.platform.is('cordova')) {
-        this.myViewDidEnter();
-      // } else {
-        // this.resetDownloadedChapters(() => {
-          // this.myViewDidLoad();
-        // });
-      // }
-    })
-  }
-
   async setChapterContent(content: any, scroll: number) {
-    const wait = (to: number) => {
-      return new Promise(r => setTimeout(r, to));
-    }
+    const wait = (to: number) => new Promise(r => setTimeout(r, to));
     this.paragraphs = content;
-    await wait(100);
-    this.content.scrollTop = scroll;
-    // console.log('scroll= ' + scroll + ', chapter= ' + this.currentChapter);
-    // console.log('ss= ' + this.content.scrollTop);
+    await wait(10);
+    try {
+      this.content.scrollTop = scroll;
+      this.onEnterSetScroll = null;
+    } catch (error) {
+      console.log('DOM paused/not loaded, setting scroll is not possible');
+      this.onEnterSetScroll = () => {
+        console.log('delayed scroll!');
+        this.content.scrollTop = scroll;
+        this.onEnterSetScroll = null;
+      }
+    }
   }
 
   async loadChapter(chapter: number, changeChapter: boolean=true, refresh: boolean=false) {
@@ -345,8 +360,7 @@ export class ReadingPage {
     }
   }
 
-  async hideInterface() {
-    console.log('tap!!')
+  async toggleInterface() {
     this.hideUi = !this.hideUi;
     this.menuCtrl.swipeEnable(!this.hideUi);
 
@@ -361,6 +375,14 @@ export class ReadingPage {
       }
     } catch(error) {
       console.log(error)
+    }
+  }
+
+  onPause() {
+    if (this.hideUi) {
+      // interface is hidden and probably pinned
+      // we want to change that;
+      this.toggleInterface();
     }
   }
 

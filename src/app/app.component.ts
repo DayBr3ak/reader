@@ -5,7 +5,6 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
-declare var window: any;
 const appVersion = '0.1a';
 
 @Component({
@@ -26,18 +25,18 @@ export class MyApp {
     ga: GoogleAnalytics
   ) {
 
-    window.gaTrackerStarted = new Promise((resolve, reject) => {
-      platform.ready().then(() => {
-        ga.startTrackerWithId("UA-97415917-1").then((data) => {
-          console.log('Google Analytics Tracker started', data);
-          ga.setAppVersion(appVersion);
-          resolve(true);
-        }, (err) => {
-          console.log('Google Analytics', err);
-          resolve(false);
-        })
-      });
-    });
+    window['gaTrackerStarted'] = (async () => {
+      await platform.ready();
+      try {
+        const data = await ga.startTrackerWithId("UA-97415917-1");
+        console.log('Google Analytics Tracker started', data);
+        ga.setAppVersion(appVersion);
+        return true;
+      } catch (error) {
+        console.log('Google Analytics', error);
+        return false;
+      }
+    })();
 
     platform.ready().then(() => {
       // Okay, so the platform is ready and our plugins are available.
