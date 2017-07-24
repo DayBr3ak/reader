@@ -101,7 +101,7 @@ export class ReadingPage {
     this._maxChapter = v;
   }
 
-  novel: Novel = null;
+  novel: Novel;
   tapHandler: MultiTapHandler;
 
   constructor(public statusBar: StatusBar,
@@ -120,6 +120,7 @@ export class ReadingPage {
     private bookmarkProvider: BookmarkProvider,
     private lockTask: LockTask
   ) {
+    this.novel = null;
     this.hideUi = false;
     this.maxChapter = null;
     this.statusBar.overlaysWebView(false);
