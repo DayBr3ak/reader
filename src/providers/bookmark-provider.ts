@@ -8,9 +8,12 @@ import { GoogleAnalytics } from '@ionic-native/google-analytics';
 import { Novel } from './wuxiaco';
 
 const ST_BOOKMARK = 'app-bookmarks';
+const ST_BOOKMARK_VERSION = 'app-bookmarks-version';
+const BK_VERSION = 1.1;
 
 @Injectable()
 export class BookmarkProvider {
+  private _version: number = null;
 
   constructor(public http: Http,
     public events: Events,
@@ -22,7 +25,7 @@ export class BookmarkProvider {
 
     this.events.subscribe('add:bookmark', (novel: Novel) => {
       this.addBookmark(novel);
-    })
+    });
   }
 
   textToast(text: string, time: number = 2000) {
@@ -33,18 +36,56 @@ export class BookmarkProvider {
     toast.present();
   }
 
+  async getVersion() {
+    // caching the version to not execute the async check everytime
+    if (this._version === null) {
+      this._version = await this.storage.get(ST_BOOKMARK_VERSION);
+    }
+    return this._version;
+  }
+
+  async checkVersion() {
+    const bkVersion = await this.getVersion();
+    // check version
+    if (bkVersion !== null && bkVersion === BK_VERSION) {
+      return;
+    }
+    // update version
+    await this.storage.set(ST_BOOKMARK_VERSION, BK_VERSION);
+    console.log(`NEW BOOKMARK VERSION ${bkVersion} -> ${BK_VERSION}`);
+    const bookmarks = await this.storage.get(ST_BOOKMARK);
+    if (bookmarks === null)
+      return;
+
+    // apply version changes for null to 1.1
+    for (let key in bookmarks) {
+      const bookmark = bookmarks[key];
+      bookmarks[bookmark.id] = bookmarks[bookmark.title];
+      bookmark.dateAdded = Date.now(); // sort by date added
+      delete bookmarks[bookmark.title];
+    }
+    await this.storage.set(ST_BOOKMARK, bookmarks);
+  }
+
   bookmarks(): Promise<any> {
-    return this.storage.get(ST_BOOKMARK);
+    return this.checkVersion().then(() => {
+      return this.storage.get(ST_BOOKMARK);
+    });
   }
 
   async addBookmark(novel: Novel) {
     console.log('add bookmark', novel.id);
-    this.ga.trackEvent('bookmark', 'add-bookmark', novel.id);
-
     const cachedBm = await this.bookmarks() || {};
-    cachedBm[novel.title] = novel.meta();
-    this.textToast(`Added "${novel.title}" to your bookmarks!`);
-    this.storage.set(ST_BOOKMARK, cachedBm);
+    if (cachedBm[novel.id] === undefined) {
+      this.ga.trackEvent('bookmark', 'add-bookmark', novel.id);
+      cachedBm[novel.id] = novel.meta();
+      cachedBm[novel.id].dateAdded = Date.now();
+      this.textToast(`Added "${novel.title}" to your bookmarks!`);
+      this.storage.set(ST_BOOKMARK, cachedBm);
+    } else {
+      this.textToast(`"${novel.title}" already bookmarked.`);
+      console.log('already bookmarked');
+    }
   }
 
   async remove(bookmark: any) {

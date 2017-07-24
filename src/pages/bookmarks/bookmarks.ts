@@ -12,11 +12,15 @@ import { BookmarkProvider } from '../../providers/bookmark-provider';
   templateUrl: 'bookmarks.html'
 })
 export class BookmarksPage {
-
   bookmarkList: any = {};
 
   get bookmarkKeys() {
-    return Object.keys(this.bookmarkList);
+    const keys = Object.keys(this.bookmarkList);
+    // sort by most recent added (could also revert the list I guess?)
+    keys.sort((a, b) => {
+      return this.bookmarkList[b].dateAdded - this.bookmarkList[a].dateAdded;
+    });
+    return keys
   }
 
   moreDesc: any = {};
@@ -70,7 +74,7 @@ export class BookmarksPage {
       this.bookmarkList = bookmarks;
       this.bookmarkKeys.forEach(async (key) => {
         let bookmark = this.bookmarkList[key];
-        let novel: Novel = this.novelService.novelKwargs(bookmark);
+        let novel = this.b2novel(key);
         try {
           bookmark.metas = await novel.getMoreMeta(true);
         } catch (error) {
