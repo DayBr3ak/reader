@@ -461,7 +461,7 @@ export class MultiTapHandler {
   private windowOf: number;
   private tapObservable: Observable<any>;
   private tapObserver: any = null;
-  private timeoutHandle: NodeJS.Timer = null;
+  private timeoutHandle: number = null;
   private tapCounter: number = 0;
 
   constructor (tapRequired: number=2, windowOf: number=600) {
