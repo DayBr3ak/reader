@@ -52,6 +52,7 @@ export class PopoverNovelPage {
           let key = ar[i];
           if (key[0] === '_') continue;
           let item = meta[key];
+          if (item === null) continue;
           this.novelMeta.push([key, item]);
         }
       })

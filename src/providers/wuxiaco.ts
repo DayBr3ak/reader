@@ -64,7 +64,7 @@ export class Wuxiaco {
   }
 
   resolveUrl(num: number, id: string) {
-    return `http://m.wuxiaworld.com/${id}-index/${id}-chapter-${num}/`;
+    return `http://m.wuxiaworld.co/${id}-index/${id}-chapter-${num}/`;
   }
 
   wuxiacoUrl(id: string, suffix: string) {
@@ -225,8 +225,8 @@ export class Wuxiaco {
       let p = new Date(Date.parse(updateTime));
       meta['Updated'] = p.toISOString().split('T')[0];
 
-      let lastChapterEle= doc.querySelector('div.synopsisArea_detail>p>a');
-      meta['Last Released'] = parseInt(lastChapterEle.innerText.trim().split(':')[0].substring('Chapter '.length));
+      let lastChapterEle = doc.querySelector('div.synopsisArea_detail>p>a');
+      // meta['Last Released'] = parseInt(lastChapterEle.innerText.trim().split(':')[0].substring('Chapter '.length));
 
       meta['_Title'] = doc.querySelector('span.title').innerText.trim();
       meta['_Desc'] = doc.querySelector('p.review').innerText.trim().substring('Description\n'.length);
@@ -240,6 +240,13 @@ export class Wuxiaco {
       let html = await this.htmlGet(url);
       let doc = this.parser.parseFromString(html, 'text/html');
       let meta = parseNovelMetaData(doc);
+      meta['Last Released'] = await novel.getMaxChapter();
+
+      const lastRead = await novel.getCurrentChapter();
+      if (lastRead > 1) {
+        meta['Last Read'] = lastRead;
+      }
+
       let compressed = compressToBase64(JSON.stringify(meta));
       this.storage.set(resolveStName(), compressed);
       return meta;
@@ -272,6 +279,8 @@ export class Novel {
   public author: string;
   public desc: string;
 
+  private _maxChapter: number;
+
   constructor(
     manager: Wuxiaco,
     opts: any
@@ -286,6 +295,7 @@ export class Novel {
     this.title = opts.title;
     this.author = opts.author || 'Unknown';
     this.desc = opts.desc || 'None';
+    this._maxChapter = null;
   }
 
   meta() {
@@ -430,10 +440,15 @@ export class Novel {
   }
 
   async getMaxChapter() {
+    if (this._maxChapter) {
+      return this._maxChapter;
+    }
     try {
       const directory = await this.getDirectory();
-      return directory.length;
+      this._maxChapter = directory.length;
+      return this._maxChapter;
     } catch (error) {
+      this._maxChapter = null;
       return 20000;
     }
   }
