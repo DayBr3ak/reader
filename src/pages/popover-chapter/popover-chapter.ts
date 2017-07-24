@@ -32,4 +32,12 @@ export class PopoverChapterPage {
     this.viewCtrl.dismiss(parseInt(input.value));
   }
 
+  gotoLast() {
+    this.viewCtrl.dismiss('last');
+  }
+
+  gotoFirst() {
+    this.viewCtrl.dismiss('first');
+  }
+
 }

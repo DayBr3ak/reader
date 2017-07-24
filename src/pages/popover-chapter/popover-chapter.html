@@ -9,4 +9,6 @@
     <ion-input #selectCh type="number" [value]="currentChapter"></ion-input>
   </ion-item>
 
-  <button ion-button block color="secondary" (click)="validate(selectCh)">Go to</button>
+  <button ion-button block color="danger" (click)="validate(selectCh)">Go</button>
+  <button ion-button block color="danger" (click)="gotoFirst()">Go to first chapter</button>
+  <button ion-button block color="danger" (click)="gotoLast()">Go to last chapter</button>

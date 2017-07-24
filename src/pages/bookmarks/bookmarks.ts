@@ -69,19 +69,27 @@ export class BookmarksPage {
   }
 
   async didLoad() {
+    const updateMetas = async (bookmark) => {
+      let novel = this.b2novel(bookmark.id);
+      bookmark.metas = await novel.getMoreMeta(true);
+    };
+
     const bookmarks = await this.bookmarkProvider.bookmarks();
     if (bookmarks) {
       this.bookmarkList = bookmarks;
-      this.bookmarkKeys.forEach(async (key) => {
-        let bookmark = this.bookmarkList[key];
-        let novel = this.b2novel(key);
-        try {
-          bookmark.metas = await novel.getMoreMeta(true);
-        } catch (error) {
-          console.log(error);
-          this.textToast('You have no internet access :(')
+      const promises = [];
+      try {
+        for (let key of this.bookmarkKeys) {
+          const bookmark = this.bookmarkList[key];
+          promises.push(
+            updateMetas(bookmark)
+          );
         }
-      });
+        await Promise.all(promises);
+      } catch (error) {
+        console.log(error);
+        this.textToast('You have no internet access :(')
+      }
     }
   }
 

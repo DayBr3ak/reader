@@ -92,7 +92,7 @@ export class BookmarkProvider {
     const bs = await this.bookmarks();
     this.ga.trackEvent('bookmark', 'remove-bookmark', bookmark.title);
 
-    delete bs[bookmark.title]
+    delete bs[bookmark.id]
     return this.storage.set(ST_BOOKMARK, bs);
   }
 }

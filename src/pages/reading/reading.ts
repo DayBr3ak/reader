@@ -415,7 +415,13 @@ export class ReadingPage {
       });
       popover.onDidDismiss(data => {
         if (data) {
-          this.loadChapter(data);
+          if (data === 'last') {
+            this.loadChapter(this.maxChapter);
+          } else if (data === 'first') {
+            this.loadChapter(1);
+          } else {
+            this.loadChapter(data);
+          }
         }
       });
       popover.present();
