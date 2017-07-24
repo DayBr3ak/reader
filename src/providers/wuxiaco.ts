@@ -9,6 +9,13 @@ import 'rxjs/add/operator/retry';
 
 import { compressToBase64, decompressFromBase64 } from 'lz-string';
 
+const arrayRange = (n: number, offset:number=0) => {
+  return Array.apply(null, Array(n)).map((x, i) => i + offset);
+}
+
+const arrayToChunk = (array: Array<any>, n: number) => {
+  return Array.from(Array(Math.ceil(array.length / n)), (_,i) => array.slice(i * n, i * n + n));
+}
 
 const ST_CURRENT_CHAPTER = 'current-chapter';
 const ST_CHAPTER_TXT = 'chapter-txt-';
@@ -348,29 +355,31 @@ export class Novel {
   }
 
   async download() {
-    const createSequence = async (start: number, step: number, directory: any[]) => {
-      for (let i = start; i < directory.length; i = i + step) {
-          const chapter = i + 1;
-          console.log('download chapter ' + chapter);
-          const chachedContent = await this.getStored(ST_CHAPTER_TXT + chapter);
-          if (chachedContent)
-            continue // chapter is already cached so no need to download it
-
-          const chapterElement = directory[i];
-          const url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
-          const content = await this.manager.scrapChapter(url);
-          this.cacheChapterContent(chapter, content);
+    const cacheChapter = async (chapter, url) => {
+      const cachedContent = await this.getStored(ST_CHAPTER_TXT + chapter);
+      if (cachedContent) {
+        console.log('Skip Ch' + chapter + '... Already in cache');
+        return;
       }
+      const content = await this.manager.scrapChapter(url);
+      this.cacheChapterContent(chapter, content);
     }
 
     try {
       const directory = await this.getDirectory();
-      const step = 5
-      const list = [];
-      for (let i = 0; i < step; i++) {
-        list.push(createSequence(i, step, directory));
+      const urls = [];
+      for (let i = 0; i < directory.length; i++) {
+        const chapterElement = directory[i];
+        const url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
+        urls.push([i + 1, url]);
       }
-      await Promise.all(list);
+      let count = 0;
+      for (let chunk of arrayToChunk(urls, 20)) {
+        const promises = chunk.map(tuple => cacheChapter(tuple[0], tuple[1]));
+        await Promise.all(promises);
+        count += chunk.length;
+        console.log(`downloaded ${count} chapters`);
+      }
       return directory.length;
     } catch (error) {
       console.log('Error download ' + error);
@@ -380,13 +389,14 @@ export class Novel {
 
   async removeDownload() {
     const max = await this.getMaxChapter();
-    let prList = [];
-    for (let i = 0; i < max; i++) {
-      let chapter = i + 1;
-      let pr = this.manager.storage.remove(this.id + '-' + ST_CHAPTER_TXT + chapter);
-      prList.push(pr);
+    const range = arrayRange(max, 1);
+
+    for (let chunk of arrayToChunk(range, 50)) {
+      const promises = chunk.map(chapter => this.manager.storage.remove(this.id + '-' + ST_CHAPTER_TXT + chapter));
+      await Promise.all(promises);
+      console.log('removed 50 or less chapters');
     }
-    await Promise.all(prList);
+    console.log('done');
   }
 
   getMoreMeta(force: boolean=false): Promise<any> {

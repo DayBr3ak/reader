@@ -78,6 +78,7 @@ export class PopoverNovelPage {
   }
 
   async download() {
+    this.textToast("Starting download...");
     const max = await this.novel.download();
     const mes = `Downloaded ${max} chapters of '${this.novel.title}'`;
     this.textToast(mes);
@@ -85,6 +86,7 @@ export class PopoverNovelPage {
   }
 
   async rm () {
+    this.textToast(`Deleting offline data of '${this.novel.title}'`);
     await this.novel.removeDownload()
     console.log('deleted')
     this.textToast(`Deleted offline data of '${this.novel.title}'`);
