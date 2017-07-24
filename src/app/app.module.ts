@@ -3,14 +3,8 @@ import { IonicApp, IonicModule, IonicErrorHandler } from 'ionic-angular';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MyApp } from './app.component';
-// import { ReadingPage } from '../pages/reading/reading';
-// import { ReadModalPage } from '../pages/read-modal/read-modal';
-// import { SettingsPage } from '../pages/settings/settings';
 import { PopoverReadPage } from '../pages/popover-read/popover-read';
 import { PopoverChapterPage } from '../pages/popover-chapter/popover-chapter';
-// import { ExplorePage } from '../pages/explore/explore';
-// import { BookmarksPage } from '../pages/bookmarks/bookmarks';
-// import { PopoverNovelPage } from '../pages/popover-novel/popover-novel';
 
 import { Wuxiaco } from '../providers/wuxiaco';
 import { HttpModule } from '@angular/http';

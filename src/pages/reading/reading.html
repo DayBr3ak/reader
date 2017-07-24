@@ -8,7 +8,7 @@
       <ion-title *ngIf="novel !== null">Ch{{ currentChapter }} - {{ novel.title }}</ion-title>
       <ion-title *ngIf="novel === null">No internet!</ion-title>
 
-      <ion-buttons start *ngIf="novel !== null">
+      <!-- <ion-buttons start *ngIf="novel !== null">
         <button ion-button icon-only (click)='prevChapter()'>
           <ion-icon name="arrow-back"></ion-icon>
         </button>
@@ -18,7 +18,7 @@
         <button ion-button icon-only (click)='nextChapter()'>
           <ion-icon name="arrow-forward"></ion-icon>
         </button>
-      </ion-buttons>
+      </ion-buttons> -->
 
   </ion-navbar>
 </ion-header>
