@@ -1,7 +1,17 @@
 import { Component, ViewChild } from '@angular/core';
-import { IonicPage, NavController, NavParams, Events, Content, Platform, PopoverController, ToastController } from 'ionic-angular';
+import { IonicPage, NavController, NavParams, Events,
+  Content, Platform, PopoverController, ToastController,
+} from 'ionic-angular';
 import { Wuxiaco } from '../../providers/wuxiaco';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
+
+const arrayRange = (n: number, offset:number=0) => {
+  return Array.apply(null, Array(n)).map((x, i) => i + offset);
+}
+
+const arrayToChunk = (array: Array<any>, n: number) => {
+  return Array.from(Array(Math.ceil(array.length / n)), (_,i) => array.slice(i * n, i * n + n));
+}
 
 @IonicPage()
 @Component({
@@ -55,31 +65,37 @@ export class ExplorePage {
   async loadListAll() {
     this.novelListDefault = [];
     this.novelList = [];
-
     // see https://developers.google.com/web/fundamentals/getting-started/primers/promises
     // basically all networking promises start simultaneously
     // then they are reduced sequentially to keep the order
     // as they complete the elements are added in the correct order
     try {
-      const chapter1Promise = this.loadList(1);
+      const page1Promise = this.loadList(1);
       // need the first chapter to know how many page needs to be loaded
-      const chapter1 = await chapter1Promise;
-      const list = [];
-      for (let i = 2; i <= chapter1.max; i++) {
-        list.push(i);
-      }
-      const chapterPromises = list.map(this.loadList.bind(this));
-      chapterPromises.unshift(chapter1Promise); // here we keep the result from the first page as a promise
+      const page1 = await page1Promise;
+      this._loadList(page1);
+      this._updateDom();
+      const pagesId = arrayRange(page1.max - 2, 2);
 
-      for (let i = 0; i < chapterPromises.length; i++) {
-        this._loadList(await chapterPromises[i]);
+      for (let chunk of arrayToChunk(pagesId, 10)) {
+        const promises = [];
+        for (let pageId of chunk) {
+          promises.push(
+            this.loadList(pageId)
+          );
+        }
+        const pages = await Promise.all(promises);
+        for (let page of pages) {
+          this._loadList(page);
+        }
       }
 
     } catch (error) {
       this.textToast('You have no internet access :(')
       let list = this.novelListDefault.concat([{ title: 'Sorry', desc: 'You have no internet access :(', error: error }]);
       this.novelListDefault = list;
-      this.novelList = this.novelListDefault;
+    } finally {
+      this._updateDom();
     }
   }
 
@@ -101,7 +117,11 @@ export class ExplorePage {
   _loadList(search: any) {
     console.log(search);
     this.novelListDefault = this.novelListDefault.concat(search.list);
-    this.novelSearch = search;
+    // this.novelSearch = search;
+    // this._updateDom();
+  }
+
+  _updateDom() {
     this.novelList = this.novelListDefault;
   }
 
