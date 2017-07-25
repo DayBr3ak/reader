@@ -9,7 +9,8 @@ import 'rxjs/add/operator/map';
 
 import { PopoverChapterPage } from '../popover-chapter/popover-chapter';
 import { PopoverReadPage } from '../popover-read/popover-read';
-import { Wuxiaco, Novel } from '../../providers/wuxiaco';
+import { Wuxiaco } from '../../providers/wuxiaco';
+import { Novel } from '../../providers/novel';
 import { BookmarkProvider } from '../../providers/bookmark-provider';
 import { LockTask } from '../../providers/lock-task';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';

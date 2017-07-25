@@ -5,7 +5,7 @@ import 'rxjs/add/operator/map';
 import { Storage } from '@ionic/storage';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
-import { Novel } from './wuxiaco';
+import { Novel } from './novel';
 
 const ST_BOOKMARK = 'app-bookmarks';
 const ST_BOOKMARK_VERSION = 'app-bookmarks-version';

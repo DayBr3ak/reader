@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { IonicPage, NavController, NavParams, Events, ToastController } from 'ionic-angular';
 
-import { Novel } from '../../providers/wuxiaco';
+import { Novel } from '../../providers/novel';
 
 @IonicPage()
 @Component({
