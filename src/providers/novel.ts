@@ -6,6 +6,7 @@ const ST_CURRENT_CHAPTER = 'current-chapter';
 const ST_CHAPTER_TXT = 'chapter-txt-';
 const ST_CHAPTER_SCROLL = 'chapter-scroll-';
 const ST_NOVEL_DIR = 'novel-directory';
+const ST_MOREMETA = '-novel-moremeta';
 
 const arrayRange = (n: number, offset:number=0) => {
   return Array.apply(null, Array(n)).map((x, i) => i + offset);
@@ -135,8 +136,15 @@ export class Novel {
     console.log('done');
   }
 
-  getMoreMeta(force: boolean=false): Promise<any> {
-    return this.manager.getNovelMeta(this, force);
+  async getMoreMeta(force: boolean=false): Promise<any> {
+    let moreMeta = await this.manager.storage.get(this.id + ST_MOREMETA);
+    if (moreMeta === null || Date.now() - moreMeta._timestamp > 5 * 60 * 1000) { // 5 min
+      moreMeta = await this.manager.getNovelMeta(this, force);
+      moreMeta._timestamp = Date.now();
+      this.manager.storage.set(this.id + ST_MOREMETA, moreMeta);
+      console.log('timestamp novel ' + this.title);
+    }
+    return moreMeta;
   }
 
   getStored(property: string, prefix: string = this.id): Promise<any> {
