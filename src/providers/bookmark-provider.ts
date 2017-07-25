@@ -67,15 +67,14 @@ export class BookmarkProvider {
     await this.storage.set(ST_BOOKMARK, bookmarks);
   }
 
-  bookmarks(): Promise<any> {
-    return this.checkVersion().then(() => {
-      return this.storage.get(ST_BOOKMARK);
-    });
+  async bookmarks(): Promise<any> {
+    await this.checkVersion();
+    return (await this.storage.get(ST_BOOKMARK)) || {};
   }
 
   async addBookmark(novel: Novel) {
     console.log('add bookmark', novel.id);
-    const cachedBm = await this.bookmarks() || {};
+    const cachedBm = await this.bookmarks();
     if (cachedBm[novel.id] === undefined) {
       this.ga.trackEvent('bookmark', 'add-bookmark', novel.id);
       cachedBm[novel.id] = novel.meta();
@@ -94,6 +93,14 @@ export class BookmarkProvider {
 
     delete bs[bookmark.id]
     return this.storage.set(ST_BOOKMARK, bs);
+  }
+
+  async isUpdated() {
+    const bookmarks = await this.bookmarks();
+    for (let bookmarkId in bookmarks) {
+      const bookmark = bookmarks[bookmarkId];
+      //todo
+    }
   }
 }
 

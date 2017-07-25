@@ -6,7 +6,11 @@ const ST_CURRENT_CHAPTER = 'current-chapter';
 const ST_CHAPTER_TXT = 'chapter-txt-';
 const ST_CHAPTER_SCROLL = 'chapter-scroll-';
 const ST_NOVEL_DIR = 'novel-directory';
-const ST_MOREMETA = '-novel-moremeta';
+const ST_MOREMETA = 'novel-moremeta';
+
+const _1MIN = 60 * 1000;
+const TIMESTAMP_MOREMETA = 10 * _1MIN;
+const TIMESTAMP_DIRECTORY = 15* _1MIN;
 
 const arrayRange = (n: number, offset:number=0) => {
   return Array.apply(null, Array(n)).map((x, i) => i + offset);
@@ -23,8 +27,6 @@ export class Novel {
   public author: string;
   public desc: string;
 
-  private _maxChapter: number;
-
   constructor(
     manager: Wuxiaco,
     opts: any
@@ -39,7 +41,6 @@ export class Novel {
     this.title = opts.title;
     this.author = opts.author || 'Unknown';
     this.desc = opts.desc || 'None';
-    this._maxChapter = null;
   }
 
   meta() {
@@ -59,12 +60,33 @@ export class Novel {
     return this.manager.resolveUrl(chapter, this.id);
   }
 
-  async getDirectory(): Promise<any[]> {
-    let url = this.manager.wuxiacoUrl(this.id, 'all.html');
+  async cache(opts) {
+    let cached;
+    if (opts.compressed === true) {
+      cached = await this.getStoredCompressed(opts.key);
+    } else {
+      cached = await this.getStored(opts.key);
+    }
+    if (cached === null || Date.now() - cached._timestamp > opts.timeout) {
+      cached = await opts.fallback.bind(this)();
+      cached._timestamp = Date.now();
 
+      if (opts.compressed === true) {
+        this.setStoredCompressed(opts.key, cached);
+      } else {
+        this.setStored(opts.key, cached);
+      }
+
+      opts.log && console.log(opts.log);
+    }
+    return cached;
+  }
+
+  async _getDirectory(): Promise<any[]> {
+    let url = this.manager.wuxiacoUrl(this.id, 'all.html');
     try {
       const directory = await this.manager.scrapDirectory(url);
-      this.setStoredCompressed(ST_NOVEL_DIR, directory);
+      // this.setStoredCompressed(ST_NOVEL_DIR, directory);
       return directory;
     } catch (error) {
       const cachedDirectory = await this.getStoredCompressed(ST_NOVEL_DIR);
@@ -73,6 +95,18 @@ export class Novel {
       }
       throw 'no directory available';
     }
+  }
+
+  async getDirectory(): Promise<any[]> {
+    return this.cache({
+      compressed: true,
+      key: ST_NOVEL_DIR,
+      timeout: TIMESTAMP_DIRECTORY,
+      log: 'timestamp directory ' + this.title,
+      fallback: () => {
+        return this._getDirectory();
+      }
+    });
   }
 
   async scrap(chapter) {
@@ -137,14 +171,24 @@ export class Novel {
   }
 
   async getMoreMeta(force: boolean=false): Promise<any> {
-    let moreMeta = await this.manager.storage.get(this.id + ST_MOREMETA);
-    if (moreMeta === null || Date.now() - moreMeta._timestamp > 5 * 60 * 1000) { // 5 min
-      moreMeta = await this.manager.getNovelMeta(this, force);
-      moreMeta._timestamp = Date.now();
-      this.manager.storage.set(this.id + ST_MOREMETA, moreMeta);
-      console.log('timestamp novel ' + this.title);
+    return this.cache({
+      compressed: false,
+      key: ST_MOREMETA,
+      timeout: TIMESTAMP_MOREMETA,
+      log: 'timestamp novelmeta ' + this.title,
+      fallback: () => {
+        return this.manager.getNovelMeta(this, force);
+      }
+    });
+  }
+
+  async getMaxChapter() {
+    try {
+      const directory = await this.getDirectory();
+      return directory.length;
+    } catch (error) {
+      return 20000;
     }
-    return moreMeta;
   }
 
   getStored(property: string, prefix: string = this.id): Promise<any> {
@@ -191,20 +235,6 @@ export class Novel {
 
   getChapterContent(chapter: number): Promise<any> {
     return this.getStoredCompressed(ST_CHAPTER_TXT + chapter);
-  }
-
-  async getMaxChapter() {
-    if (this._maxChapter) {
-      return this._maxChapter;
-    }
-    try {
-      const directory = await this.getDirectory();
-      this._maxChapter = directory.length;
-      return this._maxChapter;
-    } catch (error) {
-      this._maxChapter = null;
-      return 20000;
-    }
   }
 
   async getCurrentChapter() {
