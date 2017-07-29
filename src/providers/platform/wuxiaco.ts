@@ -115,9 +115,9 @@ export class Wuxiaco extends NovelPlatform {
     }
   }
 
-  async getChapterUrl(chapter: number, directory: Array<any>): Promise<any> {
+  async getChapterUrl(chapter: number, novelId: string, directory: Array<any>): Promise<any> {
     const chapterElement = directory[chapter - 1];
-    return this.resolveChapterUrl(this.id, chapterElement[0]);
+    return this.resolveChapterUrl(novelId, chapterElement[0]);
   }
 
   async getNovelList(genre, page=1): Promise<any> {

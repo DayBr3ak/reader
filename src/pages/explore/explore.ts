@@ -4,7 +4,7 @@ import { IonicPage, NavController, NavParams, Events,
 } from 'ionic-angular';
 // import { Wuxiaco } from '../../providers/wuxiaco';
 import { NovelPlatform } from '../../providers/novelPlatform';
-import { PlatformManager } from '../../providers/platformManager';
+import { PlatformManager, PLATFORMS } from '../../providers/platformManager';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 const arrayRange = (n: number, offset:number=0) => {
@@ -16,6 +16,14 @@ const arrayRange = (n: number, offset:number=0) => {
 
 const arrayToChunk = (array: Array<any>, n: number) => {
   return Array.from(Array(Math.ceil(array.length / n)), (_,i) => array.slice(i * n, i * n + n));
+}
+
+const platformsToSelector = () => {
+  const result = [];
+  for (let elem of PLATFORMS) {
+    result.push([elem[0], elem[2]]);
+  }
+  return result;
 }
 
 @IonicPage()
@@ -50,10 +58,8 @@ export class ExplorePage {
     this.novelListDefault = [{ title: 'Dummy', desc: 'This is a dummy'}];
     this.novelList = this.novelListDefault;
 
-    this.novelPlatforms = [
-      ['classic', 'Classic'],
-      ['lnb', 'LightNovelBastion']
-    ];
+
+    this.novelPlatforms = platformsToSelector();
     this.updatePlatformSelection(this.novelPlatforms[0][0]);
     this.ga.trackView("Explore Page");
   }

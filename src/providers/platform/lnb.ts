@@ -50,7 +50,7 @@ export class LNB extends NovelPlatform {
           author: 'NC',
           desc: 'NC',
           id: getId(href),
-          _platform: 'lnb'
+          _platform: this.id
         }
         results.push(item);
         all.push(item);
@@ -103,10 +103,6 @@ export class LNB extends NovelPlatform {
     const doc = await this.getDoc(url);
 
     let paragraphs = doc.querySelectorAll('section.box.style1.blacktext')[0].children;
-    // if (paragraphs.length == 0) {
-      // paragraphs = doc.querySelectorAll('section.box.style1.blacktext>div');
-    // }
-
     const title = doc.querySelectorAll('header#releases>h2');
 
     const result = [];
@@ -117,7 +113,7 @@ export class LNB extends NovelPlatform {
     for (let i = 0; i < paragraphs.length; i++) {
       const e = paragraphs[i];
       if (e.tagName === 'P' || e.tagName === 'DIV')
-        result.push(paragraphs[i].innerHTML);
+        result.push(e.innerHTML);
     }
     return result;
   }
@@ -138,7 +134,7 @@ export class LNB extends NovelPlatform {
     return meta;
   }
 
-  async getChapterUrl(chapter: number, directory: Array<any>): Promise<any> {
+  async getChapterUrl(chapter: number, novelId: string, directory: Array<any>): Promise<any> {
     return directory[chapter - 1];
   }
 }

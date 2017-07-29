@@ -16,7 +16,7 @@
           <ion-option *ngFor="let plt of novelPlatforms" [value]="plt[0]"> {{ plt[1] }}</ion-option>
         </ion-select>
       </ion-item>
-      <ion-item>
+      <ion-item *ngIf="(genres.length > 1)">
         <ion-label>Genre Filter</ion-label>
         <ion-select [(ngModel)]="genreFilter" (ionChange)="genreFilterChange($event)">
           <ion-option *ngFor="let genre of genres" [value]="genre[0]"> {{ genre[1] }}</ion-option>

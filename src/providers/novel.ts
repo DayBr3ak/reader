@@ -110,7 +110,7 @@ export class Novel {
       if (chapter > directory.length) {
         return { error: `Chapter ${chapter} doesn't exist yet` };
       }
-      const url = await this.manager.getChapterUrl(chapter, directory);
+      const url = await this.manager.getChapterUrl(chapter, this.id, directory);
       return await this.manager.scrapChapter(url);
     } catch (error) {
       let mes = 'Download error: ' + chapter + ' ' + this.title;
@@ -135,8 +135,7 @@ export class Novel {
       const directory = await this.getDirectory();
       const urls = [];
       for (let i = 0; i < directory.length; i++) {
-        const chapterElement = directory[i];
-        const url = this.manager.resolveChapterUrl(this.id, chapterElement[0]);
+        const url = await this.manager.getChapterUrl(i + 1, this.id, directory);
         urls.push([i + 1, url]);
       }
       let count = 0;

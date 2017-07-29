@@ -10,15 +10,17 @@ import { Novel } from './novel';
 import { NovelPlatform } from './novelPlatform';
 import { Wuxiaco } from './platform/wuxiaco';
 import { LNB } from './platform/lnb';
+import { Kokuma } from './platform/kokuma';
 
 type PlatformMap = {
   id: string,
   platform: NovelPlatform
 };
 
-const PLATFORMS: Array<[string, any]> = [
-  ['classic', Wuxiaco],
-  ['lnb', LNB]
+export const PLATFORMS: Array<[string, any, string]> = [
+  ['classic', Wuxiaco, 'Classic'],
+  ['lnb', LNB, 'LightNovelBastion'],
+  ['kokuma', Kokuma, 'Kokuma']
 ];
 
 @Injectable()
