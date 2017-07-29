@@ -72,7 +72,7 @@ export class Wuxiaco extends NovelPlatform {
   }
 
   resolveDirectoryUrl(novelId: string): string {
-    return this.resolveChapterUrl(this.id, 'all.html');
+    return this.resolveChapterUrl(novelId, 'all.html');
   }
 
   async scrapDirectory(url: string): Promise<any> {

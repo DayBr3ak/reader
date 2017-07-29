@@ -112,7 +112,7 @@ export class Novel {
     try {
       const directory = await this.getDirectory();
       if (chapter > directory.length) {
-        return { error: "Chapter doesn't " + chapter + " exist yet" };
+        return { error: `Chapter ${chapter} doesn't exist yet` };
       }
       if (this.manager.id === 'lnb') {
         return await this.manager.scrapChapter(directory[chapter]);
