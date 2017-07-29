@@ -115,7 +115,7 @@ export class Novel {
         return { error: `Chapter ${chapter} doesn't exist yet` };
       }
       if (this.manager.id === 'lnb') {
-        return await this.manager.scrapChapter(directory[chapter]);
+        return await this.manager.scrapChapter(directory[chapter - 1]);
       }
       const chapterElement = directory[chapter - 1]
       const url = this.manager.resolveChapterUrl(this.id, chapterElement[0]);
@@ -174,7 +174,8 @@ export class Novel {
   }
 
   async getMoreMeta(force: boolean=false): Promise<any> {
-    return this.cache({
+    const currentChapterPromise = this.getCurrentChapter();
+    const meta = await this.cache({
       compressed: false,
       key: ST_MOREMETA,
       timeout: TIMESTAMP_MOREMETA,
@@ -183,6 +184,12 @@ export class Novel {
         return this.manager.getNovelMeta(this, force);
       }
     });
+
+    const lastRead = await currentChapterPromise;
+    if (lastRead > 1) {
+      meta['Last Read'] = lastRead;
+    }
+    return meta;
   }
 
   async getMaxChapter() {

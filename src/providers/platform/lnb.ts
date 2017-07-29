@@ -47,8 +47,8 @@ export class LNB extends NovelPlatform {
         let item = {
           href: href,
           title: text,
-          author: 'idk',
-          desc: 'idk',
+          author: 'NC',
+          desc: 'NC',
           id: getId(href),
           _platform: 'lnb'
         }
@@ -122,11 +122,18 @@ export class LNB extends NovelPlatform {
 
   async getNovelMeta(novel: Novel, force?: boolean): Promise<any> {
     // throw new Error('need implem!!');
-    return {
-      test: 'test1',
-      blouf: 'test2',
-      braf: 'test3'
-    }
+    const maxChapterPromise = novel.getMaxChapter();
+    const doc = await this.getDoc(this.resolveDirectoryUrl(novel.id));
+    const meta = {
+      _Author: doc.querySelectorAll('header>h2')[0].innerText,
+      Status: doc.querySelectorAll('header>h3>span')[0].innerText,
+      _Desc: doc.querySelectorAll('header>p')[1].innerText
+    };
+    novel.desc = meta._Desc;
+    novel.author = meta._Author;
+    meta['Last Released'] = await maxChapterPromise;
+
+    return meta;
   }
 }
 

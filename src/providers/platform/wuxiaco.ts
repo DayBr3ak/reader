@@ -207,11 +207,6 @@ export class Wuxiaco extends NovelPlatform {
       let meta = parseNovelMetaData(doc);
       meta['Last Released'] = await novel.getMaxChapter();
 
-      const lastRead = await novel.getCurrentChapter();
-      if (lastRead > 1) {
-        meta['Last Read'] = lastRead;
-      }
-
       let compressed = compressToBase64(JSON.stringify(meta));
       this.storage.set(resolveStName(), compressed);
       return meta;
