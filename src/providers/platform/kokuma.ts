@@ -89,6 +89,10 @@ export class Kokuma extends NovelPlatform {
         res.push(paragraphs[i].innerHTML);
       }
     }
+    const last = res.pop();
+    if (last.search('Previous Chapter') <= -1 && last.search('Next Chapter') <= -1) {
+      res.push(last);
+    }
 
     return res;
   }
