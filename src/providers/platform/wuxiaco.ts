@@ -1,71 +1,35 @@
-import { Injectable } from '@angular/core';
-import { ToastController } from 'ionic-angular';
-import { Http } from '@angular/http';
-import { Storage } from '@ionic/storage';
-
-// import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/retry';
-// import { Observable } from 'rxjs/Observable';
 
 import { compressToBase64, decompressFromBase64 } from 'lz-string';
 
-import { Novel } from './novel';
+import { Novel } from '../novel';
 
 const urlRegex = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
 
-@Injectable()
-export class Wuxiaco {
+import { NovelPlatform } from '../novelPlatform';
+import { PlatformManager } from '../platformManager';
+
+export class Wuxiaco extends NovelPlatform {
   private NAME = 'WUXIACO';
-  private parser: DOMParser = new DOMParser();
   private URL: string = 'http://m.wuxiaworld.co';
-  public GENRE = [
-    [0, 'All'],
-    [1, 'Fantasy'],
-    [2, 'Xianxia'],
-    [3, 'Romantic'],
-    [4, 'Historical'],
-    [5, 'Sci-fi'],
-    [6, 'Game']
-  ]
 
-  constructor(
-    public http: Http,
-    public toastCtrl: ToastController,
-    public storage: Storage
-  ) {
-    console.log('Hello Wuxiaco Provider');
+  init() {
+    console.log('Hello LNB Platform');
   }
 
-  textToast(text: string, time: number = 2000) {
-    let toast = this.toastCtrl.create({
-      message: text,
-      duration: time
-    });
-    toast.present();
-  }
-
-  htmlGet(url: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      this.http.get(url)
-        .retry(5)
-        .subscribe((data) => {
-        resolve(data.text());
-      }, (error) => {
-        reject(error);
-      });
-    })
+  getGenres(): Array<[number, string]> {
+    return [
+      [0, 'All'],
+      [1, 'Fantasy'],
+      [2, 'Xianxia'],
+      [3, 'Romantic'],
+      [4, 'Historical'],
+      [5, 'Sci-fi'],
+      [6, 'Game']
+    ]
   }
 
   wordFilter(text: string, pattern: RegExp, replacement: string): string {
     return text.replace(pattern, replacement);
-  }
-
-  resolveUrl(num: number, id: string) {
-    return `http://m.wuxiaworld.co/${id}-index/${id}-chapter-${num}/`;
-  }
-
-  wuxiacoUrl(id: string, suffix: string) {
-    return `${this.URL}/${id}/${suffix}`
   }
 
   async scrap(url: string, chapter: number) {
@@ -96,18 +60,22 @@ export class Wuxiaco {
     }
 
     try {
-      let resHtml = await this.htmlGet(url);
-      resHtml = resHtml.replace(urlRegex, '');
-      let doc = this.parser.parseFromString(resHtml, 'text/html');
+      const doc = await this.getDoc(url, (html) => {
+        return html.replace(urlRegex, '');
+      });
       let articleBody = doc.querySelector('div[itemprop="articleBody"]');
       return getArticleBody(articleBody);
     } catch (error) {
       if (error) console.log(error);
-      this.textToast('Error loading chapter: ' + chapter + '; error="' + error.status + ':' + error.statusText + '"');
+      this.toast('Error loading chapter: ' + chapter + '; error="' + error.status + ':' + error.statusText + '"');
     }
   }
 
-  async scrapDirectory(url: string) {
+  resolveDirectoryUrl(novelId: string): string {
+    return this.resolveChapterUrl(this.id, 'all.html');
+  }
+
+  async scrapDirectory(url: string): Promise<any> {
     let parseChapterList = (doc) => {
       let links = doc.querySelectorAll('#chapterlist>p>a');
       var filter = Array.prototype.filter;
@@ -122,12 +90,15 @@ export class Wuxiaco {
       return directory;
     };
 
-    const html = await this.htmlGet(url);
-    let doc = this.parser.parseFromString(html, 'text/html');
+    const doc = await this.getDoc(url);
     return parseChapterList(doc);
   }
 
-  async scrapChapter(url: string) {
+  resolveChapterUrl(...args: string[]): string {
+    return `${this.URL}/${args[0]}/${args[1]}`;
+  }
+
+  async scrapChapter(url: string): Promise<any> {
     let parseChapterContent = (doc) => {
       let content = doc.querySelector('#chaptercontent').innerHTML.trim();
       content = this.wordFilter(content, /\*ck/g, 'uck');
@@ -136,8 +107,7 @@ export class Wuxiaco {
     }
     console.log(url)
     try {
-      const text = await this.htmlGet(url);
-      let doc = this.parser.parseFromString(text, 'text/html');
+      const doc = await this.getDoc(url);
       return parseChapterContent(doc);
     } catch (error) {
       console.log("scrapChapter Error")
@@ -145,7 +115,7 @@ export class Wuxiaco {
     }
   }
 
-  async getNovelList(genre, page=1) {
+  async getNovelList(genre, page=1): Promise<any> {
     let parseAuthor = (div): string => {
       let author = div.querySelector('p.author').innerText.trim();
       author = author.split('Author：')[1].trim();
@@ -187,8 +157,7 @@ export class Wuxiaco {
     let url = `${this.URL}/category/${genreId}/${page}.html`;
 
     try {
-      let html = await this.htmlGet(url);
-      let doc = this.parser.parseFromString(html, 'text/html');
+      let doc = await this.getDoc(url);
       let list = parseNovelList(doc);
       let compressed = compressToBase64(JSON.stringify(list));
       this.storage.set(resolveStName(), compressed);
@@ -234,8 +203,7 @@ export class Wuxiaco {
     }
 
     try {
-      let html = await this.htmlGet(url);
-      let doc = this.parser.parseFromString(html, 'text/html');
+      let doc = await this.getDoc(url);
       let meta = parseNovelMetaData(doc);
       meta['Last Released'] = await novel.getMaxChapter();
 
@@ -257,14 +225,6 @@ export class Wuxiaco {
         throw { fn: 'getNovelMeta', error: `can't access ${url}` };
       }
     }
-  }
-
-  novelKwargs(opts: any): Novel {
-    return new Novel(this, opts);
-  }
-
-  novel(title: string, id: string) {
-    return this.novelKwargs({ title: title, id: id });
   }
 
 }

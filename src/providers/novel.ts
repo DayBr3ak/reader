@@ -1,5 +1,5 @@
 
-import { Wuxiaco } from './wuxiaco';
+import { NovelPlatform } from './novelPlatform';
 import { compressToBase64, decompressFromBase64 } from 'lz-string';
 
 const ST_CURRENT_CHAPTER = 'current-chapter';
@@ -21,14 +21,14 @@ const arrayToChunk = (array: Array<any>, n: number) => {
 }
 
 export class Novel {
-  public manager: Wuxiaco;
   public id: string;
   public title: string;
   public author: string;
   public desc: string;
+  public _platform: string;
 
   constructor(
-    manager: Wuxiaco,
+    public manager: NovelPlatform,
     opts: any
   ) {
     this.manager = manager;
@@ -41,6 +41,7 @@ export class Novel {
     this.title = opts.title;
     this.author = opts.author || 'Unknown';
     this.desc = opts.desc || 'None';
+    this._platform = opts._platform || 'classic';
   }
 
   meta() {
@@ -48,16 +49,13 @@ export class Novel {
       title: this.title,
       id: this.id,
       author: this.author,
-      desc: this.desc
+      desc: this.desc,
+      _platform: this.manager.id
     };
   }
 
   href(): string {
     return `/${this.id}/`;
-  }
-
-  resolveUrl(chapter) {
-    return this.manager.resolveUrl(chapter, this.id);
   }
 
   async cache(opts) {
@@ -83,7 +81,7 @@ export class Novel {
   }
 
   async _getDirectory(): Promise<any[]> {
-    let url = this.manager.wuxiacoUrl(this.id, 'all.html');
+    let url = this.manager.resolveDirectoryUrl(this.id);
     try {
       const directory = await this.manager.scrapDirectory(url);
       // this.setStoredCompressed(ST_NOVEL_DIR, directory);
@@ -93,6 +91,7 @@ export class Novel {
       if (cachedDirectory) {
         return cachedDirectory;
       }
+      console.error(error)
       throw 'no directory available';
     }
   }
@@ -115,12 +114,16 @@ export class Novel {
       if (chapter > directory.length) {
         return { error: "Chapter doesn't " + chapter + " exist yet" };
       }
+      if (this.manager.id === 'lnb') {
+        return await this.manager.scrapChapter(directory[chapter]);
+      }
       const chapterElement = directory[chapter - 1]
-      const url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
+      const url = this.manager.resolveChapterUrl(this.id, chapterElement[0]);
       return await this.manager.scrapChapter(url);
     } catch (error) {
       let mes = 'Download error: ' + chapter + ' ' + this.title;
       console.log(mes);
+      console.error(error)
       throw { message: mes, error: error };
     }
   }
@@ -141,7 +144,7 @@ export class Novel {
       const urls = [];
       for (let i = 0; i < directory.length; i++) {
         const chapterElement = directory[i];
-        const url = this.manager.wuxiacoUrl(this.id, chapterElement[0]);
+        const url = this.manager.resolveChapterUrl(this.id, chapterElement[0]);
         urls.push([i + 1, url]);
       }
       let count = 0;

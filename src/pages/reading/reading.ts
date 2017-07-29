@@ -9,7 +9,9 @@ import 'rxjs/add/operator/map';
 
 import { PopoverChapterPage } from '../popover-chapter/popover-chapter';
 import { PopoverReadPage } from '../popover-read/popover-read';
-import { Wuxiaco } from '../../providers/wuxiaco';
+import { NovelPlatform } from '../../providers/novelPlatform';
+import { PlatformManager } from '../../providers/platformManager';
+
 import { Novel } from '../../providers/novel';
 import { BookmarkProvider } from '../../providers/bookmark-provider';
 import { LockTask } from '../../providers/lock-task';
@@ -117,7 +119,7 @@ export class ReadingPage {
     public toastCtrl: ToastController,
 
     private ga: GoogleAnalytics,
-    private novelService: Wuxiaco,
+    private novelService: PlatformManager,
     private bookmarkProvider: BookmarkProvider,
     private lockTask: LockTask
   ) {
@@ -145,6 +147,7 @@ export class ReadingPage {
     if (settings) {
       this.readerSettings = settings;
     }
+    console.log(this.navParams.data);
     const novel = await this.initNovel();
     if (novel) {
       this.loadNovel(novel);
@@ -220,6 +223,7 @@ export class ReadingPage {
     this.novel = novel;
     this.storage.set(ST_CURRENT_NOVEL, this.novel.meta());
 
+    console.log(this.novel)
     this.maxChapter = await this.novel.getMaxChapter();
     console.log('maxChapter= ' + this.maxChapter);
     const currentChapter = await this.novel.getCurrentChapter();

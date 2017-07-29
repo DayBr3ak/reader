@@ -1,5 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
-import { Platform, Nav, Events } from 'ionic-angular';
+import { Platform, Nav, Events, ToastController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 
@@ -15,13 +15,13 @@ export class MyApp {
 
   rootPage:any = 'ReadingPage';
   pages:any;
-  events: any;
 
   constructor(
     platform: Platform,
     statusBar: StatusBar,
     splashScreen: SplashScreen,
-    events: Events,
+    public events: Events,
+    public toastCtrl: ToastController,
     ga: GoogleAnalytics
   ) {
 
@@ -66,6 +66,14 @@ export class MyApp {
 
       events.subscribe('change:novel', (novel) => {
         this.nav.setRoot('ReadingPage', { novel: novel });
+      })
+
+      events.subscribe('toast', (message, time) => {
+        let toast = this.toastCtrl.create({
+          message: message,
+          duration: time
+        });
+        toast.present();
       })
 
     });

@@ -3,7 +3,9 @@ import { Component } from '@angular/core';
 import { IonicPage, NavController, NavParams, ToastController, Events } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
 
-import { Wuxiaco } from '../../providers/wuxiaco';
+// import { Wuxiaco } from '../../providers/wuxiaco';
+import { NovelPlatform } from '../../providers/novelPlatform';
+import { PlatformManager } from '../../providers/platformManager';
 import { Novel } from '../../providers/novel';
 import { BookmarkProvider } from '../../providers/bookmark-provider';
 
@@ -30,7 +32,7 @@ export class BookmarksPage {
     private storage: Storage,
     private toastCtrl: ToastController,
     private events: Events,
-    private novelService: Wuxiaco,
+    private novelService: PlatformManager,
     private bookmarkProvider: BookmarkProvider
   ) {
 

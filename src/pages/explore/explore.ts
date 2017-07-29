@@ -2,10 +2,15 @@ import { Component, ViewChild } from '@angular/core';
 import { IonicPage, NavController, NavParams, Events,
   Content, Platform, PopoverController, ToastController,
 } from 'ionic-angular';
-import { Wuxiaco } from '../../providers/wuxiaco';
+// import { Wuxiaco } from '../../providers/wuxiaco';
+import { NovelPlatform } from '../../providers/novelPlatform';
+import { PlatformManager } from '../../providers/platformManager';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 const arrayRange = (n: number, offset:number=0) => {
+  if (n <= 1) {
+    return [];
+  }
   return Array.apply(null, Array(n)).map((x, i) => i + offset);
 }
 
@@ -24,6 +29,10 @@ export class ExplorePage {
   novelList: any;
   novelListDefault: any;
   novelSearch: any;
+
+  novelPlatforms: any;
+  novelPlatform: any;
+
   genres: any;
   genreFilter: any;
 
@@ -36,21 +45,31 @@ export class ExplorePage {
     public toastCtrl: ToastController,
 
     private ga: GoogleAnalytics,
-    private novelService: Wuxiaco
+    private novelService: PlatformManager
   ) {
     this.novelListDefault = [{ title: 'Dummy', desc: 'This is a dummy'}];
     this.novelList = this.novelListDefault;
-    this.genres = this.novelService.GENRE;
-    this.genreFilter = this.genres[0][0];
+
+    this.novelPlatforms = [
+      ['classic', 'Classic'],
+      ['lnb', 'LightNovelBastion']
+    ];
+    this.updatePlatformSelection(this.novelPlatforms[0][0]);
     this.ga.trackView("Explore Page");
   }
 
+  updatePlatformSelection(pltId: string) {
+    this.novelPlatform = pltId;
+    this.genres = this.getNovelPlatform().getGenres();
+    this.genreFilter = this.genres[0][0];
+  }
+
+  getNovelPlatform(): NovelPlatform {
+    return this.novelService.getPlatform(this.novelPlatform);
+  }
+
   textToast(text: string, time: number = 2000) {
-    let toast = this.toastCtrl.create({
-      message: text,
-      duration: time
-    });
-    toast.present();
+    this.events.publish('toast', text, time);
   }
 
   ionViewDidLoad() {
@@ -91,6 +110,7 @@ export class ExplorePage {
       }
 
     } catch (error) {
+      console.error(error);
       this.textToast('You have no internet access :(')
       let list = this.novelListDefault.concat([{ title: 'Sorry', desc: 'You have no internet access :(', error: error }]);
       this.novelListDefault = list;
@@ -102,10 +122,10 @@ export class ExplorePage {
   loadList(page: number=1): Promise<any> {
     // console.log(`in loadList(${page})`)
     let genre = this.genres[this.genreFilter];
-    return this.novelService.getNovelList(genre, page);
+    return this.getNovelPlatform().getNovelList(genre, page);
   }
 
-  sortNovelList(field: string) {
+  sortNovelList(field: string) { // unused for now
     this.novelListDefault.sort((a, b) => {
       if (a[field] < b[field]) return -1;
       if (a[field] > b[field]) return 1;
@@ -126,12 +146,12 @@ export class ExplorePage {
   }
 
   getItems(event) {
-    this.novelList = this.novelListDefault;
+    let tmpList = this.novelListDefault;
     let val = event.target.value;
     console.log('search= ' + val);
 
     if (val && val.trim() != '') {
-      this.novelList = this.novelList.filter((item) => {
+      this.novelList = tmpList.filter((item) => {
         return (item.title.toLowerCase().indexOf(val.toLowerCase()) > -1);
       })
     }
@@ -142,10 +162,18 @@ export class ExplorePage {
     this.loadListAll();
   }
 
+  novelPlatformChange(event) {
+    this.updatePlatformSelection(event);
+    this.loadListAll().then(() => {
+      console.log('loadListAll over')
+    });
+  }
+
   selNovel(novel) {
     if (novel.error)
       return;
 
+    console.log(novel)
     this.navCtrl.push('PopoverNovelPage', {
       novel: this.novelService.novelKwargs(novel),
       origin: 'explore'

@@ -6,7 +6,7 @@ import { MyApp } from './app.component';
 import { PopoverReadPage } from '../pages/popover-read/popover-read';
 import { PopoverChapterPage } from '../pages/popover-chapter/popover-chapter';
 
-import { Wuxiaco } from '../providers/wuxiaco';
+import { PlatformManager } from '../providers/platformManager';
 import { HttpModule } from '@angular/http';
 
 import { BookmarkProvider } from '../providers/bookmark-provider';
@@ -38,11 +38,11 @@ import { GoogleAnalytics } from '@ionic-native/google-analytics';
     PopoverChapterPage,
   ],
   providers: [
+    PlatformManager,
     StatusBar,
     SplashScreen,
     { provide: ErrorHandler, useClass: IonicErrorHandler },
     GoogleAnalytics,
-    Wuxiaco,
     BookmarkProvider,
     LockTask
   ]
