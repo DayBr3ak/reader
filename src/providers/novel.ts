@@ -54,10 +54,6 @@ export class Novel {
     };
   }
 
-  href(): string {
-    return `/${this.id}/`;
-  }
-
   async cache(opts) {
     let cached;
     if (opts.compressed === true) {
@@ -92,7 +88,7 @@ export class Novel {
         return cachedDirectory;
       }
       console.error(error)
-      throw 'no directory available';
+      throw error;
     }
   }
 
@@ -114,11 +110,7 @@ export class Novel {
       if (chapter > directory.length) {
         return { error: `Chapter ${chapter} doesn't exist yet` };
       }
-      if (this.manager.id === 'lnb') {
-        return await this.manager.scrapChapter(directory[chapter - 1]);
-      }
-      const chapterElement = directory[chapter - 1]
-      const url = this.manager.resolveChapterUrl(this.id, chapterElement[0]);
+      const url = await this.manager.getChapterUrl(chapter, directory);
       return await this.manager.scrapChapter(url);
     } catch (error) {
       let mes = 'Download error: ' + chapter + ' ' + this.title;

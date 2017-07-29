@@ -115,6 +115,11 @@ export class Wuxiaco extends NovelPlatform {
     }
   }
 
+  async getChapterUrl(chapter: number, directory: Array<any>): Promise<any> {
+    const chapterElement = directory[chapter - 1];
+    return this.resolveChapterUrl(this.id, chapterElement[0]);
+  }
+
   async getNovelList(genre, page=1): Promise<any> {
     let parseAuthor = (div): string => {
       let author = div.querySelector('p.author').innerText.trim();
@@ -178,7 +183,7 @@ export class Wuxiaco extends NovelPlatform {
     let resolveStName = () => {
       return `${this.NAME}-meta-${novel.id}`;
     }
-    let url = `${this.URL}/${novel.href()}`;
+    let url = `${this.URL}/${novel.id}/`;
 
     let parseNovelMetaData = (doc) => {
       let meta = {};
@@ -203,9 +208,10 @@ export class Wuxiaco extends NovelPlatform {
     }
 
     try {
+      const maxChapterPromise = novel.getMaxChapter();
       let doc = await this.getDoc(url);
       let meta = parseNovelMetaData(doc);
-      meta['Last Released'] = await novel.getMaxChapter();
+      meta['Last Released'] = await maxChapterPromise;
 
       let compressed = compressToBase64(JSON.stringify(meta));
       this.storage.set(resolveStName(), compressed);

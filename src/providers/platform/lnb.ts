@@ -102,10 +102,10 @@ export class LNB extends NovelPlatform {
   async scrapChapter(url: string): Promise<any> {
     const doc = await this.getDoc(url);
 
-    let paragraphs = doc.querySelectorAll('section.box.style1.blacktext>p');
-    if (paragraphs.length == 0) {
-      paragraphs = doc.querySelectorAll('section.box.style1.blacktext>div');
-    }
+    let paragraphs = doc.querySelectorAll('section.box.style1.blacktext')[0].children;
+    // if (paragraphs.length == 0) {
+      // paragraphs = doc.querySelectorAll('section.box.style1.blacktext>div');
+    // }
 
     const title = doc.querySelectorAll('header#releases>h2');
 
@@ -115,7 +115,9 @@ export class LNB extends NovelPlatform {
     }
 
     for (let i = 0; i < paragraphs.length; i++) {
-      result.push(paragraphs[i].innerHTML);
+      const e = paragraphs[i];
+      if (e.tagName === 'P' || e.tagName === 'DIV')
+        result.push(paragraphs[i].innerHTML);
     }
     return result;
   }
@@ -134,6 +136,10 @@ export class LNB extends NovelPlatform {
     meta['Last Released'] = await maxChapterPromise;
 
     return meta;
+  }
+
+  async getChapterUrl(chapter: number, directory: Array<any>): Promise<any> {
+    return directory[chapter - 1];
   }
 }
 

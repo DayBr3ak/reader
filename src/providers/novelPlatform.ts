@@ -66,6 +66,10 @@ export class NovelPlatform {
     throw new Error('need implem!!');
   }
 
+  getChapterUrl(chapter: number, directory: Array<any>): Promise<any> {
+    throw new Error('need implem!!');
+  }
+
   scrapDirectory(url: string): Promise<any> {
     throw new Error('need implem!!');
   }
