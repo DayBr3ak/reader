@@ -2,7 +2,7 @@ import { ViewChild, Component, ElementRef } from '@angular/core';
 import { trigger, transition, style, animate, state } from '@angular/animations';
 
 import { IonicPage, NavController, NavParams, ModalController, MenuController,
-  Content, Platform, Events, PopoverController, ToastController } from 'ionic-angular';
+  Content, Platform, Events, PopoverController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { Storage } from '@ionic/storage';
 import 'rxjs/add/operator/map';
@@ -121,7 +121,6 @@ export class ReadingPage {
     public platform: Platform,
     public events: Events,
     public popoverCtrl: PopoverController,
-    public toastCtrl: ToastController,
 
     private ga: GoogleAnalytics,
     private novelService: PlatformManager,
@@ -149,33 +148,29 @@ export class ReadingPage {
         this.onScrollEnd(event.scrollTop);
       });
     })
+
+    this.registerEvents();
+    this.storage.ready().then(async () => {
+      const settings = await this.storage.get(ST_R_SETTINGS);
+      if (settings) {
+        this.readerSettings = settings;
+      }
+      console.log(this.navParams.data);
+      const novel = await this.initNovel();
+      if (novel) {
+        this.loadNovel(novel);
+      }
+    })
   }
 
   async ionViewDidLoad() {
     console.log('VIEW DID LOAD');
     await window['gaTrackerStarted'];
     this.ga.trackView("Reading Page");
-
-    this.registerEvents();
-    await this.storage.ready();
-    const settings = await this.storage.get(ST_R_SETTINGS);
-    if (settings) {
-      this.readerSettings = settings;
-    }
-    console.log(this.navParams.data);
-    const novel = await this.initNovel();
-    if (novel) {
-      this.loadNovel(novel);
-    }
   }
 
   ionViewDidEnter() {
     console.log('VIEW DID ENTER')
-    window['goto'] = (n) => {
-      this.platform.zone.run(() => {
-        this.loadChapter(n);
-      });
-    }
     window['thiz'] = this;
   }
 
@@ -193,11 +188,7 @@ export class ReadingPage {
   }
 
   textToast(text: string, time: number = 2000) {
-    let toast = this.toastCtrl.create({
-      message: text,
-      duration: time
-    });
-    toast.present();
+    this.events.publish('toast', text, time);
   }
 
   onPreviousChapter() {

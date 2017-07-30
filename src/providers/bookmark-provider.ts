@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Http } from '@angular/http';
-import { Events, ToastController } from 'ionic-angular';
+import { Events } from 'ionic-angular';
 import 'rxjs/add/operator/map';
 import { Storage } from '@ionic/storage';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
@@ -18,7 +18,6 @@ export class BookmarkProvider {
   constructor(public http: Http,
     public events: Events,
     public storage: Storage,
-    public toastCtrl: ToastController,
     private ga: GoogleAnalytics
   ) {
     console.log('Hello BookmarkProvider Provider');
@@ -31,11 +30,7 @@ export class BookmarkProvider {
   }
 
   textToast(text: string, time: number = 2000) {
-    let toast = this.toastCtrl.create({
-      message: text,
-      duration: time
-    });
-    toast.present();
+    this.events.publish('toast', text, time);
   }
 
   async getVersion() {
