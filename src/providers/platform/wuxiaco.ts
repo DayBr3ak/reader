@@ -13,7 +13,7 @@ export class Wuxiaco extends NovelPlatform {
   private URL: string = 'http://m.wuxiaworld.co';
 
   init() {
-    console.log('Hello LNB Platform');
+    console.log('Hello Classic Platform');
   }
 
   getGenres(): Array<[number, string]> {

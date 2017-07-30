@@ -10,6 +10,7 @@ import { PlatformManager } from '../providers/platformManager';
 import { HttpModule } from '@angular/http';
 
 import { BookmarkProvider } from '../providers/bookmark-provider';
+import { ReaderProvider } from   '../providers/reader-provider';
 import { LockTask } from '../providers/lock-task';
 
 import { IonicStorageModule } from '@ionic/storage';
@@ -44,6 +45,7 @@ import { GoogleAnalytics } from '@ionic-native/google-analytics';
     { provide: ErrorHandler, useClass: IonicErrorHandler },
     GoogleAnalytics,
     BookmarkProvider,
+    ReaderProvider,
     LockTask
   ]
 })

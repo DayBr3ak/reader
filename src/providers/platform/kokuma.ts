@@ -19,7 +19,6 @@ export class Kokuma extends NovelPlatform {
   }
 
   async getNovelList(genre, page?:number): Promise<any> {
-
     const doc = await this.getDoc(this.NOVEL_U);
     const list = [
       {

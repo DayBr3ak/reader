@@ -14,6 +14,7 @@ import { PlatformManager } from '../../providers/platformManager';
 
 import { Novel } from '../../providers/novel';
 import { BookmarkProvider } from '../../providers/bookmark-provider';
+import { ReaderProvider } from '../../providers/reader-provider';
 import { LockTask } from '../../providers/lock-task';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
@@ -23,6 +24,8 @@ const DEFAULT_NOVEL = {
   title: 'MartialGodAsura',
   id: 'Martial-God-Asura'
 };
+
+const wait = (to: number) => new Promise(r => setTimeout(r, to));
 
 @IonicPage()
 @Component({
@@ -82,6 +85,8 @@ const DEFAULT_NOVEL = {
 })
 export class ReadingPage {
   @ViewChild('pageContent') content: Content;
+  contentPromise: Promise<Content>;
+
   @ViewChild('pageContent', { read: ElementRef }) contentEref: ElementRef;
   @ViewChild('articleBody', { read: ElementRef }) textEref: ElementRef;
 
@@ -121,8 +126,11 @@ export class ReadingPage {
     private ga: GoogleAnalytics,
     private novelService: PlatformManager,
     private bookmarkProvider: BookmarkProvider,
+    private readerProvider: ReaderProvider,
     private lockTask: LockTask
   ) {
+    this.readerProvider.setView(this);
+
     this.novel = null;
     this.hideUi = false;
     this.maxChapter = null;
@@ -134,6 +142,13 @@ export class ReadingPage {
     };
 
     console.log('Hello ReadingPage constructor');
+
+    this.contentPromise = this.waitForContent();
+    this.contentPromise.then((viewContent) => {
+      viewContent.ionScrollEnd.subscribe((event) => {
+        this.onScrollEnd(event.scrollTop);
+      });
+    })
   }
 
   async ionViewDidLoad() {
@@ -164,10 +179,8 @@ export class ReadingPage {
     window['thiz'] = this;
   }
 
-  onEnterSetScroll: () => void = null;
   async ionViewWillEnter() {
     console.log('VIEW WILL ENTER');
-    this.onEnterSetScroll && this.onEnterSetScroll();
   }
 
   ionViewDidUnload() {
@@ -175,6 +188,7 @@ export class ReadingPage {
   }
 
   ionViewDidLeave() {
+    this.readerProvider.viewInactive(this);
     console.log('VIEW DID LEAVE');
   }
 
@@ -186,37 +200,32 @@ export class ReadingPage {
     toast.present();
   }
 
+  onPreviousChapter() {
+    console.log('VUP, chapter is now ' + (this.currentChapter - 1))
+    this.prevChapter();
+  }
+
+  onNextChapter() {
+    console.log('VDOWN, chapter is now ' + (this.currentChapter + 1))
+    this.nextChapter();
+  }
+
+  onScrollEnd(scrollTop) {
+    this.novel.setScroll(this.currentChapter, scrollTop);
+  }
+
+  onBackGroundChange(bg) {
+    this.readerSettings.bgClass = bg;
+  }
+
   registerEvents() {
     console.log('REGISTER EVENTS');
-
-    this.events.subscribe('volume:up', () => {
-      console.log('VUP, chapter is now ' + (this.currentChapter - 1))
-      this.prevChapter();
-    })
-
-    this.events.subscribe('volume:down', () => {
-      console.log('VDOWN, chapter is now ' + (this.currentChapter + 1))
-      this.nextChapter();
-    })
-
-    this.content.ionScrollEnd.subscribe((event) => {
-      // console.log("It's scrolling !! " + event.scrollTop);
-      this.novel.setScroll(this.currentChapter, event.scrollTop);
-    });
-
-    this.events.subscribe('change:background', (bg) => {
-      this.readerSettings.bgClass = bg;
-    });
 
     this.tapHandler = new MultiTapHandler(3, 600);
     this.tapHandler.observable.subscribe(() => {
       console.log('tap!!')
       this.toggleInterface();
     });
-
-    this.platform.pause.subscribe(() => {
-      this.onPause();
-    })
   }
 
   async loadNovel(novel: Novel) {
@@ -254,21 +263,25 @@ export class ReadingPage {
     }
   }
 
-  async setChapterContent(content: any, scroll: number) {
-    const wait = (to: number) => new Promise(r => setTimeout(r, to));
-    this.paragraphs = content;
-    await wait(10);
-    try {
-      this.content.scrollTop = scroll;
-      this.onEnterSetScroll = null;
-    } catch (error) {
-      console.log('DOM paused/not loaded, setting scroll is not possible');
-      this.onEnterSetScroll = () => {
-        console.log('delayed scroll!');
-        this.content.scrollTop = scroll;
-        this.onEnterSetScroll = null;
+  async waitForContent(): Promise<Content> {
+    while(true) {
+      try {
+        let st = this.content.scrollTop;
+        this.content.scrollTop = st;
+        break;
+      } catch(error) {
+        // wait and retry
+        await wait(50);
       }
     }
+    return this.content;
+  }
+
+  async setChapterContent(data: any, scroll: number) {
+    this.paragraphs = data;
+    let viewContent = await this.contentPromise;
+    await wait(10);
+    viewContent.scrollTop = scroll;
   }
 
   async loadChapter(chapter: number, changeChapter: boolean=true, refresh: boolean=false) {

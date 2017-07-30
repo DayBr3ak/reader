@@ -26,6 +26,8 @@ export class BookmarkProvider {
     this.events.subscribe('add:bookmark', (novel: Novel) => {
       this.addBookmark(novel);
     });
+
+    window['uploadBookmarks'] = this.uploadBookmarks.bind(this);
   }
 
   textToast(text: string, time: number = 2000) {
@@ -101,6 +103,21 @@ export class BookmarkProvider {
       const bookmark = bookmarks[bookmarkId];
       //todo
     }
+  }
+
+  async uploadBookmarks() {
+    // for now just print bookmarks to console as json;
+    const bookmarks = await this.bookmarks();
+    const data = {};
+    for (let key in bookmarks) {
+      let bk = bookmarks[key];
+      data[key] = { currentChapter: await this.storage.get(`${key}-current-chapter`) };
+    }
+    const res = {
+      bookmarks: bookmarks,
+      data: data
+    }
+    console.log(JSON.stringify(res, null, 2));
   }
 }
 
