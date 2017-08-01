@@ -111,6 +111,7 @@ export class ReadingPage {
 
   novel: Novel;
   tapHandler: MultiTapHandler;
+  analytics: Promise<GoogleAnalytics>;
 
   constructor(public statusBar: StatusBar,
     public navCtrl: NavController,
@@ -122,7 +123,6 @@ export class ReadingPage {
     public events: Events,
     public popoverCtrl: PopoverController,
 
-    private ga: GoogleAnalytics,
     private novelService: PlatformManager,
     private bookmarkProvider: BookmarkProvider,
     private readerProvider: ReaderProvider,
@@ -141,6 +141,7 @@ export class ReadingPage {
     };
 
     console.log('Hello ReadingPage constructor');
+    this.analytics = window['gaTrackerStarted'];
 
     this.contentPromise = this.waitForContent();
     this.contentPromise.then((viewContent) => {
@@ -155,6 +156,9 @@ export class ReadingPage {
       if (settings) {
         this.readerSettings = settings;
       }
+    })
+
+    this.storage.ready().then(async () => {
       console.log(this.navParams.data);
       const novel = await this.initNovel();
       if (novel) {
@@ -165,8 +169,7 @@ export class ReadingPage {
 
   async ionViewDidLoad() {
     console.log('VIEW DID LOAD');
-    await window['gaTrackerStarted'];
-    this.ga.trackView("Reading Page");
+    (await this.analytics).trackView("Reading Page");
   }
 
   ionViewDidEnter() {
@@ -230,7 +233,7 @@ export class ReadingPage {
     this.loadAhead(currentChapter, 2, this.maxChapter);
     await this.loadChapter(currentChapter);
     this.content.fullscreen = true;
-    this.ga.trackEvent('novel', 'load', novel.title);
+    (await this.analytics).trackEvent('novel', 'load', novel.title);
   }
 
   async initNovel() {
@@ -351,8 +354,8 @@ export class ReadingPage {
   nextChapter() {
     this.disableNav = true;
     this.loadChapter(this.currentChapter + 1).then(() => {
-      setTimeout(() => {
-        this.ga.trackEvent("Reading", "NextChapter");
+      setTimeout(async () => {
+        (await this.analytics).trackEvent("Reading", "NextChapter");
         this.disableNav = false;
       }, 200)
     });
@@ -402,16 +405,17 @@ export class ReadingPage {
       textEle: this.textEref.nativeElement,
       bgClass: this.readerSettings.bgClass
     });
-    popover.onDidDismiss((data) => {
+    popover.onDidDismiss(async (data) => {
       console.log('popover dismissed');
       this.readerSettings.fontFamily = this.textEref.nativeElement.style.fontFamily;
       this.readerSettings.fontSize = this.textEref.nativeElement.style.fontSize;
       //bgClass already set
 
       this.storage.set(ST_R_SETTINGS, this.readerSettings);
-      this.ga.trackEvent('settings', 'setFont', this.readerSettings.fontFamily);
-      this.ga.trackEvent('settings', 'setSize', '' + this.readerSettings.fontSize);
-      this.ga.trackEvent('settings', 'setBgClass', this.readerSettings.bgClass);
+      let ga = await this.analytics;
+      ga.trackEvent('settings', 'setFont', this.readerSettings.fontFamily);
+      ga.trackEvent('settings', 'setSize', '' + this.readerSettings.fontSize);
+      ga.trackEvent('settings', 'setBgClass', this.readerSettings.bgClass);
     })
     popover.present();
   }

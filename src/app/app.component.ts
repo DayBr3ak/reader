@@ -31,10 +31,10 @@ export class MyApp {
         const data = await ga.startTrackerWithId("UA-97415917-1");
         console.log('Google Analytics Tracker started', data);
         ga.setAppVersion(appVersion);
-        return true;
+        return ga;
       } catch (error) {
         console.log('Google Analytics', error);
-        return false;
+        return ga;
       }
     })();
 
