@@ -23,8 +23,19 @@
     </ion-col>
   </ion-row>
 
-  <ion-item *ngFor="let f of fonts" [ngStyle]="{'font-family': f.family}">
+  <ion-item>
+    <ion-range [(ngModel)]="brightnessValue"
+      (ionChange)="changeRange($event)"
+      debounce="10"
+      pin="true"
+    >
+      <ion-icon range-left small name="sunny"></ion-icon>
+      <ion-icon range-right name="sunny"></ion-icon>
+    </ion-range>
+  </ion-item>
+
+  <!-- <ion-item *ngFor="let f of fonts" [ngStyle]="{'font-family': f.family}">
     <ion-label> {{ f.label }} </ion-label>
     <ion-radio [value]="f.family"></ion-radio>
-  </ion-item>
+  </ion-item> -->
 </ion-list>

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { IonicPage, NavParams, Events } from 'ionic-angular';
+import { Brightness } from '@ionic-native/brightness';
 
 IonicPage()
 @Component({
@@ -11,6 +12,9 @@ export class PopoverReadPage {
   contentEle: any;
   textEle: any;
   fontFamily;
+
+  brightnessValue: number;
+  canSetBrightness: boolean;
 
   fonts = [
     {
@@ -25,18 +29,26 @@ export class PopoverReadPage {
 
   constructor(
     private navParams: NavParams,
+    private brightness: Brightness,
     public events: Events
   ) {
-
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     if (this.navParams.data) {
       this.contentEle = this.navParams.data.contentEle;
       this.textEle = this.navParams.data.textEle;
 
       this.background = this.navParams.data.bgClass;
       this.setFontFamily();
+
+      this.brightnessValue = 50;
+      this.canSetBrightness = true;
+      try {
+        this.brightnessValue = Math.floor((await this.brightness.getBrightness()) * 100);
+      } catch(error) {
+        this.canSetBrightness = false;
+      }
     }
   }
 
@@ -66,6 +78,12 @@ export class PopoverReadPage {
   }
 
   changeFontFamily() {
-    if (this.fontFamily) this.textEle.style.fontFamily = this.fontFamily;
+    if (this.fontFamily)
+      this.textEle.style.fontFamily = this.fontFamily;
+  }
+
+  changeRange(event) {
+    if (this.canSetBrightness)
+      this.brightness.setBrightness(this.brightnessValue / 100.0);
   }
 }

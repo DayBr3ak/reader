@@ -19,6 +19,7 @@ import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 import { LocalNotifications } from '@ionic-native/local-notifications';
+import { Brightness } from '@ionic-native/brightness';
 
 @NgModule({
   declarations: [
@@ -46,6 +47,7 @@ import { LocalNotifications } from '@ionic-native/local-notifications';
     { provide: ErrorHandler, useClass: IonicErrorHandler },
     GoogleAnalytics,
     LocalNotifications,
+    Brightness,
     BookmarkProvider,
     ReaderProvider,
     LockTask

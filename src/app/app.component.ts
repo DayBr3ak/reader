@@ -53,7 +53,6 @@ export class MyApp {
         { title: 'Bookmarks', component: 'BookmarksPage' },
       ];
 
-
       document.addEventListener("volumedownbutton", () => {
         platform.zone.run(() => {
           events.publish('volume:down');
