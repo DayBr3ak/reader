@@ -24,11 +24,13 @@
         "@angular/tsc-wrapped": "^4.3.1",
         "@ionic-native/core": "4.1.0",
         "@ionic-native/google-analytics": "^4.1.0",
+        "@ionic-native/local-notifications": "^4.1.0",
         "@ionic-native/splash-screen": "4.1.0",
         "@ionic-native/status-bar": "4.1.0",
         "@ionic/storage": "^2.0.1",
         "@ngx-translate/core": "6.0.1",
         "@ngx-translate/http-loader": "0.0.3",
+        "cordova-plugin-app-event": "^1.2.0",
         "cordova-plugin-console": "1.0.5",
         "cordova-plugin-device": "1.1.4",
         "cordova-plugin-splashscreen": "~4.0.1",
@@ -41,14 +43,15 @@
         "lz-string": "^1.4.4",
         "rxjs": "5.4.0",
         "sw-toolbox": "3.6.0",
-        "zone.js": "0.8.12"
+        "zone.js": "0.8.12",
+        "de.appplant.cordova.plugin.local-notification": "~0.8.5"
     },
     "devDependencies": {
         "@ionic/app-scripts": "2.0.2",
-        "@ionic/cli-plugin-cordova": "1.5.0",
-        "@ionic/cli-plugin-ionic-angular": "1.4.0",
-        "ionic": "3.6.0",
+        "@ionic/cli-plugin-cordova": "1.6.1",
+        "@ionic/cli-plugin-ionic-angular": "1.4.1",
         "ajv-keywords": "^2.1.0",
+        "ionic": "3.7.0",
         "setimmediate": "^1.0.5",
         "typescript": "2.3.4"
     },
@@ -82,7 +85,8 @@
             "cordova-plugin-statusbar": {},
             "cordova-plugin-whitelist": {},
             "cordova-sqlite-storage": {},
-            "ionic-plugin-keyboard": {}
+            "ionic-plugin-keyboard": {},
+            "de.appplant.cordova.plugin.local-notification": {}
         }
     }
 }

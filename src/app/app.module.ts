@@ -18,6 +18,7 @@ import { IonicStorageModule } from '@ionic/storage';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
+import { LocalNotifications } from '@ionic-native/local-notifications';
 
 @NgModule({
   declarations: [
@@ -44,6 +45,7 @@ import { GoogleAnalytics } from '@ionic-native/google-analytics';
     SplashScreen,
     { provide: ErrorHandler, useClass: IonicErrorHandler },
     GoogleAnalytics,
+    LocalNotifications,
     BookmarkProvider,
     ReaderProvider,
     LockTask

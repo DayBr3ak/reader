@@ -15,27 +15,22 @@ import { BookmarkProvider } from '../../providers/bookmark-provider';
   templateUrl: 'bookmarks.html'
 })
 export class BookmarksPage {
-  bookmarkList: any = {};
-
-  get bookmarkKeys() {
-    const keys = Object.keys(this.bookmarkList);
-    // sort by most recent added (could also revert the list I guess?)
-    keys.sort((a, b) => {
-      return this.bookmarkList[b].dateAdded - this.bookmarkList[a].dateAdded;
-    });
-    return keys
-  }
-
   moreDesc: any = {};
+  bookmarkList: any = {};
+  get bKeys() {
+    return this.bookmarkProvider.sortBookmarks(this.bookmarkList);
+  }
 
   constructor(public navCtrl: NavController, public navParams: NavParams,
     private storage: Storage,
     private toastCtrl: ToastController,
     private events: Events,
-    private novelService: PlatformManager,
     private bookmarkProvider: BookmarkProvider
   ) {
 
+    // window['updateBk'] = () => {
+    //   this.bookmarkProvider.updateBk(this.bookmarkList);
+    // }
   }
 
   textToast(text: string, time: number = 2000) {
@@ -71,35 +66,18 @@ export class BookmarksPage {
      return res;
   }
 
-  async didLoad() {
-    const updateMetas = async (bookmark) => {
-      let novel = this.b2novel(bookmark.id);
-      bookmark.metas = await novel.getMoreMeta(true);
-    };
-
-    const bookmarks = await this.bookmarkProvider.bookmarks();
-    if (bookmarks) {
-      this.bookmarkList = bookmarks;
-      const promises = [];
-      try {
-        for (let key of this.bookmarkKeys) {
-          const bookmark = this.bookmarkList[key];
-          promises.push(
-            updateMetas(bookmark)
-          );
-        }
-        await Promise.all(promises);
-      } catch (error) {
-        console.log(error);
-        this.textToast('You have no internet access :(')
-      }
-    }
+  b2novel(key: string): Novel {
+    return this.bookmarkProvider.b2novel(key, this.bookmarkList);
   }
 
-  b2novel(key: string): Novel {
-    let bookmark = this.bookmarkList[key];
-    let novel = this.novelService.novelKwargs(bookmark);
-    return novel;
+  async didLoad() {
+    this.bookmarkList = await this.bookmarkProvider.bookmarks();
+    try {
+      this.bookmarkProvider.getMoreMeta(this.bookmarkList);
+    } catch (error) {
+      console.log(error);
+      this.textToast('You have no internet access :(')
+    }
   }
 
   read(key: string) {

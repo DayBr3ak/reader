@@ -13,9 +13,9 @@
 
 <ion-content padding>
 
-  <ion-list *ngIf="bookmarkKeys.length > 0">
+  <ion-list *ngIf="bKeys.length > 0">
 
-    <ion-card *ngFor="let key of bookmarkKeys">
+    <ion-card *ngFor="let key of bKeys">
       <ion-card-content (click)="moreDesc[key] = !moreDesc[key]" >
         <ion-card-title>
           {{ bookmarkList[key].title }}
@@ -66,7 +66,7 @@
     </ion-card>
   </ion-list>
 
-  <ion-list *ngIf="bookmarkKeys.length == 0">
+  <ion-list *ngIf="bKeys.length == 0">
 
     <ion-card>
       <ion-card-content>

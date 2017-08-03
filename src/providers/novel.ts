@@ -183,7 +183,7 @@ export class Novel {
     return meta;
   }
 
-  async getMaxChapter() {
+  async getMaxChapter(): Promise<number> {
     try {
       const directory = await this.getDirectory();
       return directory.length;
@@ -238,7 +238,7 @@ export class Novel {
     return this.getStoredCompressed(ST_CHAPTER_TXT + chapter);
   }
 
-  async getCurrentChapter() {
+  async getCurrentChapter(): Promise<number> {
     const chapter = await this.getStored(ST_CURRENT_CHAPTER);
     if (chapter)
       return chapter

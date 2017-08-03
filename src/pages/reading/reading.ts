@@ -327,6 +327,7 @@ export class ReadingPage {
     if (content) {
       this.currentChapter = chapter;
       this.novel.setCurrentChapter(chapter);
+      this.events.publish('update:novel', this.novel);
       // view loaded, should scroll to saved scroll point if available
       return await this.setChapterContent(content, scroll);
     }

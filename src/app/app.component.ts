@@ -2,10 +2,11 @@ import { Component, ViewChild } from '@angular/core';
 import { Platform, Nav, Events, ToastController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { SplashScreen } from '@ionic-native/splash-screen';
-
+import { LocalNotifications } from '@ionic-native/local-notifications';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
-const appVersion = '0.1a';
+import { Novel } from '../providers/novel'
+const appVersion = '0.2';
 
 @Component({
   templateUrl: 'app.html'
@@ -20,6 +21,7 @@ export class MyApp {
     platform: Platform,
     statusBar: StatusBar,
     splashScreen: SplashScreen,
+    public localNotifications: LocalNotifications,
     public events: Events,
     public toastCtrl: ToastController,
     ga: GoogleAnalytics
@@ -74,6 +76,22 @@ export class MyApp {
           duration: time
         });
         toast.present();
+      })
+
+      events.subscribe('updated:novel', (notifId: number, bookmark: any, newMaxChapter: number) => {
+        this.localNotifications.schedule({
+          id: notifId,
+          text: `${bookmark.title}: New Chapter (${newMaxChapter})`,
+          data: bookmark
+        });
+
+        console.log(bookmark);
+      })
+
+      this.localNotifications.on('click', (notification: any) => {
+        platform.zone.run(() => {
+          this.events.publish('change:novel', JSON.parse(notification.data));
+        })
       })
 
     });
