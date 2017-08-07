@@ -95,15 +95,15 @@ export class BookmarkProvider {
       }
     });
 
-    window['test1'] = async () => {
-      const bks = await this.bookmarks();
-      for (let id in bks) {
-        let novel = this.b2novel(id, bks);
-        let novelMaxChapter = await novel.getMaxChapter();
-        this.events.publish('updated:novel', 1, bks[id], novelMaxChapter);
-        break;
-      }
-    }
+    // window['test1'] = async () => {
+    //   const bks = await this.bookmarks();
+    //   for (let id in bks) {
+    //     let novel = this.b2novel(id, bks);
+    //     let novelMaxChapter = await novel.getMaxChapter();
+    //     this.events.publish('updated:novel', 1, bks[id], novelMaxChapter);
+    //     break;
+    //   }
+    // }
   }
 
   textToast(text: string, time: number = 2000) {

@@ -54,12 +54,14 @@ export class MyApp {
       ];
 
       document.addEventListener("volumedownbutton", () => {
+        console.log('volumedownbutton');
         platform.zone.run(() => {
           events.publish('volume:down');
         });
       }, false);
 
       document.addEventListener("volumeupbutton", () => {
+        console.log('volumeupbutton');
         platform.zone.run(() => {
           events.publish('volume:up');
         });

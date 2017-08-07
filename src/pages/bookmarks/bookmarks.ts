@@ -78,6 +78,8 @@ export class BookmarksPage {
       console.log(error);
       this.textToast('You have no internet access :(')
     }
+
+    this.events.publish('checkupdate:bookmarks'); // FIXME
   }
 
   read(key: string) {
