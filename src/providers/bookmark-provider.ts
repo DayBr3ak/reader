@@ -72,6 +72,7 @@ export class BookmarkProvider {
     });
 
     this.events.subscribe('checkupdate:bookmarks', async () => {
+      console.log('event :: checkupdate:bookmarks');
       const bks = await this.bookmarks();
       let cnt = 1;
       for (let id in bks) {

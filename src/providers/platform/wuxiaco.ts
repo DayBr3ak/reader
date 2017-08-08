@@ -207,25 +207,25 @@ export class Wuxiaco extends NovelPlatform {
       return meta;
     }
 
-    try {
-      const maxChapterPromise = novel.getMaxChapter();
+    // try {
+      // const maxChapterPromise = novel.getMaxChapter();
       let doc = await this.getDoc(url);
       let meta = parseNovelMetaData(doc);
-      meta['Last Released'] = await maxChapterPromise;
+      // meta['Last Released'] = await maxChapterPromise;
 
       let compressed = compressToBase64(JSON.stringify(meta));
       this.storage.set(resolveStName(), compressed);
       return meta;
-    } catch (error) {
-      let cachedMeta = await this.storage.get(resolveStName());
-      if (cachedMeta) {
-        let uncompressed = decompressFromBase64(cachedMeta);
-        return JSON.parse(uncompressed);
-      }
-      else {
-        throw { fn: 'getNovelMeta', error: `can't access ${url}` };
-      }
-    }
+    // } catch (error) {
+    //   let cachedMeta = await this.storage.get(resolveStName());
+    //   if (cachedMeta) {
+    //     let uncompressed = decompressFromBase64(cachedMeta);
+    //     return JSON.parse(uncompressed);
+    //   }
+    //   else {
+    //     throw { fn: 'getNovelMeta', error: `can't access ${url}` };
+    //   }
+    // }
   }
 
 }

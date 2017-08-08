@@ -95,6 +95,13 @@ export class MyApp {
         })
       })
 
+      setTimeout(() => {
+        this.events.publish('checkupdate:bookmarks');
+      }, 2000);
+      setInterval(() => {
+        this.events.publish('checkupdate:bookmarks');
+      }, 5 * 60 * 1000);
+
     });
   }
 

@@ -9,8 +9,9 @@ const ST_NOVEL_DIR = 'novel-directory';
 const ST_MOREMETA = 'novel-moremeta';
 
 const _1MIN = 60 * 1000;
-const TIMESTAMP_MOREMETA = 10 * _1MIN;
-const TIMESTAMP_DIRECTORY = 15* _1MIN;
+const _1HOUR = 60 * _1MIN;
+const TIMESTAMP_MOREMETA =  4 * _1HOUR;
+const TIMESTAMP_DIRECTORY = 1 * _1HOUR + 20 * _1MIN;
 
 const arrayRange = (n: number, offset:number=0) => {
   return Array.apply(null, Array(n)).map((x, i) => i + offset);
@@ -54,33 +55,50 @@ export class Novel {
     };
   }
 
+  cachePromises: any = {};
+
   async cache(opts) {
-    let cached;
-    if (opts.compressed === true) {
-      cached = await this.getStoredCompressed(opts.key);
-    } else {
-      cached = await this.getStored(opts.key);
-    }
-    if (cached === null || Date.now() - cached._timestamp > opts.timeout) {
-      cached = await opts.fallback.bind(this)();
-      cached._timestamp = Date.now();
 
+    if (this.cachePromises[opts.id]) {
+      return this.cachePromises[opts.id];
+    }
+
+    const fn = async () => {
+      let cached;
       if (opts.compressed === true) {
-        this.setStoredCompressed(opts.key, cached);
+        cached = await this.getStoredCompressed(opts.key);
       } else {
-        this.setStored(opts.key, cached);
+        cached = await this.getStored(opts.key);
       }
+      if (cached === null || cached._timestamp === undefined || Date.now() - cached._timestamp > opts.timeout) {
+        // console.log(cached);
+        // if (cached && Date.now() - cached._timestamp > opts.timeout) {
+        //   console.log('stale')
+        // }
+        cached = {
+          object: await opts.fallback.bind(this)(),
+          _timestamp: Date.now()
+        }
 
-      opts.log && console.log(opts.log);
+        if (opts.compressed === true) {
+          await this.setStoredCompressed(opts.key, cached);
+        } else {
+          await this.setStored(opts.key, cached);
+        }
+
+        opts.log && console.log(opts.log);
+      }
+      this.cachePromises[opts.id] = null;
+      return cached.object;
     }
-    return cached;
+    this.cachePromises[opts.id] = fn();
+    return this.cachePromises[opts.id];
   }
 
-  async _getDirectory(): Promise<any[]> {
+  async _getDirectory(): Promise<any> {
     let url = this.manager.resolveDirectoryUrl(this.id);
     try {
       const directory = await this.manager.scrapDirectory(url);
-      // this.setStoredCompressed(ST_NOVEL_DIR, directory);
       return directory;
     } catch (error) {
       const cachedDirectory = await this.getStoredCompressed(ST_NOVEL_DIR);
@@ -92,8 +110,9 @@ export class Novel {
     }
   }
 
-  async getDirectory(): Promise<any[]> {
+  async getDirectory(): Promise<any> {
     return this.cache({
+      id: 'directory',
       compressed: true,
       key: ST_NOVEL_DIR,
       timeout: TIMESTAMP_DIRECTORY,
@@ -166,7 +185,9 @@ export class Novel {
 
   async getMoreMeta(force: boolean=false): Promise<any> {
     const currentChapterPromise = this.getCurrentChapter();
+    const maxChapterPromise = this.getMaxChapter();
     const meta = await this.cache({
+      id: 'moremeta',
       compressed: false,
       key: ST_MOREMETA,
       timeout: TIMESTAMP_MOREMETA,
@@ -180,6 +201,7 @@ export class Novel {
     if (lastRead > 1) {
       meta['Last Read'] = lastRead;
     }
+    meta['Last Released'] = await maxChapterPromise;
     return meta;
   }
 

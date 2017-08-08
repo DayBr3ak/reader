@@ -98,7 +98,7 @@ export class Kokuma extends NovelPlatform {
 
   async getNovelMeta(novel: Novel, force?: boolean): Promise<any> {
     // throw new Error('need implem!!');
-    const maxChapterPromise = novel.getMaxChapter();
+    // const maxChapterPromise = novel.getMaxChapter();
     // const doc = await this.getDoc(this.resolveDirectoryUrl(novel.id));
     // const meta = {
     //   _Author: doc.querySelectorAll('header>h2')[0].innerText,
@@ -110,7 +110,7 @@ export class Kokuma extends NovelPlatform {
     const meta = {
       Status: 'Active'
     }
-    meta['Last Released'] = await maxChapterPromise;
+    // meta['Last Released'] = await maxChapterPromise;
     return meta;
   }
 

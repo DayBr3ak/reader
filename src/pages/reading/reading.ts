@@ -97,18 +97,8 @@ export class ReadingPage {
   public chapList: Array<number>;
 
   private disableNav: boolean = false;
-  private _maxChapter: number;
-  get maxChapter(): number {
-    if (this.platform.is('cordova'))
-      return this._maxChapter;
-    else
-      // return DEBUG_DOWNLOAD;
-      return this._maxChapter;
-  }
-  set maxChapter(v: number) {
-    this._maxChapter = v;
-  }
 
+  maxChapter: number;
   novel: Novel;
   tapHandler: MultiTapHandler;
   analytics: Promise<GoogleAnalytics>;
@@ -132,7 +122,6 @@ export class ReadingPage {
 
     this.novel = null;
     this.hideUi = false;
-    this.maxChapter = null;
     this.statusBar.overlaysWebView(false);
     this.readerSettings = {
       fontFamily: 'roboto',
@@ -227,11 +216,11 @@ export class ReadingPage {
     this.storage.set(ST_CURRENT_NOVEL, this.novel.meta());
 
     console.log(this.novel)
-    this.maxChapter = await this.novel.getMaxChapter();
-    console.log('maxChapter= ' + this.maxChapter);
+    const maxChapter = await this.getMaxChapter();
+    console.log('maxChapter= ' + maxChapter);
     const currentChapter = await this.novel.getCurrentChapter();
-    this.loadAhead(currentChapter, 2, this.maxChapter);
-    await this.loadChapter(currentChapter);
+    this.loadAhead(currentChapter, 2, maxChapter);
+    await this.loadChapter(currentChapter, maxChapter);
     this.content.fullscreen = true;
     (await this.analytics).trackEvent('novel', 'load', novel.title);
   }
@@ -278,16 +267,16 @@ export class ReadingPage {
     viewContent.scrollTop = scroll;
   }
 
-  async loadChapter(chapter: number, changeChapter: boolean=true, refresh: boolean=false) {
-    if (chapter < 1 || (this.maxChapter && chapter > this.maxChapter)) {
-      this.textToast("Chapter " + chapter + " doesn't exist. Max is " + this.maxChapter);
+  async loadChapter(chapter: number, maxChapter: number, changeChapter: boolean=true, refresh: boolean=false) {
+    if (chapter < 1 || (maxChapter && chapter > maxChapter)) {
+      this.textToast("Chapter " + chapter + " doesn't exist. Max is " + maxChapter);
     }
 
     if (chapter < 1) {
       chapter = 1;
     }
-    if (this.maxChapter && chapter > this.maxChapter) {
-      chapter = this.maxChapter;
+    if (maxChapter && chapter > maxChapter) {
+      chapter = maxChapter;
     }
     console.log('async loadchapter ' + chapter);
     let getContent = async () => {
@@ -340,7 +329,7 @@ export class ReadingPage {
       chapters.push(chapter + i);
     }
     const chapterPromises = chapters.map((chapterId) => {
-      return this.loadChapter(chapterId, false);
+      return this.loadChapter(chapterId, maxChapter, false);
     })
     await Promise.all(chapterPromises);
     console.log('lookAhead over');
@@ -352,21 +341,29 @@ export class ReadingPage {
     return max;
   }
 
-  nextChapter() {
+  async getMaxChapter(): Promise<number> {
+    const max = await this.novel.getMaxChapter();
+    this.maxChapter = max;
+    return max;
+  }
+
+  async nextChapter() {
+    const maxChapter = await this.getMaxChapter();
     this.disableNav = true;
-    this.loadChapter(this.currentChapter + 1).then(() => {
+    this.loadChapter(this.currentChapter + 1, maxChapter).then(() => {
       setTimeout(async () => {
         (await this.analytics).trackEvent("Reading", "NextChapter");
         this.disableNav = false;
       }, 200)
     });
-    this.loadAhead(this.currentChapter + 2, 2, this.maxChapter);
+    this.loadAhead(this.currentChapter + 2, 2, maxChapter);
   }
 
-  prevChapter() {
+  async prevChapter() {
     if (this.currentChapter > 1) {
+      const maxChapter = await this.getMaxChapter();
       this.disableNav = true;
-      this.loadChapter(this.currentChapter - 1).then(() => {
+      this.loadChapter(this.currentChapter - 1, maxChapter).then(() => {
         setTimeout(() => {
           this.disableNav = false;
         }, 200)
@@ -421,25 +418,24 @@ export class ReadingPage {
     popover.present();
   }
 
-  presentPopoverChapter() {
-    if (this.maxChapter) {
-      let popover = this.popoverCtrl.create(PopoverChapterPage, {
-        max: this.maxChapter,
-        current: this.currentChapter
-      });
-      popover.onDidDismiss(data => {
-        if (data) {
-          if (data === 'last') {
-            this.loadChapter(this.maxChapter);
-          } else if (data === 'first') {
-            this.loadChapter(1);
-          } else {
-            this.loadChapter(data);
-          }
+  async presentPopoverChapter() {
+    const maxChapter = await this.getMaxChapter();
+    let popover = this.popoverCtrl.create(PopoverChapterPage, {
+      max: maxChapter,
+      current: this.currentChapter
+    });
+    popover.onDidDismiss(data => {
+      if (data) {
+        if (data === 'last') {
+          this.loadChapter(maxChapter, maxChapter);
+        } else if (data === 'first') {
+          this.loadChapter(1, maxChapter);
+        } else {
+          this.loadChapter(data, maxChapter);
         }
-      });
-      popover.present();
-    }
+      }
+    });
+    popover.present();
   }
 
   addBookmark(novel: Novel) {
@@ -461,7 +457,8 @@ export class ReadingPage {
     console.log('Begin async operation', refresher);
 
     if (this.novel) {
-      await this.loadChapter(this.currentChapter, true, true);
+      const maxChapter = await this.getMaxChapter();
+      await this.loadChapter(this.currentChapter, maxChapter, true, true);
     } else {
       const novel = await this.initNovel();
       if (novel) {
