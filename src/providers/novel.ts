@@ -58,12 +58,11 @@ export class Novel {
   cachePromises: any = {};
 
   async cache(opts) {
-
     if (this.cachePromises[opts.id]) {
       return this.cachePromises[opts.id];
     }
 
-    const fn = async () => {
+    const promiseGen = async () => {
       let cached;
       if (opts.compressed === true) {
         cached = await this.getStoredCompressed(opts.key);
@@ -75,9 +74,11 @@ export class Novel {
         // if (cached && Date.now() - cached._timestamp > opts.timeout) {
         //   console.log('stale')
         // }
-        cached = {
-          object: await opts.fallback.bind(this)(),
-          _timestamp: Date.now()
+        try {
+          cached = await opts.fallback.bind(this)();
+        } catch(error) {
+          this.cachePromises[opts.id] = null;
+          throw error;
         }
 
         if (opts.compressed === true) {
@@ -89,9 +90,9 @@ export class Novel {
         opts.log && console.log(opts.log);
       }
       this.cachePromises[opts.id] = null;
-      return cached.object;
+      return cached;
     }
-    this.cachePromises[opts.id] = fn();
+    this.cachePromises[opts.id] = promiseGen();
     return this.cachePromises[opts.id];
   }
 
@@ -99,28 +100,44 @@ export class Novel {
     let url = this.manager.resolveDirectoryUrl(this.id);
     try {
       const directory = await this.manager.scrapDirectory(url);
-      return directory;
+      return {
+        directory: directory,
+        _timestamp: Date.now()
+      }
     } catch (error) {
       const cachedDirectory = await this.getStoredCompressed(ST_NOVEL_DIR);
       if (cachedDirectory) {
-        return cachedDirectory;
+        return {
+          directory: cachedDirectory.directory,
+        }
       }
+      console.error('Error in novel._getDirectory');
       console.error(error)
       throw error;
     }
   }
 
-  async getDirectory(): Promise<any> {
-    return this.cache({
+  async getDirectory(): Promise<any[]> {
+    let cached = await this.cache({
       id: 'directory',
       compressed: true,
       key: ST_NOVEL_DIR,
       timeout: TIMESTAMP_DIRECTORY,
       log: 'timestamp directory ' + this.title,
-      fallback: () => {
+      fallback: async () => {
         return this._getDirectory();
       }
     });
+
+    if (cached)
+      return cached.directory;
+    return null;
+  }
+
+  async _invalidCache() {
+    await this.setStored(ST_NOVEL_DIR, null);
+    await this.setStored(ST_MOREMETA, null);
+    console.log('cache cleared');
   }
 
   async scrap(chapter) {
@@ -192,16 +209,27 @@ export class Novel {
       key: ST_MOREMETA,
       timeout: TIMESTAMP_MOREMETA,
       log: 'timestamp novelmeta ' + this.title,
-      fallback: () => {
-        return this.manager.getNovelMeta(this, force);
+      fallback: async () => {
+        try {
+          let meta = await this.manager.getNovelMeta(this, force);
+          meta._timestamp = Date.now();
+          return meta;
+        } catch (error) {
+          return {
+            Error: "Internet Disconnected",
+            _error: true
+          }
+        }
       }
     });
 
-    const lastRead = await currentChapterPromise;
-    if (lastRead > 1) {
-      meta['Last Read'] = lastRead;
+    if (meta['_error'] === undefined) {
+      const lastRead = await currentChapterPromise;
+      if (lastRead > 1) {
+        meta['Last Read'] = lastRead;
+      }
+      meta['Last Released'] = await maxChapterPromise;
     }
-    meta['Last Released'] = await maxChapterPromise;
     return meta;
   }
 

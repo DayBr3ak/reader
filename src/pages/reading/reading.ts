@@ -140,20 +140,21 @@ export class ReadingPage {
     })
 
     this.registerEvents();
-    this.storage.ready().then(async () => {
-      const settings = await this.storage.get(ST_R_SETTINGS);
+    this.storage.get(ST_R_SETTINGS).then(settings => {
       if (settings) {
         this.readerSettings = settings;
       }
+    });
+
+    console.log(this.navParams.data);
+    this.initNovel().then(novel => {
+      if (novel) {
+        return this.loadNovel(novel);
+      }
+    }).then(() => {
+      this.events.publish('toggle:splashscreen');
     })
 
-    this.storage.ready().then(async () => {
-      console.log(this.navParams.data);
-      const novel = await this.initNovel();
-      if (novel) {
-        this.loadNovel(novel);
-      }
-    })
   }
 
   async ionViewDidLoad() {
@@ -311,7 +312,7 @@ export class ReadingPage {
       content = await getContent();
       scroll = await this.novel.getScroll(chapter) || scroll;
     } catch (error) {
-      content = error;
+      content = [ error ];
     }
     if (content) {
       this.currentChapter = chapter;

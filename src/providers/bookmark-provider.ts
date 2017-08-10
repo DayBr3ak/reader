@@ -86,7 +86,7 @@ export class BookmarkProvider {
           this.novelsWasUptodate[novel.id] = false;
         } else {
           if (this.novelsWasUptodate[novel.id] === true) {
-            this.events.publish('updated:novel', cnt, novel, novelMaxChapter);
+            this.events.publish('updated:novel', cnt, bks[novel.id], novelMaxChapter);
             this.novelsWasUptodate[novel.id] = false;
             cnt += 1;
           }

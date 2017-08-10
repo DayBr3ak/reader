@@ -1,6 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { Platform, Nav, Events, ToastController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
+import { Storage } from '@ionic/storage';
 import { SplashScreen } from '@ionic-native/splash-screen';
 import { LocalNotifications } from '@ionic-native/local-notifications';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
@@ -18,90 +19,98 @@ export class MyApp {
   pages:any;
 
   constructor(
-    platform: Platform,
-    statusBar: StatusBar,
-    splashScreen: SplashScreen,
+    public platform: Platform,
+    public statusBar: StatusBar,
+    public splashScreen: SplashScreen,
+    public storage: Storage,
     public localNotifications: LocalNotifications,
     public events: Events,
     public toastCtrl: ToastController,
-    ga: GoogleAnalytics
+    public ga: GoogleAnalytics
   ) {
 
+    this.init();
+  }
+
+  async init() {
     window['gaTrackerStarted'] = (async () => {
-      await platform.ready();
+      await this.platform.ready();
       try {
-        const data = await ga.startTrackerWithId("UA-97415917-1");
+        const data = await this.ga.startTrackerWithId("UA-97415917-1");
         console.log('Google Analytics Tracker started', data);
-        ga.setAppVersion(appVersion);
-        return ga;
+        this.ga.setAppVersion(appVersion);
+        return this.ga;
       } catch (error) {
         console.log('Google Analytics', error);
-        return ga;
+        return this.ga;
       }
     })();
 
-    platform.ready().then(() => {
-      // Okay, so the platform is ready and our plugins are available.
-      // Here you can do any higher level native things you might need.
-      statusBar.styleDefault();
-      splashScreen.hide();
-      this.events = events;
+    await this.platform.ready();
+    await this.storage.ready();
 
-      this.pages = [
-        { title: 'Explore', component: 'ExplorePage' },
-        { title: 'Back To Reading', component: 'ReadingPage' },
-        { title: 'Bookmarks', component: 'BookmarksPage' },
-      ];
+    // Okay, so the platform is ready and our plugins are available.
+    // Here you can do any higher level native things you might need.
+    this.statusBar.styleDefault();
 
-      document.addEventListener("volumedownbutton", () => {
-        console.log('volumedownbutton');
-        platform.zone.run(() => {
-          events.publish('volume:down');
-        });
-      }, false);
+    this.pages = [
+      { title: 'Explore', component: 'ExplorePage' },
+      { title: 'Back To Reading', component: 'ReadingPage' },
+      { title: 'Bookmarks', component: 'BookmarksPage' },
+    ];
 
-      document.addEventListener("volumeupbutton", () => {
-        console.log('volumeupbutton');
-        platform.zone.run(() => {
-          events.publish('volume:up');
-        });
-      }, false);
+    document.addEventListener("volumedownbutton", () => {
+      console.log('volumedownbutton');
+      this.platform.zone.run(() => {
+        this.events.publish('volume:down');
+      });
+    }, false);
 
-      events.subscribe('change:novel', (novel) => {
-        this.nav.setRoot('ReadingPage', { novel: novel });
+    document.addEventListener("volumeupbutton", () => {
+      console.log('volumeupbutton');
+      this.platform.zone.run(() => {
+        this.events.publish('volume:up');
+      });
+    }, false);
+
+    this.events.subscribe('change:novel', (novel) => {
+      this.nav.setRoot('ReadingPage', { novel: novel });
+    })
+
+    this.events.subscribe('toast', (message, time) => {
+      let toast = this.toastCtrl.create({
+        message: message,
+        duration: time
+      });
+      toast.present();
+    })
+
+    this.events.subscribe('updated:novel', (notifId: number, bookmark: any, newMaxChapter: number) => {
+      this.localNotifications.schedule({
+        id: notifId,
+        text: `${bookmark.title}: New Chapter (${newMaxChapter})`,
+        data: bookmark
+      });
+
+      console.log(bookmark);
+    })
+
+    this.localNotifications.on('click', (notification: any) => {
+      this.platform.zone.run(() => {
+        this.events.publish('change:novel', JSON.parse(notification.data));
       })
+    })
 
-      events.subscribe('toast', (message, time) => {
-        let toast = this.toastCtrl.create({
-          message: message,
-          duration: time
-        });
-        toast.present();
-      })
+    // setTimeout(() => {
+    //   this.events.publish('checkupdate:bookmarks');
+    // }, 2000);
+    // setInterval(() => {
+    //   this.events.publish('checkupdate:bookmarks');
+    // }, 5 * 60 * 1000);
 
-      events.subscribe('updated:novel', (notifId: number, bookmark: any, newMaxChapter: number) => {
-        this.localNotifications.schedule({
-          id: notifId,
-          text: `${bookmark.title}: New Chapter (${newMaxChapter})`,
-          data: bookmark
-        });
-
-        console.log(bookmark);
-      })
-
-      this.localNotifications.on('click', (notification: any) => {
-        platform.zone.run(() => {
-          this.events.publish('change:novel', JSON.parse(notification.data));
-        })
-      })
-
-      setTimeout(() => {
-        this.events.publish('checkupdate:bookmarks');
-      }, 2000);
-      setInterval(() => {
-        this.events.publish('checkupdate:bookmarks');
-      }, 5 * 60 * 1000);
-
+    this.events.subscribe('toggle:splashscreen', () => {
+      console.log('hide splashscreen');
+      this.splashScreen.hide();
     });
   }
 
