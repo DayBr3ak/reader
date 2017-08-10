@@ -316,10 +316,10 @@ export class ReadingPage {
     }
     if (content) {
       this.currentChapter = chapter;
-      this.novel.setCurrentChapter(chapter);
-      this.events.publish('update:novel', this.novel);
+      await this.novel.setCurrentChapter(chapter);
       // view loaded, should scroll to saved scroll point if available
-      return await this.setChapterContent(content, scroll);
+      await this.setChapterContent(content, scroll);
+      return await this.bookmarkProvider.updateNovel(this.novel);
     }
     return null;
   }

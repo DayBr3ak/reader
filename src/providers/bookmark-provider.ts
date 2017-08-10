@@ -10,19 +10,9 @@ import { Novel } from './novel';
 
 const ST_BOOKMARK = 'app-bookmarks';
 const ST_BOOKMARK_VERSION = 'app-bookmarks-version';
-const ST_BOOKMARK_NOVEL_LAST_READ = 'app-bookmarks-last-read';
-const ST_BOOKMARK_NOVEL_MAX_CHAPTER = 'app-bookmarks-max-chapter';
 const ST_BOOKMARK_NOVEL_WAS_UPTODATE = 'app-bookmarks-was-uptodate';
 const BK_VERSION = 1.8;
 
-type NovelReadMap = {
-  novelId: string,
-  currentChapter: number
-};
-type NovelMaxMap = {
-  novelId: string,
-  maxChapter: number
-};
 type NovelUpMap = {
   novelId: string,
   wasUptodate: boolean
@@ -31,8 +21,6 @@ type NovelUpMap = {
 @Injectable()
 export class BookmarkProvider {
   private _version: number = null;
-  private novelsLastRead: NovelReadMap;
-  private novelsMaxChapter: NovelMaxMap;
   private novelsWasUptodate: NovelUpMap;
 
   constructor(public http: Http,
@@ -50,50 +38,10 @@ export class BookmarkProvider {
     window['uploadBookmarks'] = this.uploadBookmarks.bind(this);
     window['bookmarkProvider'] = this;
 
-    this.storage.get(ST_BOOKMARK_NOVEL_LAST_READ).then(val => this.novelsLastRead = val || {})
-    this.storage.get(ST_BOOKMARK_NOVEL_MAX_CHAPTER).then(val => this.novelsMaxChapter = val || {})
     this.storage.get(ST_BOOKMARK_NOVEL_WAS_UPTODATE).then(val => this.novelsWasUptodate = val || {})
 
-
-    this.events.subscribe('update:novel', async (novel: Novel) => {
-      const currentPr = novel.getCurrentChapter();
-      const maxPr = novel.getMaxChapter();
-      this.novelsLastRead[novel.id] = await currentPr;
-      this.novelsMaxChapter[novel.id] = await maxPr;
-
-      if (this.novelsLastRead[novel.id] === this.novelsMaxChapter[novel.id]) {
-        this.novelsWasUptodate[novel.id] = true;
-      } else {
-        this.novelsWasUptodate[novel.id] = false;
-      }
-      this.storage.set(ST_BOOKMARK_NOVEL_LAST_READ, this.novelsLastRead);
-      this.storage.set(ST_BOOKMARK_NOVEL_MAX_CHAPTER, this.novelsMaxChapter);
-      this.storage.set(ST_BOOKMARK_NOVEL_WAS_UPTODATE, this.novelsWasUptodate);
-    });
-
     this.events.subscribe('checkupdate:bookmarks', async () => {
-      console.log('event :: checkupdate:bookmarks');
-      const bks = await this.bookmarks();
-      let cnt = 1;
-      for (let id in bks) {
-        let novel = this.b2novel(id, bks);
-        let novelCurrentChapter = this.novelsLastRead[novel.id];
-        let novelMaxChapter = await novel.getMaxChapter();
-
-        if (novelCurrentChapter === novelMaxChapter) {
-          this.novelsWasUptodate[novel.id] = true;
-        } else if (novelCurrentChapter < novelMaxChapter) {
-          this.novelsWasUptodate[novel.id] = false;
-        } else {
-          if (this.novelsWasUptodate[novel.id] === true) {
-            this.events.publish('updated:novel', cnt, bks[novel.id], novelMaxChapter);
-            this.novelsWasUptodate[novel.id] = false;
-            cnt += 1;
-          }
-        }
-
-        await this.storage.set(ST_BOOKMARK_NOVEL_WAS_UPTODATE, this.novelsWasUptodate);
-      }
+      this.checkUpdateBookmarks();
     });
 
     // window['test1'] = async () => {
@@ -109,6 +57,56 @@ export class BookmarkProvider {
 
   textToast(text: string, time: number = 2000) {
     this.events.publish('toast', text, time);
+  }
+
+  async updateNovel(novel: Novel) {
+    const currentPr = novel.getCurrentChapter();
+    const maxPr = novel.getMaxChapter();
+    const currentChapter = await currentPr;
+    const maxChapter = await maxPr;
+
+    if (currentChapter === maxChapter) {
+      this.novelsWasUptodate[novel.id] = true;
+    } else {
+      this.novelsWasUptodate[novel.id] = false;
+    }
+    await this.storage.set(ST_BOOKMARK_NOVEL_WAS_UPTODATE, this.novelsWasUptodate);
+  }
+
+  async checkUpdateBookmarks() {
+    console.log('event :: checkupdate:bookmarks');
+    const bks = await this.bookmarks();
+    let cnt = 1;
+    for (let id in bks) {
+      let novel = this.b2novel(id, bks);
+      let novelCurrentChapter = await novel.getCurrentChapter();
+      let novelMaxChapter = await novel.getMaxChapter();
+
+      if (!novelCurrentChapter) {
+        console.log('checkupdate:bookmarks :: currentChapter is null/undef ?');
+        continue;
+      }
+      if (!novelMaxChapter) {
+        console.log('checkupdate:bookmarks :: maxChapter is null/undef ?');
+        continue;
+      }
+
+      if (novelCurrentChapter === novelMaxChapter) {
+        this.novelsWasUptodate[novel.id] = true;
+        console.log(`${novel.title} has no updates`);
+      } else if (novelCurrentChapter < novelMaxChapter) {
+        if (this.novelsWasUptodate[novel.id] === true) {
+          console.log(`${novel.title} has an update available!`);
+          this.events.publish('updated:novel', cnt, bks[novel.id], novelMaxChapter);
+          cnt += 1;
+        }
+        this.novelsWasUptodate[novel.id] = false;
+      } else {
+        console.error(`${novel.title} current chapter is higher than max chapter`);
+      }
+
+    }
+    await this.storage.set(ST_BOOKMARK_NOVEL_WAS_UPTODATE, this.novelsWasUptodate);
   }
 
   async getVersion() {
