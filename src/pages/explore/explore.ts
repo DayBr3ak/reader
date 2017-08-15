@@ -34,6 +34,8 @@ const platformsToSelector = () => {
 export class ExplorePage {
   @ViewChild('content') content: Content;
 
+  isLoading: boolean = false;
+  searchBarValue: string = null;
   novelList: any;
   novelListDefault: any;
   novelSearch: any;
@@ -88,6 +90,7 @@ export class ExplorePage {
   }
 
   async loadListAll() {
+    this.isLoading = true;
     this.novelListDefault = [];
     this.novelList = [];
     // see https://developers.google.com/web/fundamentals/getting-started/primers/promises
@@ -121,7 +124,8 @@ export class ExplorePage {
       let list = this.novelListDefault.concat([{ title: 'Sorry', desc: 'You have no internet access :(', error: error }]);
       this.novelListDefault = list;
     } finally {
-      this._updateDom();
+      this.isLoading = false;
+      this._getItems(this.searchBarValue);
     }
   }
 
@@ -147,19 +151,41 @@ export class ExplorePage {
     // this._updateDom();
   }
 
-  _updateDom() {
-    this.novelList = this.novelListDefault;
+  _updateDom(list=this.novelListDefault) {
+    this.novelList = list;
   }
 
   getItems(event) {
+    this._getItems(event.target.value);
+  }
+
+  _getItems(val: string) {
+    this.searchBarValue = val;
+    if (this.isLoading) {
+      return;
+    }
     let tmpList = this.novelListDefault;
-    let val = event.target.value;
     console.log('search= ' + val);
 
-    if (val && val.trim() != '') {
-      this.novelList = tmpList.filter((item) => {
-        return (item.title.toLowerCase().indexOf(val.toLowerCase()) > -1);
-      })
+    if (val === undefined || val === null) {
+      val = '';
+    }
+
+    if (val.length > 0) {
+      const filter = val.toLowerCase();
+      const filtered = tmpList.filter((item) => {
+        const title: string = item.title.toLowerCase();
+        return (title.indexOf(filter) > -1);
+      });
+      if (filtered.length > 0) {
+        this._updateDom(filtered);
+      } else {
+        this._updateDom([
+          { title: 'Sorry', desc: `No results matching: ${val}`, error: 'Nothing matching' }
+        ]);
+      }
+    } else {
+      this._updateDom(tmpList);
     }
   }
 
