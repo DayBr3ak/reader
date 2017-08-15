@@ -101,12 +101,12 @@ export class MyApp {
       })
     })
 
-    // setTimeout(() => {
-    //   this.events.publish('checkupdate:bookmarks');
-    // }, 2000);
-    // setInterval(() => {
-    //   this.events.publish('checkupdate:bookmarks');
-    // }, 5 * 60 * 1000);
+    setTimeout(() => {
+      this.events.publish('checkupdate:bookmarks');
+    }, 2000);
+    setInterval(() => {
+      this.events.publish('checkupdate:bookmarks');
+    }, 60 * 60 * 1000);
 
     this.events.subscribe('toggle:splashscreen', () => {
       console.log('hide splashscreen');

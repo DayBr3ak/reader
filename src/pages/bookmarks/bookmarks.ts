@@ -1,13 +1,9 @@
 
 import { Component } from '@angular/core';
 import { IonicPage, NavController, NavParams, ToastController, Events } from 'ionic-angular';
-import { Storage } from '@ionic/storage';
 
-// import { Wuxiaco } from '../../providers/wuxiaco';
-import { NovelPlatform } from '../../providers/novelPlatform';
-import { PlatformManager } from '../../providers/platformManager';
 import { Novel } from '../../providers/novel';
-import { BookmarkProvider } from '../../providers/bookmark-provider';
+import { BookmarkProvider, IBookmark, IBookmarkMap, IBookmarkMeta } from '../../providers/bookmark-provider';
 
 @IonicPage()
 @Component({
@@ -16,21 +12,18 @@ import { BookmarkProvider } from '../../providers/bookmark-provider';
 })
 export class BookmarksPage {
   moreDesc: any = {};
-  bookmarkList: any = {};
+  bookmarkList: IBookmarkMap = {};
+  bookmarkMeta: IBookmarkMeta = {};
   get bKeys() {
     return this.bookmarkProvider.sortBookmarks(this.bookmarkList);
   }
 
   constructor(public navCtrl: NavController, public navParams: NavParams,
-    private storage: Storage,
     private toastCtrl: ToastController,
     private events: Events,
     private bookmarkProvider: BookmarkProvider
   ) {
-
-    // window['updateBk'] = () => {
-    //   this.bookmarkProvider.updateBk(this.bookmarkList);
-    // }
+    this.didLoad();
   }
 
   textToast(text: string, time: number = 2000) {
@@ -44,22 +37,19 @@ export class BookmarksPage {
   ionViewDidEnter() {
     window['thiz'] = this;
     console.log('ionViewDidLoad BookmarksPage');
-    this.storage.ready().then(() => {
-      this.didLoad();
-    });
   }
 
   _formatMeta(key: string) {
-     let bookmark = this.bookmarkList[key];
-     if (!bookmark.metas)
+     let meta = this.bookmarkMeta[key];
+     if (!meta)
        return [];
 
-     let ar = Object.keys(bookmark.metas);
+     let ar = Object.keys(meta);
      let res = []
      for (let i = 0; i < ar.length; i++) {
        let key = ar[i];
        if (key[0] === '_') continue;
-       let item = bookmark.metas[key];
+       let item = meta[key];
        res.push([key, item]);
      }
 
@@ -73,7 +63,7 @@ export class BookmarksPage {
   async didLoad() {
     this.bookmarkList = await this.bookmarkProvider.bookmarks();
     try {
-      this.bookmarkProvider.getMoreMeta(this.bookmarkList);
+      this.bookmarkMeta = await this.bookmarkProvider.getMoreMeta(this.bookmarkList);
     } catch (error) {
       console.log(error);
       this.textToast('You have no internet access :(')
@@ -85,20 +75,15 @@ export class BookmarksPage {
     this.events.publish('change:novel', novel);
   }
 
-  remove(key: string) {
+  async remove(key: string) {
     let bookmark = this.bookmarkList[key];
-    this.bookmarkProvider.remove(bookmark).then((newBookmarks) => {
-      this.bookmarkList = newBookmarks;
-    })
+    this.bookmarkList = await this.bookmarkProvider.remove(bookmark);
   }
 
-  download(key: string) {
+  async download(key: string) {
     let novel = this.b2novel(key);
-    let finish = (downloaded) => {
-      this.textToast(`Downloaded ${downloaded} chapters of '${novel.title}'`);
-    };
-      // this.loadAhead(1, this.maxChapter, this.maxChapter, null, finish);
-    novel.download().then(finish);
+    const downloaded = await novel.download();
+    this.textToast(`Downloaded ${downloaded} chapters of '${novel.title}'`);
   }
 
   rm (key: string) {

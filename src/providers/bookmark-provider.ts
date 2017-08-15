@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Http } from '@angular/http';
 import { Events } from 'ionic-angular';
-import 'rxjs/add/operator/map';
 import { Storage } from '@ionic/storage';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
@@ -18,12 +16,26 @@ type NovelUpMap = {
   wasUptodate: boolean
 };
 
+export interface IBookmark {
+  id: string;
+  title: string;
+  _platform: string;
+
+  author?: string;
+  desc?: string;
+  dateAdded?: number;
+}
+
+export type IBookmarkMap = { [id: string] : IBookmark; };
+export type IBookmarkMeta = { [id: string] : any; };
+
+
 @Injectable()
 export class BookmarkProvider {
   private _version: number = null;
   private novelsWasUptodate: NovelUpMap;
 
-  constructor(public http: Http,
+  constructor(
     public events: Events,
     private novelService: PlatformManager,
     public storage: Storage,
@@ -43,16 +55,6 @@ export class BookmarkProvider {
     this.events.subscribe('checkupdate:bookmarks', async () => {
       this.checkUpdateBookmarks();
     });
-
-    // window['test1'] = async () => {
-    //   const bks = await this.bookmarks();
-    //   for (let id in bks) {
-    //     let novel = this.b2novel(id, bks);
-    //     let novelMaxChapter = await novel.getMaxChapter();
-    //     this.events.publish('updated:novel', 1, bks[id], novelMaxChapter);
-    //     break;
-    //   }
-    // }
   }
 
   textToast(text: string, time: number = 2000) {
@@ -79,30 +81,32 @@ export class BookmarkProvider {
     let cnt = 1;
     for (let id in bks) {
       let novel = this.b2novel(id, bks);
-      let novelCurrentChapter = await novel.getCurrentChapter();
-      let novelMaxChapter = await novel.getMaxChapter();
+      if (this.novelsWasUptodate[novel.id] === true) {
 
-      if (!novelCurrentChapter) {
-        console.log('checkupdate:bookmarks :: currentChapter is null/undef ?');
-        continue;
-      }
-      if (!novelMaxChapter) {
-        console.log('checkupdate:bookmarks :: maxChapter is null/undef ?');
-        continue;
-      }
+        let novelCurrentChapter = await novel.getCurrentChapter();
+        let novelMaxChapter = await novel.getMaxChapter();
 
-      if (novelCurrentChapter === novelMaxChapter) {
-        this.novelsWasUptodate[novel.id] = true;
-        console.log(`${novel.title} has no updates`);
-      } else if (novelCurrentChapter < novelMaxChapter) {
-        if (this.novelsWasUptodate[novel.id] === true) {
+        if (!novelCurrentChapter) {
+          console.log('checkupdate:bookmarks :: currentChapter is null/undef ?');
+          continue;
+        }
+        if (!novelMaxChapter) {
+          console.log('checkupdate:bookmarks :: maxChapter is null/undef ?');
+          continue;
+        }
+
+        if (novelCurrentChapter < novelMaxChapter) {
           console.log(`${novel.title} has an update available!`);
           this.events.publish('updated:novel', cnt, bks[novel.id], novelMaxChapter);
           cnt += 1;
+          this.novelsWasUptodate[novel.id] = false;
+        } else if (novelCurrentChapter === novelMaxChapter) {
+          console.log(`${novel.title} has no updates`);
+        } else {
+          console.error(`${novel.title} current chapter is higher than max chapter`);
         }
-        this.novelsWasUptodate[novel.id] = false;
       } else {
-        console.error(`${novel.title} current chapter is higher than max chapter`);
+        console.log(`${novel.title} don't need to be checked.`);
       }
 
     }
@@ -133,25 +137,13 @@ export class BookmarkProvider {
     await this.storage.set(ST_BOOKMARK, bookmarks);
   }
 
-  async updateBk(bookmarks) {
-    for (let key in bookmarks) {
-      let bk = bookmarks[key];
-
-      if (bk.metas['Last Read'] === bk.metas['Last Released']) {
-        bk['_isUpToDate'] = true;
-      } else {
-        bk['_isUpToDate'] = false;
-      }
-    }
-  }
-
   b2novel(key: string, dict: any): Novel {
     let bookmark = dict[key];
     let novel = this.novelService.novelKwargs(bookmark);
     return novel;
   }
 
-  sortBookmarks(bookmarks) {
+  sortBookmarks(bookmarks: IBookmarkMap): Array<string> {
     const keys = Object.keys(bookmarks);
     // sort by most recent added (could also revert the list I guess?)
     keys.sort((a, b) => {
@@ -160,13 +152,16 @@ export class BookmarkProvider {
     return keys
   }
 
-  async getMoreMeta(bookmarks): Promise<any> {
+  async getMoreMeta(bookmarks): Promise<IBookmarkMeta> {
+    const bookmarksMeta = {};
+
     const a = (id) => {
       let novel = this.b2novel(id, bookmarks);
       return novel.getMoreMeta(true).then((meta) => {
-        bookmarks[id].metas = meta;
+        bookmarksMeta[id] = meta;
       })
     }
+
     if (bookmarks) {
       const promises = [];
       for (let key of this.sortBookmarks(bookmarks)) {
@@ -176,9 +171,10 @@ export class BookmarkProvider {
       }
       await Promise.all(promises);
     }
+    return bookmarksMeta;
   }
 
-  async bookmarks(): Promise<any> {
+  async bookmarks(): Promise<IBookmarkMap> {
     await this.checkVersion();
     return (await this.storage.get(ST_BOOKMARK)) || {};
   }
@@ -190,6 +186,7 @@ export class BookmarkProvider {
       this.ga.trackEvent('bookmark', 'add-bookmark', novel.id);
       cachedBm[novel.id] = novel.meta();
       cachedBm[novel.id].dateAdded = Date.now();
+
       this.textToast(`Added "${novel.title}" to your bookmarks!`);
       this.storage.set(ST_BOOKMARK, cachedBm);
     } else {
@@ -198,35 +195,22 @@ export class BookmarkProvider {
     }
   }
 
-  async remove(bookmark: any) {
+  async remove(bookmark: IBookmark): Promise<IBookmarkMap> {
     const bs = await this.bookmarks();
     this.ga.trackEvent('bookmark', 'remove-bookmark', bookmark.title);
 
-    delete bs[bookmark.id]
+    delete bs[bookmark.id];
     return this.storage.set(ST_BOOKMARK, bs);
   }
 
-  async checkUpdated() {
-    const bookmarks = await this.bookmarks();
-    for (let key in bookmarks) {
-      const bk = bookmarks[key];
-
-      if (bk['_isUpToDate'] === true) {
-        if (bk.metas['Last Read'] < bk.metas['Last Released']) {
-          // trigger notification for this bk;
-          bk['_isUpToDate'] = false;
-        }
-      }
-    }
-  }
-
-  async uploadBookmarks() {
+  async uploadBookmarks() { // TODO
     // for now just print bookmarks to console as json;
     const bookmarks = await this.bookmarks();
     const data = {};
     for (let key in bookmarks) {
-      let bk = bookmarks[key];
-      data[key] = { currentChapter: await this.storage.get(`${key}-current-chapter`) };
+      data[key] = {
+        currentChapter: await this.storage.get(`${key}-current-chapter`)
+      };
     }
     const res = {
       bookmarks: bookmarks,
