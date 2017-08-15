@@ -20,8 +20,10 @@ export class ReaderProvider {
     this.view = view;
   }
 
-  viewInactive(view: ReadingPage) {
-    if (this.view != view) {
+  viewInactive(currentView: ReadingPage) {
+    if (currentView.timestamp < this.view.timestamp) {
+      // bug, this function is called after the new view is set with setView, so nulling the view cause an error;
+      // (only when view is reloaded)
       return;
     }
     console.log('view inactive')
@@ -30,11 +32,17 @@ export class ReaderProvider {
 
   registerEvents() {
     this.events.subscribe('volume:up', () => {
-      this.view && this.view.onPreviousChapter();
+      if (this.view)
+        this.platform.zone.run(() => {
+          this.view.onPreviousChapter();
+        });
     })
 
     this.events.subscribe('volume:down', () => {
-      this.view && this.view.onNextChapter();
+      if (this.view)
+        this.platform.zone.run(() => {
+          this.view.onNextChapter();
+        });
     })
 
     this.events.subscribe('change:background', (bg) => {

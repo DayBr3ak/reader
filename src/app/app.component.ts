@@ -61,16 +61,12 @@ export class MyApp {
 
     document.addEventListener("volumedownbutton", () => {
       console.log('volumedownbutton');
-      this.platform.zone.run(() => {
-        this.events.publish('volume:down');
-      });
+      this.events.publish('volume:down');
     }, false);
 
     document.addEventListener("volumeupbutton", () => {
       console.log('volumeupbutton');
-      this.platform.zone.run(() => {
-        this.events.publish('volume:up');
-      });
+      this.events.publish('volume:up');
     }, false);
 
     this.events.subscribe('change:novel', (novel) => {

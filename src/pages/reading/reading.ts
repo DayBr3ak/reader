@@ -103,6 +103,7 @@ export class ReadingPage {
   novel: Novel;
   tapHandler: MultiTapHandler;
   analytics: Promise<GoogleAnalytics>;
+  timestamp: number;
 
   constructor(public statusBar: StatusBar,
     public navCtrl: NavController,
@@ -132,6 +133,7 @@ export class ReadingPage {
 
     console.log('Hello ReadingPage constructor');
     this.analytics = window['gaTrackerStarted'];
+    this.timestamp = Date.now();
 
     this.contentPromise = this.waitForContent();
     this.contentPromise.then((viewContent) => {
