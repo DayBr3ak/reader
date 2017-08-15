@@ -202,8 +202,6 @@ export class Wuxiaco extends NovelPlatform {
       meta['_Title'] = doc.querySelector('span.title').innerText.trim();
       meta['_Desc'] = doc.querySelector('p.review').innerText.trim().substring('Description\n'.length);
 
-      novel.title = meta['_Title'];
-      novel.desc = meta['_Desc'];
       return meta;
     }
 

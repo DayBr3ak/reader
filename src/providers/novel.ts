@@ -229,6 +229,15 @@ export class Novel {
         meta['Last Read'] = lastRead;
       }
       meta['Last Released'] = await maxChapterPromise;
+      if (meta['_Desc']) {
+        this.desc = meta['_Desc'];
+      }
+      if (meta['_Author']) {
+        this.author = meta['_Author'];
+      }
+      if (meta['_Title']) {
+        this.title = meta['_Title'];
+      }
     }
     return meta;
   }

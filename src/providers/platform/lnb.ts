@@ -128,13 +128,15 @@ export class LNB extends NovelPlatform {
     // throw new Error('need implem!!');
     // const maxChapterPromise = novel.getMaxChapter();
     const doc = await this.getDoc(this.resolveDirectoryUrl(novel.id));
+    let desc = doc.querySelectorAll('header>p')[1].innerText;
+    if (!desc || desc.length <= 0) {
+      desc = doc.querySelectorAll('header>blockquote>p')[0].innerText;
+    }
     const meta = {
       _Author: doc.querySelectorAll('header>h2')[0].innerText,
       Status: doc.querySelectorAll('header>h3>span')[0].innerText,
-      _Desc: doc.querySelectorAll('header>p')[1].innerText
+      _Desc: desc
     };
-    novel.desc = meta._Desc;
-    novel.author = meta._Author;
     // meta['Last Released'] = await maxChapterPromise;
 
     return meta;
