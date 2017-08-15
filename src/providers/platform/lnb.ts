@@ -99,6 +99,11 @@ export class LNB extends NovelPlatform {
     return directory.reverse();
   }
 
+  filterParagraphContent(p) {
+    const r = /<span style="color:.*">.*it\ has\ been\ stolen!\)<\/span>/gi;
+    return p.replace(r, '');
+  }
+
   async scrapChapter(url: string): Promise<any> {
     const doc = await this.getDoc(url);
 
@@ -112,8 +117,9 @@ export class LNB extends NovelPlatform {
 
     for (let i = 0; i < paragraphs.length; i++) {
       const e = paragraphs[i];
-      if (e.tagName === 'P' || e.tagName === 'DIV')
-        result.push(e.innerHTML);
+      if (e.tagName === 'P' || e.tagName === 'DIV') {
+        result.push(this.filterParagraphContent(e.innerHTML));
+      }
     }
     return result;
   }
