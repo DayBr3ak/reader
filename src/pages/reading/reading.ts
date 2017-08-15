@@ -25,6 +25,7 @@ const DEFAULT_NOVEL = {
   id: 'Martial-God-Asura'
 };
 
+const setTimeout = window.setTimeout;
 const wait = (to: number) => new Promise(r => setTimeout(r, to));
 
 @IonicPage()
@@ -507,8 +508,8 @@ export class MultiTapHandler {
 
   private _createTimeout() {
     this.timeoutHandle = setTimeout(() => {
-        this._cancelTimeout();
-        console.log('taphandler timeout')
+      this._cancelTimeout();
+      console.log('taphandler timeout')
     }, this.windowOf);
   }
 

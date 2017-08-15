@@ -3,8 +3,6 @@ import { Injectable } from '@angular/core';
 import { Events, Platform } from 'ionic-angular';
 import { ReadingPage } from '../pages/reading/reading';
 
-const wait = (to: number) => new Promise(r => setTimeout(r, to));
-
 @Injectable()
 export class ReaderProvider {
 
