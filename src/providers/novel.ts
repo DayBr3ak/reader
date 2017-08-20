@@ -144,15 +144,22 @@ export class Novel {
     try {
       const directory = await this.getDirectory();
       if (chapter > directory.length) {
-        return { error: `Chapter ${chapter} doesn't exist yet` };
+        throw {
+          message: `Chapter ${chapter} doesn't exist yet`,
+          error: `chapter (${chapter}) > maxChapter (${directory.length})`
+        };
       }
       const url = await this.manager.getChapterUrl(chapter, this.id, directory);
       return await this.manager.scrapChapter(url);
     } catch (error) {
-      let mes = 'Download error: ' + chapter + ' ' + this.title;
-      console.log(mes);
-      console.error(error)
-      throw { message: mes, error: error };
+      let result = error;
+      if (error.error === undefined) {
+        let mes = 'Download error: ' + chapter + ' ' + this.title;
+        console.log(mes);
+        console.error(error)
+        result = { message: mes, error: error };
+      }
+      throw result;
     }
   }
 
