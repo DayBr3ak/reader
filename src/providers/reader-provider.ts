@@ -6,7 +6,7 @@ import { ReadingPage } from '../pages/reading/reading';
 @Injectable()
 export class ReaderProvider {
 
-  view: ReadingPage;
+  private view: ReadingPage;
 
   constructor(
     public events: Events,
