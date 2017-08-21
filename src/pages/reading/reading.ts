@@ -16,6 +16,8 @@ import { Novel } from '../../providers/novel';
 import { BookmarkProvider } from '../../providers/bookmark-provider';
 import { ReaderProvider } from '../../providers/reader-provider';
 import { LockTask } from '../../providers/lock-task';
+
+import { MultiTapHandler } from './multi-tap-handler';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 const ST_R_SETTINGS = 'reader-settings';
@@ -44,44 +46,7 @@ const wait = (to: number) => new Promise(r => setTimeout(r, to));
           animate('100ms', style({ opacity: 0 }))
         ])
       ]
-    ),
-
-    trigger('flyInOut', [
-      state('in', style({
-        transform: 'translate3d(0, 0, 0)'
-      })),
-      state('out', style({
-        transform: 'translate3d(150%, 0, 0)'
-      })),
-      transition('in => out', animate('300ms linear')),
-      transition('out => in', animate('300ms linear'))
-    ]),
-
-    trigger('changeChapter', [
-      state('in', style({
-        transform: 'translate3d(0, 0, 0)'
-      })),
-      state('prev-out', style({
-        transform: 'translate3d(150%, 0, 0)'
-      })),
-      state('next-out', style({
-        transform: 'translate3d(-150%, 0, 0)'
-      })),
-      transition('in => next-out', animate('300ms linear')),
-      transition('in => prev-out', animate('300ms linear')),
-      transition('next-out => in', [style({transform: 'translate3d(150%, 0, 0)'}), animate('300ms 10ms linear')]),
-      transition('prev-out => in', [style({transform: 'translate3d(-150%, 0, 0)'}), animate('300ms 10ms linear')]),
-    ]),
-
-    trigger('fade', [
-      state('in', style({
-        opacity: 1
-      })),
-      state('out', style({
-        opacity: 0
-      })),
-      transition('in <=> out', animate('200ms linear'))
-    ])
+    )
   ],
 })
 export class ReadingPage {
@@ -95,7 +60,6 @@ export class ReadingPage {
   public readerSettings: any;
   public currentChapter: number;
   public hideUi: boolean;
-  public chapList: Array<number>;
 
   private disableNav: boolean = false;
 
@@ -471,73 +435,6 @@ export class ReadingPage {
     }
     console.log('Async operation has ended');
     refresher.complete();
-  }
-}
-
-import { Observable } from 'rxjs';
-
-
-export class MultiTapHandler {
-
-  private tapRequired: number;
-  private windowOf: number;
-  private tapObservable: Observable<any>;
-  private tapObserver: any = null;
-  private timeoutHandle: number = null;
-  private tapCounter: number = 0;
-
-  constructor (tapRequired: number=2, windowOf: number=600) {
-    if (tapRequired < 1) {
-      throw 'MultiTapHandler needs at least 1 tap';
-    }
-    this.tapRequired = tapRequired;
-    this.windowOf = windowOf;
-    this.tapObservable = Observable.create(observer => {
-      this.tapObserver = observer;
-      return () => {
-        console.log('taphandler disposed');
-      }
-    });
-  }
-
-  private _cancelTimeout() {
-    if (this.timeoutHandle) {
-      clearTimeout(this.timeoutHandle);
-      this.timeoutHandle = null;
-    }
-    this.tapCounter = 0;
-  }
-
-  private _createTimeout() {
-    this.timeoutHandle = setTimeout(() => {
-      this._cancelTimeout();
-      console.log('taphandler timeout')
-    }, this.windowOf);
-  }
-
-  private _publish() {
-    this._cancelTimeout();
-    this.tapObserver.next(true);
-  }
-
-  tap () {
-    if (this.tapRequired === 1) {
-      return this._publish();
-    }
-    if (this.timeoutHandle === null) {
-      // first tap, enable timer
-      return this._createTimeout();
-    }
-    if (this.timeoutHandle) {
-      this.tapCounter++;
-      if (this.tapCounter >= (this.tapRequired - 1)) {
-        this._publish();
-      }
-    }
-  }
-
-  get observable(): Observable<any> {
-    return this.tapObservable;
   }
 }
 
