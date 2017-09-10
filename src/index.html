@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
-  <title>Ionic App</title>
+  <title>My Web Novel App</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="format-detection" content="telephone=no">
   <meta name="msapplication-tap-highlight" content="no">
@@ -11,19 +11,31 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4e8ef7">
 
+  <link rel="preload" href="cordova.js" as="script">
+  <link rel="preload" href="build/vendor.js" as="script">
+  <link rel="preload" href="build/main.js" as="script">
+  <link rel="preload" href="build/main.css" as="style">
+  <link rel="preload" href="build/polyfills.js" as="script">
+  <link rel="preload" href="build/0.js" as="script">
+
+  <link rel="preload" href="assets/fonts/roboto-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/roboto-medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/ionicons.woff2?v=3.0.0-alpha.3" as="font" type="font/woff2" crossorigin>
+
+
+  <link rel="stylesheet" href="build/main.css">
+
   <!-- cordova.js required for cordova apps -->
   <script src="cordova.js"></script>
 
-  <!-- un-comment this code to enable service worker
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
+   <!-- un-comment this code to enable service worker -->
+  <!-- <script>
+    if (navigator['serviceWorker'] !== undefined) {
+      navigator['serviceWorker'].register('service-worker.js')
         .then(() => console.log('service worker installed'))
         .catch(err => console.log('Error', err));
     }
-  </script>-->
-
-  <link href="build/main.css" rel="stylesheet">
+  </script> -->
 
   <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' *; object-src 'self'; style-src 'self' 'unsafe-inline'; media-src *">
 
@@ -41,6 +53,22 @@
 
   <!-- The bundle js is generated during the build process -->
   <script src="build/main.js"></script>
+
+  <script>
+  const lazyPreloads = [
+    'build/1.js',
+    'build/2.js',
+    'build/3.js'
+  ];
+
+  lazyPreloads.forEach((script) => {
+    const link = document.createElement('link');
+    link.href = script;
+    link.rel = 'preload';
+    link.as = 'script';
+    document.head.appendChild(link);
+  });
+  </script>
 
 </body>
 </html>

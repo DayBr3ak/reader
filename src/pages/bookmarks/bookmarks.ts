@@ -93,5 +93,9 @@ export class BookmarksPage {
       this.textToast(`Deleted offline data of '${novel.title}'`);
     });
   }
+
+  checkUpdate() {
+    this.events.publish('checkupdate:bookmarks');
+  }
 }
 

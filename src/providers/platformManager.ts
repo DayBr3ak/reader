@@ -2,7 +2,6 @@
 import { Injectable } from '@angular/core';
 import { Events } from 'ionic-angular';
 import { Http } from '@angular/http';
-import 'rxjs/add/operator/retry';
 
 import { Storage } from '@ionic/storage';
 

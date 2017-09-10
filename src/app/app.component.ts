@@ -9,6 +9,13 @@ import { GoogleAnalytics } from '@ionic-native/google-analytics';
 import { Novel } from '../providers/novel'
 const appVersion = '0.2';
 
+const doubleRaf = () =>
+  new Promise(r =>
+    window.requestAnimationFrame(() =>
+      window.requestAnimationFrame(r)
+    )
+  )
+
 @Component({
   templateUrl: 'app.html'
 })
@@ -97,22 +104,19 @@ export class MyApp {
       })
     })
 
-    setTimeout(() => {
-      this.events.publish('checkupdate:bookmarks');
-    }, 2000);
-    setInterval(() => {
-      this.events.publish('checkupdate:bookmarks');
-    }, 60 * 60 * 1000);
-
     this.events.subscribe('toggle:splashscreen', () => {
       console.log('hide splashscreen');
       this.splashScreen.hide();
     });
+
+    this.platform.resume.subscribe(() => {
+      this.events.publish('checkupdate:bookmarks');
+    })
   }
 
   openPage(page) {
     // Reset the content nav to have just this page
     // we wouldn't want the back button to show in this scenario
-    this.nav.setRoot(page.component);
+    doubleRaf().then(() => this.nav.setRoot(page.component))
   }
 }

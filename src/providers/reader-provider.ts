@@ -21,7 +21,7 @@ export class ReaderProvider {
   }
 
   viewInactive(currentView: ReadingPage) {
-    if (currentView.timestamp < this.view.timestamp) {
+    if (this.view && currentView.timestamp < this.view.timestamp) {
       // bug, this function is called after the new view is set with setView, so nulling the view cause an error;
       // (only when view is reloaded)
       return;

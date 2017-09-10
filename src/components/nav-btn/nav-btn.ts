@@ -1,5 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 
+const doubleRaf = () =>
+  new Promise(r =>
+    window.requestAnimationFrame(() =>
+      window.requestAnimationFrame(r)
+    )
+  )
+
 @Component({
   selector: 'nav-btn',
   templateUrl: 'nav-btn.html'
@@ -14,21 +21,24 @@ export class NavBtn {
   disable: boolean = false;
 
   @Output() prevClick = new EventEmitter();
-  @Output() selClick = new EventEmitter();
+  @Output() selClick =  new EventEmitter();
   @Output() nextClick = new EventEmitter();
 
   constructor() {
-    console.log('Hello NavBtn Component');
+    // console.log('Hello NavBtn Component');
   }
 
   prev() {
-    this.prevClick.emit();
+    doubleRaf()
+      .then(() => this.prevClick.emit())
   }
   next() {
-    this.nextClick.next();
+    doubleRaf()
+      .then(() => this.nextClick.emit())
   }
   select() {
-    this.selClick.emit();
+    doubleRaf()
+      .then(() => this.selClick.emit())
   }
 
 }
