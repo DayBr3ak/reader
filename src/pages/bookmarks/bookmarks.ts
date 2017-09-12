@@ -94,8 +94,20 @@ export class BookmarksPage {
     });
   }
 
-  checkUpdate() {
-    this.events.publish('checkupdate:bookmarks');
+  isChecking = false;
+  async checkUpdate() {
+    if (this.isChecking) {
+      return;
+    }
+    this.isChecking = true;
+    this.textToast('Started Checking for Updates', 1000);
+    try {
+      await this.bookmarkProvider.checkUpdateBookmarks();
+      this.textToast('Finished checking for updates');
+    } catch(error) {
+      this.textToast('Got an error somehow')
+    }
+    this.isChecking = false;
   }
 }
 

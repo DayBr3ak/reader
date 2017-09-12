@@ -1,6 +1,6 @@
 
 import { NovelPlatform } from './novelPlatform';
-import { compressToBase64, decompressFromBase64 } from 'lz-string';
+import { compressToBase64, decompressFromBase64 } from 'lz-string/libs/lz-string.min';
 
 const ST_CURRENT_CHAPTER = 'current-chapter';
 const ST_CHAPTER_TXT = 'chapter-txt-';

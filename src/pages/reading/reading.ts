@@ -1,5 +1,5 @@
 import { ViewChild, Component, ElementRef } from '@angular/core';
-import { trigger, transition, style, animate, state } from '@angular/animations';
+import { trigger, transition, style, animate } from '@angular/animations';
 
 import { IonicPage, NavController, NavParams, ModalController, MenuController,
   Content, Platform, Events, PopoverController } from 'ionic-angular';
@@ -15,7 +15,7 @@ import { PlatformManager } from '../../providers/platformManager';
 import { Novel } from '../../providers/novel';
 import { BookmarkProvider } from '../../providers/bookmark-provider';
 import { ReaderProvider } from '../../providers/reader-provider';
-import { LockTask } from '../../providers/lock-task';
+// import { LockTask } from '../../providers/lock-task';
 
 import { MultiTapHandler } from './multi-tap-handler';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
@@ -82,7 +82,7 @@ export class ReadingPage {
     private novelService: PlatformManager,
     private bookmarkProvider: BookmarkProvider,
     private readerProvider: ReaderProvider,
-    private lockTask: LockTask
+    // private lockTask: LockTask
   ) {
     this.readerProvider.setView(this);
 
@@ -345,11 +345,11 @@ export class ReadingPage {
 
     try {
       if (this.hideUi) {
-        await this.lockTask.start();
+        // await this.lockTask.start();
         console.log('app is pinned');
 
       } else {
-        await this.lockTask.stop()
+        // await this.lockTask.stop();
         console.log('app is UNpinned');
       }
     } catch(error) {

@@ -19,15 +19,7 @@ export class NovelPlatform {
   }
 
   _htmlGet(url: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      this.manager.http.get(url)
-        .retry(5)
-        .subscribe((data) => {
-        resolve(data.text());
-      }, (error) => {
-        reject(error);
-      });
-    })
+    return this.manager.fetchHtml(url);
   }
 
   get storage() {

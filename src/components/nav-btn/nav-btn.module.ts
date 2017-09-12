@@ -1,4 +1,4 @@
-import { NgModule, ModuleWithProviders } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { IonicModule } from 'ionic-angular';
 
 import { NavBtn } from './nav-btn';
@@ -16,7 +16,7 @@ import { NavBtn } from './nav-btn';
   ]
 })
 export class NavBtnModule {
-  public static forRoot(): ModuleWithProviders {
+  public static forRoot() {
     return {
       ngModule: NavBtnModule, providers: []
     };

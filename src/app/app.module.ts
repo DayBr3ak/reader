@@ -11,7 +11,7 @@ import { HttpModule } from '@angular/http';
 
 import { BookmarkProvider } from '../providers/bookmark-provider';
 import { ReaderProvider } from   '../providers/reader-provider';
-import { LockTask } from '../providers/lock-task';
+import { MyHttpProvider } from '../providers/my-http-provider'
 
 import { IonicStorageModule } from '@ionic/storage';
 
@@ -20,6 +20,7 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 import { LocalNotifications } from '@ionic-native/local-notifications';
 import { Brightness } from '@ionic-native/brightness';
+import { HTTP as CordovaHttp } from '@ionic-native/http';
 
 @NgModule({
   declarations: [
@@ -48,9 +49,10 @@ import { Brightness } from '@ionic-native/brightness';
     GoogleAnalytics,
     LocalNotifications,
     Brightness,
+    CordovaHttp,
     BookmarkProvider,
     ReaderProvider,
-    LockTask
+    MyHttpProvider,
   ]
 })
 export class AppModule {}

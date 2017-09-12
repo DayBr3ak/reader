@@ -7,6 +7,9 @@ import { NovelPlatform } from '../../providers/novelPlatform';
 import { PlatformManager, PLATFORMS } from '../../providers/platformManager';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
+import { Observable } from 'rxjs/Observable';
+
+
 const arrayRange = (n: number, offset:number=0) => {
   if (n <= 1) {
     return [];
@@ -57,6 +60,9 @@ export class ExplorePage {
     private ga: GoogleAnalytics,
     private novelService: PlatformManager
   ) {
+
+
+
     this.novelListDefault = [{ title: 'Dummy', desc: 'This is a dummy'}];
     this.novelList = this.novelListDefault;
 

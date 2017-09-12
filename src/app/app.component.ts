@@ -40,6 +40,8 @@ export class MyApp {
   }
 
   async init() {
+    this.splashScreen.hide();
+
     window['gaTrackerStarted'] = (async () => {
       await this.platform.ready();
       try {
@@ -106,7 +108,7 @@ export class MyApp {
 
     this.events.subscribe('toggle:splashscreen', () => {
       console.log('hide splashscreen');
-      this.splashScreen.hide();
+      // this.splashScreen.hide();
     });
 
     this.platform.resume.subscribe(() => {

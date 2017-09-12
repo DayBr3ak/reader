@@ -1,15 +1,17 @@
 
 import { Injectable } from '@angular/core';
 import { Events } from 'ionic-angular';
-import { Http } from '@angular/http';
 
 import { Storage } from '@ionic/storage';
+import { HTTP } from '@ionic-native/http';
 
 import { Novel } from './novel';
 import { NovelPlatform } from './novelPlatform';
 import { Wuxiaco } from './platform/wuxiaco';
 import { LNB } from './platform/lnb';
 import { Kokuma } from './platform/kokuma';
+
+import { MyHttpProvider } from './my-http-provider';
 
 type PlatformMap = {
   id: string,
@@ -30,12 +32,25 @@ export class PlatformManager {
   constructor(
     public storage: Storage,
     public events: Events,
-    public http: Http
+    public http: MyHttpProvider
   ) {
 
     for (let elem of PLATFORMS) {
       this.platforms[elem[0]] = new elem[1](this, elem[0]);
     }
+  }
+
+  fetchHtml(url: string): Promise<string> {
+    // return new Promise((resolve, reject) => {
+    //   this.http.get(url)
+    //     .retry(5)
+    //     .subscribe((data) => {
+    //     resolve(data.text());
+    //   }, (error) => {
+    //     reject(error);
+    //   });
+    // });
+    return this.http.getHtml(url)
   }
 
   checkPlatform(key: string): boolean {

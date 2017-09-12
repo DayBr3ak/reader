@@ -79,7 +79,8 @@ export class BookmarkProvider {
     console.log('event :: checkupdate:bookmarks');
     const bks = await this.bookmarks();
     let cnt = 1;
-    for (let id in bks) {
+
+    const promises = Object.keys(bks).map(async id => {
       let novel = this.b2novel(id, bks);
       if (this.novelsWasUptodate[novel.id] === true) {
 
@@ -88,11 +89,11 @@ export class BookmarkProvider {
 
         if (!novelCurrentChapter) {
           console.log('checkupdate:bookmarks :: currentChapter is null/undef ?');
-          continue;
+          return;
         }
         if (!novelMaxChapter) {
           console.log('checkupdate:bookmarks :: maxChapter is null/undef ?');
-          continue;
+          return;
         }
 
         if (novelCurrentChapter < novelMaxChapter) {
@@ -100,6 +101,22 @@ export class BookmarkProvider {
           this.events.publish('updated:novel', cnt, bks[novel.id], novelMaxChapter);
           cnt += 1;
           this.novelsWasUptodate[novel.id] = false;
+
+          // should cache the new chapter(s) for later offline read
+          const chapters = [];
+          for (let i = novelCurrentChapter + 1; i <= novelMaxChapter; i++) {
+            chapters.push(i)
+          }
+
+          await Promise.all(chapters.map(async (chapter) => {
+            try {
+              let chapterContent = await novel.scrap(chapter);
+              novel.cacheChapterContent(chapter, chapterContent);
+            } catch(error) {
+              console.log('error in precache bookmark', novel.title);
+            }
+          }))
+
         } else if (novelCurrentChapter === novelMaxChapter) {
           console.log(`${novel.title} has no updates`);
         } else {
@@ -108,8 +125,8 @@ export class BookmarkProvider {
       } else {
         console.log(`${novel.title} don't need to be checked.`);
       }
-
-    }
+    })
+    await Promise.all(promises);
     await this.storage.set(ST_BOOKMARK_NOVEL_WAS_UPTODATE, this.novelsWasUptodate);
   }
 

@@ -11,6 +11,9 @@
         "ionic:build": "ionic-app-scripts build",
         "ionic:serve": "ionic-app-scripts serve",
         "serve:cordova": "ionic-app-scripts serve  --address 0.0.0.0 --port 8100 --livereload-port 35729 --nobrowser --iscordovaserve --platform android --target cordova",
+        "android": "adb install -r platforms/android/build/outputs/apk/android-debug.apk && adb shell am start -n com.ionicframework.reader138235/.MainActivity",
+        "//android": "ionic cordova build android && adb install -r platforms/android/build/outputs/apk/android-debug.apk",
+        "//android:prod": "ionic cordova build --prod android && adb install -r platforms/android/build/outputs/apk/android-debug.apk",
         "nocors": "chromium --disable-web-security --user-data-dir=ChromiumDevdata/ http://localhost:8100/ &>/dev/null &"
     },
     "dependencies": {
@@ -27,6 +30,7 @@
         "@ionic-native/brightness": "^4.1.0",
         "@ionic-native/core": "4.1.0",
         "@ionic-native/google-analytics": "^4.1.0",
+        "@ionic-native/http": "^4.2.1",
         "@ionic-native/local-notifications": "^4.1.0",
         "@ionic-native/splash-screen": "4.1.0",
         "@ionic-native/status-bar": "4.1.0",
@@ -34,21 +38,27 @@
         "@ngx-translate/core": "6.0.1",
         "@ngx-translate/http-loader": "0.0.3",
         "cordova-android": "^6.2.3",
-        "cordova-plugin-app-event": "^1.2.0",
+        "cordova-plugin-advanced-http": "^1.5.9",
+        "cordova-plugin-advanced-http-2": "git+https://github.com/DayBr3ak/cordova-plugin-advanced-http-2.git",
+        "cordova-plugin-app-event": "^1.2.1",
         "cordova-plugin-brightness": "^0.1.5",
-        "cordova-plugin-console": "1.0.5",
-        "cordova-plugin-device": "1.1.4",
-        "cordova-plugin-splashscreen": "~4.0.1",
-        "cordova-plugin-statusbar": "2.2.1",
-        "cordova-plugin-whitelist": "1.3.1",
-        "cordova-sqlite-storage": "~2.0.2",
-        "de.appplant.cordova.plugin.local-notification": "~0.8.5",
-        "ionic-angular": "3.5.3",
-        "ionic-plugin-keyboard": "~2.2.1",
+        "cordova-plugin-compat": "^1.1.0",
+        "cordova-plugin-console": "^1.0.7",
+        "cordova-plugin-device": "^1.1.6",
+        "cordova-plugin-file": "^4.3.3",
+        "cordova-plugin-google-analytics": "^1.8.3",
+        "cordova-plugin-splashscreen": "^4.0.3",
+        "cordova-plugin-statusbar": "^2.2.3",
+        "cordova-plugin-whitelist": "^1.3.2",
+        "cordova-sqlite-storage": "^2.0.4",
+        "de.appplant.cordova.plugin.local-notification": "^0.8.5",
+        "ionic-angular": "^3.6.1",
+        "ionic-plugin-keyboard": "^2.2.1",
         "ionicons": "3.0.0",
         "lz-string": "^1.4.4",
         "rxjs": "5.4.0",
         "sw-toolbox": "3.6.0",
+        "test": "^0.6.0",
         "zone.js": "0.8.12"
     },
     "devDependencies": {
@@ -64,13 +74,7 @@
         "cordova-plugin-statusbar",
         "cordova-plugin-splashscreen",
         "cordova-plugin-device",
-        "ionic-plugin-keyboard",
-        "cordova-sqlite-storage",
-        "cordova-plugin-google-analytics",
-        {
-            "locator": "https://github.com/oddmouse/cordova-plugin-locktask.git",
-            "id": "com.oddmouse.plugins.locktask"
-        }
+        "ionic-plugin-keyboard"
     ],
     "cordovaPlatforms": [
         {
@@ -82,15 +86,17 @@
     "description": "reader: An Ionic project",
     "cordova": {
         "plugins": {
+            "ionic-plugin-keyboard": {},
+            "cordova-plugin-whitelist": {},
             "cordova-plugin-console": {},
             "cordova-plugin-device": {},
-            "cordova-plugin-splashscreen": {},
             "cordova-plugin-statusbar": {},
-            "cordova-plugin-whitelist": {},
-            "cordova-sqlite-storage": {},
-            "ionic-plugin-keyboard": {},
+            "cordova-plugin-splashscreen": {},
             "de.appplant.cordova.plugin.local-notification": {},
-            "cordova-plugin-brightness": {}
+            "cordova-sqlite-storage": {},
+            "cordova-plugin-google-analytics": {},
+            "cordova-plugin-brightness": {},
+            "cordova-plugin-advanced-http": {}
         },
         "platforms": [
             "android"
