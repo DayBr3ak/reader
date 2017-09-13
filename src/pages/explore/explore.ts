@@ -8,7 +8,14 @@ import { PlatformManager, PLATFORMS } from '../../providers/platformManager';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 import { Observable } from 'rxjs/Observable';
-
+import { Subject } from 'rxjs/Subject';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import 'rxjs/add/observable/of';
+import 'rxjs/add/observable/concat';
+import 'rxjs/add/operator/debounceTime';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/distinctUntilChanged';
+import 'rxjs/add/operator/switchMap';
 
 const arrayRange = (n: number, offset:number=0) => {
   if (n <= 1) {
@@ -38,8 +45,6 @@ export class ExplorePage {
   @ViewChild('content') content: Content;
 
   isLoading: boolean = false;
-  searchBarValue: string = null;
-  novelList: any;
   novelListDefault: any;
   novelSearch: any;
 
@@ -48,6 +53,12 @@ export class ExplorePage {
 
   genres: any;
   genreFilter: any;
+
+  _list = new BehaviorSubject([{ title: 'Winter', desc: 'Is at your doorstep'}])
+  get list() {
+    return this._list.asObservable();
+  }
+  searchInputSubject = new Subject();
 
   constructor(
     public navCtrl: NavController,
@@ -61,15 +72,21 @@ export class ExplorePage {
     private novelService: PlatformManager
   ) {
 
-
-
-    this.novelListDefault = [{ title: 'Dummy', desc: 'This is a dummy'}];
-    this.novelList = this.novelListDefault;
-
+    this.novelListDefault = [];
 
     this.novelPlatforms = platformsToSelector();
     this.updatePlatformSelection(this.novelPlatforms[0][0]);
     this.ga.trackView("Explore Page");
+
+    this.searchInputSubject.asObservable()
+      .debounceTime(500)
+      .map((event: any) => event.target.value)
+      .map((value: string) => value? value.trim() : '')
+      .distinctUntilChanged()
+      .subscribe(v => {
+        this._getItems(v)
+      })
+      // .switchMap(search => this.apiService.getItems(searchText);
   }
 
   updatePlatformSelection(pltId: string) {
@@ -98,11 +115,7 @@ export class ExplorePage {
   async loadListAll() {
     this.isLoading = true;
     this.novelListDefault = [];
-    this.novelList = [];
-    // see https://developers.google.com/web/fundamentals/getting-started/primers/promises
-    // basically all networking promises start simultaneously
-    // then they are reduced sequentially to keep the order
-    // as they complete the elements are added in the correct order
+
     try {
       const page1Promise = this.loadList(1);
       // need the first chapter to know how many page needs to be loaded
@@ -131,7 +144,7 @@ export class ExplorePage {
       this.novelListDefault = list;
     } finally {
       this.isLoading = false;
-      this._getItems(this.searchBarValue);
+      this._updateDom();
     }
   }
 
@@ -147,7 +160,6 @@ export class ExplorePage {
       if (a[field] > b[field]) return 1;
       return 0;
     })
-    this.novelList = this.novelListDefault;
   }
 
   _loadList(search: any) {
@@ -158,24 +170,15 @@ export class ExplorePage {
   }
 
   _updateDom(list=this.novelListDefault) {
-    this.novelList = list;
-  }
-
-  getItems(event) {
-    this._getItems(event.target.value);
+    this._list.next(list);
   }
 
   _getItems(val: string) {
-    this.searchBarValue = val;
     if (this.isLoading) {
       return;
     }
     let tmpList = this.novelListDefault;
     console.log('search= ' + val);
-
-    if (val === undefined || val === null) {
-      val = '';
-    }
 
     if (val.length > 0) {
       const filter = val.toLowerCase();

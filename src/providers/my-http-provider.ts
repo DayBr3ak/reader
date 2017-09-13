@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Platform } from 'ionic-angular';
 import { HTTP as CordovaHttp } from '@ionic-native/http';
 import { Http as AngularHttp } from '@angular/http';
+import 'rxjs/add/operator/retry';
 
 const defaultHeaders = {
   'User-Agent': `Mozilla/5.0 (Linux; Android 7.1.2; trltexx Build/NJH47F; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/60.0.3112.116 Mobile Safari/537.36`,

@@ -1,4 +1,3 @@
-import 'rxjs/add/operator/retry';
 
 import { PlatformManager } from './platformManager';
 import { Novel } from './novel';

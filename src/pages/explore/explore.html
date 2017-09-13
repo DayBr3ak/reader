@@ -24,7 +24,8 @@
       </ion-item>
     </ion-toolbar>
     <ion-toolbar>
-      <ion-searchbar (ionInput)="getItems($event)"></ion-searchbar>
+      <!-- <ion-searchbar (ionInput)="getItems($event)"></ion-searchbar> -->
+      <ion-searchbar (ionInput)="searchInputSubject.next($event)"></ion-searchbar>
 
     </ion-toolbar>
   </ion-navbar>
@@ -38,8 +39,11 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <ion-list  [virtualScroll]="novelList">
+  <!-- <ion-list  [virtualScroll]="list | async">
     <ion-card *virtualItem="let novel" (click)="selNovel(novel)">
+   -->
+  <ion-list>
+    <ion-card *ngFor="let novel of list | async" (click)="selNovel(novel)">
       <ion-card-content>
         <ion-card-title>
           {{ novel.title }}

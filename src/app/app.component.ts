@@ -22,7 +22,7 @@ const doubleRaf = () =>
 export class MyApp {
   @ViewChild(Nav) nav: Nav;
 
-  rootPage:any = 'ReadingPage';
+  rootPage:any = 'ExplorePage';
   pages:any;
 
   constructor(
