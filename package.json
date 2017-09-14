@@ -11,7 +11,7 @@
         "ionic:build": "ionic-app-scripts build",
         "ionic:serve": "ionic-app-scripts serve",
         "serve:cordova": "ionic-app-scripts serve  --address 0.0.0.0 --port 8100 --livereload-port 35729 --nobrowser --iscordovaserve --platform android --target cordova",
-        "android": "adb install -r platforms/android/build/outputs/apk/android-debug.apk && adb shell am start -n com.ionicframework.reader138235/.MainActivity",
+        "android": "adb install -r platforms/android/build/outputs/apk/android-debug.apk && adb shell am start -n com.ionicframework.readerdebug/.MainActivity",
         "//android": "ionic cordova build android && adb install -r platforms/android/build/outputs/apk/android-debug.apk",
         "//android:prod": "ionic cordova build --prod android && adb install -r platforms/android/build/outputs/apk/android-debug.apk",
         "nocors": "chromium --disable-web-security --user-data-dir=ChromiumDevdata/ http://localhost:8100/ &>/dev/null &"
@@ -64,7 +64,7 @@
     "devDependencies": {
         "@ionic/app-scripts": "2.0.2",
         "ajv-keywords": "^2.1.0",
-        "ionic": "3.9.2",
+        "ionic": "3.10.3",
         "setimmediate": "^1.0.5",
         "typescript": "2.3.4"
     },

@@ -14,7 +14,7 @@ const defaultHeaders = {
 
 @Injectable()
 export class MyHttpProvider {
-  private httpPromise: Promise<CordovaHttp | AngularHttp>;
+  private httpGetPromise: Promise<(url: string) => Promise<Response>>;
   private headers = {
     ...defaultHeaders
   };
@@ -33,53 +33,49 @@ export class MyHttpProvider {
     }
   }
 
-  constructor(private plt: Platform, private cordovaHttp: CordovaHttp, private angularHttp: AngularHttp) {
-    this.httpPromise = plt.ready()
+  constructor(plt: Platform, private cordovaHttp: CordovaHttp, private angularHttp: AngularHttp) {
+    this.httpGetPromise = plt.ready()
       .then(() => {
         if (plt.is('cordova')) {
-          return cordovaHttp;
+          return this.cordovaGet.bind(this);
         }
-        return angularHttp
+        return this.angularGet.bind(this);
       })
   }
 
-  async getHtml(url: string): Promise<string> {
-    if (this.plt.is('cordova')) {
-      const http = <CordovaHttp>(await this.httpPromise);
-      console.log(`fetching ${url} through native http plugin`)
-      const response = await http.get(url, {}, this.headers);
-      if (response.status !== 200) {
-        console.error(response);
-        throw new Error("status isn't 200");
-      }
-      if (window['logGetHtml'] === true) {
-        console.log(response.data);
-        console.log('headers', this.headers);
-        console.log('Response_headers', response.headers);
-        response.headers
-      }
-      return response.data;
-    } else {
-      const http = <AngularHttp>(await this.httpPromise);
-      console.log(`fetching ${url} through ANGULAR http module`)
-
-      //TODO set headers?
-      const dataPromise = <Promise<string>>new Promise((resolve, reject) => {
-        http.get(url)
-          // .retry(3)
-          .subscribe((response) => {
-            if (response.status !== 200) {
-              console.error(response.status, response.statusText);
-              return reject(new Error("status isn't 200"));
-            }
-            resolve(response.text());
-          }, (error) => {
-            reject(error);
-          });
-      })
-      return await dataPromise;
+  private async cordovaGet(url: string) {
+    console.log(`fetching ${url} through CORDOVA http plugin`)
+    const http = this.cordovaHttp;
+    const response = await http.get(url, {}, this.headers);
+    if (window['logGetHtml'] === true) {
+      console.log(response.data);
+      console.log('headers', this.headers);
+      console.log('Response_headers', response.headers);
     }
+    const responseInit = {
+      status: response.status,
+      headers: response.headers
+    }
+    return new Response(response.data, responseInit);
   }
 
+  private angularGet(url: string) {
+    console.log(`fetching ${url} through ANGULAR http module`)
+    const http = this.angularHttp;
+    //TODO set headers?
+    return <Promise<Response>>new Promise((resolve, reject) => {
+      http.get(url)
+        // .retry(3)
+        .subscribe((response) => {
+          resolve(response);
+        }, (error) => {
+          reject(error);
+        });
+    })
+  }
+
+  get(url: string): Promise<Response> {
+    return this.httpGetPromise.then(r => r(url))
+  }
 
 }

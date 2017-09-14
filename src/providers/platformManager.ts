@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { Events } from 'ionic-angular';
 
 import { Storage } from '@ionic/storage';
-import { HTTP } from '@ionic-native/http';
 
 import { Novel } from './novel';
 import { NovelPlatform } from './novelPlatform';
@@ -41,16 +40,14 @@ export class PlatformManager {
   }
 
   fetchHtml(url: string): Promise<string> {
-    // return new Promise((resolve, reject) => {
-    //   this.http.get(url)
-    //     .retry(5)
-    //     .subscribe((data) => {
-    //     resolve(data.text());
-    //   }, (error) => {
-    //     reject(error);
-    //   });
-    // });
-    return this.http.getHtml(url)
+    return this.http.get(url)
+      .then(response => {
+        if (response.status !== 200) {
+          console.error(response.status, response.statusText);
+          throw new Error("status isn't 200");
+        }
+        return response.text();
+      })
   }
 
   checkPlatform(key: string): boolean {

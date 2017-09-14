@@ -39,12 +39,12 @@
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
-  <!-- <ion-list  [virtualScroll]="list | async">
+  <ion-list  [virtualScroll]="list | async">
     <ion-card *virtualItem="let novel" (click)="selNovel(novel)">
-   -->
-  <ion-list>
+
+<!--   <ion-list>
     <ion-card *ngFor="let novel of list | async" (click)="selNovel(novel)">
-      <ion-card-content>
+ -->      <ion-card-content>
         <ion-card-title>
           {{ novel.title }}
           </ion-card-title>

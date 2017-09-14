@@ -1,13 +1,12 @@
 import { Component, ViewChild } from '@angular/core';
 import { IonicPage, NavController, NavParams, Events,
-  Content, Platform, PopoverController, ToastController,
+  Content, PopoverController, ToastController,
 } from 'ionic-angular';
 // import { Wuxiaco } from '../../providers/wuxiaco';
 import { NovelPlatform } from '../../providers/novelPlatform';
 import { PlatformManager, PLATFORMS } from '../../providers/platformManager';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
-import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import 'rxjs/add/observable/of';
@@ -64,7 +63,6 @@ export class ExplorePage {
     public navCtrl: NavController,
     public navParams: NavParams,
     private events: Events,
-    private plt: Platform,
     public popoverCtrl: PopoverController,
     public toastCtrl: ToastController,
 
