@@ -7,14 +7,15 @@ import { NovelPlatform } from '../../providers/novelPlatform';
 import { PlatformManager, PLATFORMS } from '../../providers/platformManager';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
-import { Subject } from 'rxjs/Subject';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import 'rxjs/add/observable/of';
-import 'rxjs/add/observable/concat';
-import 'rxjs/add/operator/debounceTime';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/distinctUntilChanged';
-import 'rxjs/add/operator/switchMap';
+import { BehaviorSubject, Subject } from 'rxjs';
+// import { Subject } from 'rxjs/Subject';
+// import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+// import 'rxjs/add/observable/of';
+// import 'rxjs/add/observable/concat';
+// import 'rxjs/add/operator/debounceTime';
+// import 'rxjs/add/operator/map';
+// import 'rxjs/add/operator/distinctUntilChanged';
+// import 'rxjs/add/operator/switchMap';
 
 const arrayRange = (n: number, offset:number=0) => {
   if (n <= 1) {

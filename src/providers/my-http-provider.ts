@@ -3,7 +3,8 @@ import { Injectable } from '@angular/core';
 import { Platform } from 'ionic-angular';
 import { HTTP as CordovaHttp } from '@ionic-native/http';
 import { Http as AngularHttp } from '@angular/http';
-import 'rxjs/add/operator/retry';
+import { Observable } from 'rxjs';
+// import 'rxjs/add/operator/retry';
 
 const defaultHeaders = {
   'User-Agent': `Mozilla/5.0 (Linux; Android 7.1.2; trltexx Build/NJH47F; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/60.0.3112.116 Mobile Safari/537.36`,
@@ -14,7 +15,6 @@ const defaultHeaders = {
 
 @Injectable()
 export class MyHttpProvider {
-  private httpGetPromise: Promise<(url: string) => Promise<Response>>;
   private headers = {
     ...defaultHeaders
   };
@@ -33,49 +33,45 @@ export class MyHttpProvider {
     }
   }
 
-  constructor(plt: Platform, private cordovaHttp: CordovaHttp, private angularHttp: AngularHttp) {
-    this.httpGetPromise = plt.ready()
-      .then(() => {
-        if (plt.is('cordova')) {
-          return this.cordovaGet.bind(this);
+  constructor(
+    private plt: Platform,
+    private cordovaHttp: CordovaHttp,
+    private angularHttp: AngularHttp)
+  {}
+
+  private cordovaGet(url: string) {
+    return Observable.fromPromise(this.cordovaHttp.get(url, {}, this.headers))
+      .do(() => {
+        console.log(`fetching ${url} through CORDOVA http plugin`)
+      })
+      .flatMap(response => {
+        if (window['logGetHtml'] === true) {
+          console.log(response.data);
+          console.log('headers', this.headers);
+          console.log('Response_headers', response.headers);
         }
-        return this.angularGet.bind(this);
+        const responseInit = {
+          status: response.status,
+          headers: response.headers
+        }
+        return Observable.of(new Response(response.data, responseInit));
       })
   }
 
-  private async cordovaGet(url: string) {
-    console.log(`fetching ${url} through CORDOVA http plugin`)
-    const http = this.cordovaHttp;
-    const response = await http.get(url, {}, this.headers);
-    if (window['logGetHtml'] === true) {
-      console.log(response.data);
-      console.log('headers', this.headers);
-      console.log('Response_headers', response.headers);
-    }
-    const responseInit = {
-      status: response.status,
-      headers: response.headers
-    }
-    return new Response(response.data, responseInit);
-  }
-
   private angularGet(url: string) {
-    console.log(`fetching ${url} through ANGULAR http module`)
-    const http = this.angularHttp;
-    //TODO set headers?
-    return <Promise<Response>>new Promise((resolve, reject) => {
-      http.get(url)
-        // .retry(3)
-        .subscribe((response) => {
-          resolve(response);
-        }, (error) => {
-          reject(error);
-        });
+    return this.angularHttp.get(url).do(() => {
+      console.log(`fetching ${url} through ANGULAR http module`)
     })
   }
 
-  get(url: string): Promise<Response> {
-    return this.httpGetPromise.then(r => r(url))
+  get(url: string) {
+     return Observable.fromPromise(this.plt.ready())
+       .flatMap<string, Response>(() => {
+         if (this.plt.is('cordova')) {
+           return this.cordovaGet(url);
+         }
+         return this.angularGet(url);
+       })
   }
 
 }

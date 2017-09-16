@@ -6,6 +6,8 @@ import { SplashScreen } from '@ionic-native/splash-screen';
 import { LocalNotifications } from '@ionic-native/local-notifications';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
+import { BookmarkProvider } from '../providers/bookmark-provider';
+
 import { Novel } from '../providers/novel'
 const appVersion = '0.2';
 
@@ -22,7 +24,7 @@ const doubleRaf = () =>
 export class MyApp {
   @ViewChild(Nav) nav: Nav;
 
-  rootPage:any = 'ExplorePage';
+  rootPage:any = 'ReadingPage';
   pages:any;
 
   constructor(
@@ -31,16 +33,15 @@ export class MyApp {
     public splashScreen: SplashScreen,
     public storage: Storage,
     public localNotifications: LocalNotifications,
+    public bookmarkProvider: BookmarkProvider,
     public events: Events,
     public toastCtrl: ToastController,
     public ga: GoogleAnalytics
   ) {
-
     this.init();
   }
 
   async init() {
-    this.splashScreen.hide();
 
     window['gaTrackerStarted'] = (async () => {
       await this.platform.ready();
@@ -56,11 +57,12 @@ export class MyApp {
     })();
 
     await this.platform.ready();
-    await this.storage.ready();
-
     // Okay, so the platform is ready and our plugins are available.
     // Here you can do any higher level native things you might need.
     this.statusBar.styleDefault();
+    this.splashScreen.hide();
+
+    await this.storage.ready();
 
     this.pages = [
       { title: 'Explore', component: 'ExplorePage' },
@@ -111,9 +113,45 @@ export class MyApp {
       // this.splashScreen.hide();
     });
 
-    this.platform.resume.subscribe(() => {
-      this.events.publish('checkupdate:bookmarks');
-    })
+    // this.platform.resume.subscribe(() => {
+    //   this.events.publish('checkupdate:bookmarks');
+    // })
+
+    const subRoutine = {
+      start: Date.now(),
+      last:  Date.now(),
+      count: 0,
+      period: 1000,
+      data: {
+        'last_checked': 0,
+        'check_interval': 30 * 60 * 1000, // 30min
+        'check_interval_default': 30 * 60 * 1000,
+        'check_interval_onfailure': 10 * 60 * 1000
+      },
+      handler: () => {
+        this.platform.timeout(subRoutine.handler, subRoutine.period);
+        const now = Date.now();
+        const last = subRoutine.last;
+        subRoutine.last = now;
+        subRoutine.count += 1;
+        // console.log('LOGGING subroutine', subRoutine.count, now - last);
+
+        if (now - subRoutine.data['last_checked'] > subRoutine.data['check_interval']) { // 30min
+          subRoutine.data['last_checked'] = now;
+          this.bookmarkProvider.checkUpdateBookmarks()
+            .then(() => {
+              subRoutine.data['check_interval'] = subRoutine.data['check_interval_default'];
+            })
+            .catch(() => {
+              subRoutine.data['check_interval'] = subRoutine.data['check_interval_onfailure'];
+            })
+            .then(() => {
+              subRoutine.data['last_checked'] = Date.now();
+            })
+        }
+      }
+    }
+    subRoutine.handler();
   }
 
   openPage(page) {

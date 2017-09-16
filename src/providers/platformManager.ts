@@ -41,13 +41,15 @@ export class PlatformManager {
 
   fetchHtml(url: string): Promise<string> {
     return this.http.get(url)
-      .then(response => {
+      .flatMap(response => {
         if (response.status !== 200) {
           console.error(response.status, response.statusText);
           throw new Error("status isn't 200");
         }
         return response.text();
       })
+      .retry(3)
+      .toPromise()
   }
 
   checkPlatform(key: string): boolean {

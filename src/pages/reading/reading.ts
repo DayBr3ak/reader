@@ -5,7 +5,6 @@ import { IonicPage, NavController, NavParams, ModalController, MenuController,
   Content, Platform, Events, PopoverController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { Storage } from '@ionic/storage';
-import 'rxjs/add/operator/map';
 
 import { PopoverChapterPage } from '../popover-chapter/popover-chapter';
 import { PopoverReadPage } from '../popover-read/popover-read';

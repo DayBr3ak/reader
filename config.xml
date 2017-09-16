@@ -3,12 +3,13 @@
     <name>readerDebug</name>
     <description>An awesome Ionic/Cordova app.</description>
     <author email="hi@ionicframework" href="http://ionicframework.com/">Ionic Framework Team</author>
-    <content src="index.html" />
+    <content original-src="index.html" src="http://192.168.1.23:8100" />
     <access origin="*" />
     <allow-navigation href="http://ionic.local/*" />
-    <allow-navigation href="http://192.168.*:*" />
+    <allow-navigation href="http://arch:*" />
     <allow-navigation href="http://*/*" />
     <allow-navigation href="https://*/*" />
+    <allow-intent href="http://arch:*" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
     <allow-intent href="tel:*" />
@@ -52,6 +53,7 @@
     <feature name="StatusBar">
         <param name="ios-package" onload="true" value="CDVStatusBar" />
     </feature>
+    <allow-navigation href="http://192.168.1.23:8100" />
     <engine name="android" spec="^6.2.3" />
     <plugin name="cordova-plugin-advanced-http" spec="^1.5.9" />
     <plugin name="cordova-plugin-brightness" spec="^0.1.5" />
