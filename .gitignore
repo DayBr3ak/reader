@@ -29,6 +29,9 @@ plugins/ios.json
 www/
 $RECYCLE.BIN/
 
+.gradle/
+*.keystore
+package-lock.json
 .DS_Store
 Thumbs.db
 UserInterfaceState.xcuserstate
