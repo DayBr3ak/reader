@@ -356,13 +356,7 @@ export class ReadingPage {
     }
   }
 
-  onPause() {
-    if (this.hideUi) {
-      // interface is hidden and probably pinned
-      // we want to change that;
-      this.toggleInterface();
-    }
-  }
+  onPause() {}
 
   presentPopoverRead() {
     let popover = this.popoverCtrl.create(PopoverReadPage, {
