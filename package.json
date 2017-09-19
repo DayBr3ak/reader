@@ -10,10 +10,11 @@
         "lint": "ionic-app-scripts lint",
         "ionic:build": "ionic-app-scripts build",
         "ionic:serve": "ionic-app-scripts serve",
+        "cordova:build":      "rm -f config.xml && ln -s config.debug.xml config.xml && ionic cordova build android",
+        "cordova:build:prod": "rm -f config.xml && ln -s config.prod.xml  config.xml && ionic cordova build android --prod --aot",
         "serve:cordova": "ionic-app-scripts serve  --address 0.0.0.0 --port 8100 --livereload-port 35729 --nobrowser --iscordovaserve --platform android --target cordova",
         "android": "adb install -r platforms/android/build/outputs/apk/android-debug.apk && adb shell am start -n com.ionicframework.readerdebug/.MainActivity",
-        "//android": "ionic cordova build android && adb install -r platforms/android/build/outputs/apk/android-debug.apk",
-        "//android:prod": "ionic cordova build --prod android && adb install -r platforms/android/build/outputs/apk/android-debug.apk",
+        "android:prod": "adb install -r platforms/android/build/outputs/apk/android-debug.apk && adb shell am start -n com.ionicframework.reader138235/.MainActivity",
         "nocors": "chromium --disable-web-security --user-data-dir=ChromiumDevdata/ http://localhost:8100/ &>/dev/null &"
     },
     "dependencies": {
