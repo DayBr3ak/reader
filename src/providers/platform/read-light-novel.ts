@@ -78,10 +78,44 @@ export class ReadLightNovel extends NovelPlatform {
     const doc = await this.getDoc(url);
 
     const content = doc.querySelector('.chapter-content3');
+    let beforeCenter;
+    for (let i = 0; i < content.children.length; i++) {
+      if (content.children[i].tagName === 'CENTER') {
+        beforeCenter = i - 1;
+        break;
+      }
+    }
+    let prefix;
+    if (beforeCenter) {
+      prefix = content.children[beforeCenter].innerText.trim();
+      let splits = prefix.split('\n');
+      prefix = splits[splits.length - 1];
+    }
+
     content.removeChild(content.querySelector('noscript'));
+    content.removeChild(content.querySelector('center'));
     content.removeChild(content.querySelector('div'));
 
-    return content.innerText.trim().split('\n').filter(t => t.length > 0);
+    let contentText = content.innerText.trim();
+    if (beforeCenter) {
+      let x = contentText.indexOf(prefix);
+      if (x > -1) {
+        let hasSpace = false;
+        if (contentText.indexOf(prefix + ' ') > -1) {
+          hasSpace = true;
+        }
+        contentText =
+          contentText.substr(0, x + prefix.length)
+          + (hasSpace? ' ': '')
+          + contentText.substr(x + prefix.length).trim();
+      }
+    }
+
+    let div = doc.createElement('div');
+    div.innerHTML = contentText;
+    contentText = div.textContent;
+
+    return contentText.split('\n').filter(t => t.trim().length > 0);
   }
 
 }
