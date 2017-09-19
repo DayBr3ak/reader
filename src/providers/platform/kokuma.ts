@@ -6,7 +6,6 @@ import { Novel } from '../novel';
 
 export class Kokuma extends NovelPlatform {
   NOVEL_U = 'http://www.novelupdates.com/series/arena/';
-  URL = 'https://lightnovelbastion.com';
 
   init() {
     console.log('Hello Kokuma Platform');
@@ -37,15 +36,11 @@ export class Kokuma extends NovelPlatform {
     return this.NOVEL_U;
   }
 
-  resolveChapterUrl(...args: string[]): string {
-    return 'https://lightnovelbastion.com/release.php?p=' + args[0];
-  }
-
   async scrapDirectory(url: string): Promise<any> {
     const doc = await this.getDoc(this.NOVEL_U);
 
     // get nb page
-    let maxPage = doc.querySelectorAll('.digg_pagination')[0].children;
+    let maxPage: any = doc.querySelectorAll('.digg_pagination')[0].children;
     maxPage = parseInt(maxPage[maxPage.length - 2].innerText);
 
     const directory = [];

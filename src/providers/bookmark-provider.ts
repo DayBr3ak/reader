@@ -6,9 +6,12 @@ import { GoogleAnalytics } from '@ionic-native/google-analytics';
 import { PlatformManager } from './platformManager';
 import { Novel } from './novel';
 
+import { BehaviorSubject } from 'rxjs';
+
 const ST_BOOKMARK = 'app-bookmarks';
 const ST_BOOKMARK_VERSION = 'app-bookmarks-version';
 const ST_BOOKMARK_NOVEL_WAS_UPTODATE = 'app-bookmarks-was-uptodate';
+const ST_BOOKMARK_LAST_UPDATE_DATE = 'app-bookmarks-date';
 const BK_VERSION = 1.8;
 
 type NovelUpMap = {
@@ -35,6 +38,19 @@ export class BookmarkProvider {
   private _version: number = null;
   private novelsWasUptodate: NovelUpMap;
 
+  private lastUpdatedSubject: BehaviorSubject<number>;
+  get lastUpdatedObservable() {
+    return this.lastUpdatedSubject
+      .asObservable()
+      .map(numberDate => {
+        if (!numberDate) {
+          return 'N/A';
+        }
+        const date = new Date(numberDate);
+        return date.toLocaleString();
+      })
+  }
+
   constructor(
     public events: Events,
     private novelService: PlatformManager,
@@ -51,6 +67,8 @@ export class BookmarkProvider {
     window['bookmarkProvider'] = this;
 
     this.storage.get(ST_BOOKMARK_NOVEL_WAS_UPTODATE).then(val => this.novelsWasUptodate = val || {})
+    this.lastUpdatedSubject = new BehaviorSubject(undefined);
+    this.storage.get(ST_BOOKMARK_LAST_UPDATE_DATE).then(val => this.lastUpdatedSubject.next(val));
 
     this.events.subscribe('checkupdate:bookmarks', async () => {
       this.checkUpdateBookmarks();
@@ -128,6 +146,7 @@ export class BookmarkProvider {
     })
     await Promise.all(promises);
     await this.storage.set(ST_BOOKMARK_NOVEL_WAS_UPTODATE, this.novelsWasUptodate);
+    this.lastUpdatedSubject.next(Date.now());
   }
 
   async getVersion() {

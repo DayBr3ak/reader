@@ -32,7 +32,6 @@ export class LNB extends NovelPlatform {
     }
 
     const doc = await this.getDoc(this.URL);
-
     let drop = doc.querySelectorAll('.dropdown')[1];
     let flyouts = drop.querySelectorAll('li.flyout');
 

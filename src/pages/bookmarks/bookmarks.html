@@ -19,6 +19,8 @@
 
 <ion-content padding>
 
+  <p>Last Updated: {{ bookmarkProvider.lastUpdatedObservable | async }}</p>
+
   <ion-list *ngIf="bKeys.length > 0">
 
     <ion-card *ngFor="let key of bKeys">

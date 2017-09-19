@@ -9,6 +9,7 @@ import { NovelPlatform } from './novelPlatform';
 import { Wuxiaco } from './platform/wuxiaco';
 import { LNB } from './platform/lnb';
 import { Kokuma } from './platform/kokuma';
+import { ReadLightNovel } from './platform/read-light-novel';
 
 import { MyHttpProvider } from './my-http-provider';
 
@@ -18,9 +19,10 @@ type PlatformMap = {
 };
 
 export const PLATFORMS: Array<[string, any, string]> = [
+  ['readlightnovel', ReadLightNovel, 'Read-Light-Novel'],
   ['classic', Wuxiaco, 'Classic'],
   ['lnb', LNB, 'LightNovelBastion'],
-  ['kokuma', Kokuma, 'Kokuma']
+  ['kokuma', Kokuma, 'Kokuma'],
 ];
 
 @Injectable()
@@ -40,16 +42,18 @@ export class PlatformManager {
   }
 
   fetchHtml(url: string): Promise<string> {
-    return this.http.get(url)
-      .flatMap(response => {
-        if (response.status !== 200) {
-          console.error(response.status, response.statusText);
-          throw new Error("status isn't 200");
-        }
-        return response.text();
-      })
-      .retry(3)
-      .toPromise()
+    return new Promise((r, reject) => {
+      this.http.get(url)
+        .map(response => {
+          if (response.status !== 200) {
+            console.error(response.status, response.statusText);
+            throw new Error("status isn't 200");
+          }
+          return response.text();
+        })
+        .retry(3)
+        .subscribe(r, reject)
+    });
   }
 
   checkPlatform(key: string): boolean {

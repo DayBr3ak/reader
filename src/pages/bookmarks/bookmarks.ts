@@ -14,6 +14,7 @@ export class BookmarksPage {
   moreDesc: any = {};
   bookmarkList: IBookmarkMap = {};
   bookmarkMeta: IBookmarkMeta = {};
+
   get bKeys() {
     return this.bookmarkProvider.sortBookmarks(this.bookmarkList);
   }

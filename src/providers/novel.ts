@@ -231,11 +231,6 @@ export class Novel {
     });
 
     if (meta['_error'] === undefined) {
-      const lastRead = await currentChapterPromise;
-      if (lastRead > 1) {
-        meta['Last Read'] = lastRead;
-      }
-      meta['Last Released'] = await maxChapterPromise;
       if (meta['_Desc']) {
         this.desc = meta['_Desc'];
       }
@@ -245,6 +240,11 @@ export class Novel {
       if (meta['_Title']) {
         this.title = meta['_Title'];
       }
+      const lastRead = await currentChapterPromise;
+      if (lastRead > 1) {
+        meta['Last Read'] = lastRead;
+      }
+      meta['Last Released'] = await maxChapterPromise;
     }
     return meta;
   }
