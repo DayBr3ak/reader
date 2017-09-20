@@ -3,7 +3,6 @@ import { Platform, Nav, Events, ToastController } from 'ionic-angular';
 import { StatusBar } from '@ionic-native/status-bar';
 import { Storage } from '@ionic/storage';
 import { SplashScreen } from '@ionic-native/splash-screen';
-import { LocalNotifications } from '@ionic-native/local-notifications';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
 
 import { BookmarkProvider } from '../providers/bookmark-provider';
@@ -32,7 +31,6 @@ export class MyApp {
     public statusBar: StatusBar,
     public splashScreen: SplashScreen,
     public storage: Storage,
-    public localNotifications: LocalNotifications,
     public bookmarkProvider: BookmarkProvider,
     public events: Events,
     public toastCtrl: ToastController,
@@ -90,22 +88,6 @@ export class MyApp {
         duration: time
       });
       toast.present();
-    })
-
-    this.events.subscribe('updated:novel', (notifId: number, bookmark: any, newMaxChapter: number) => {
-      this.localNotifications.schedule({
-        id: notifId,
-        text: `${bookmark.title}: New Chapter (${newMaxChapter})`,
-        data: bookmark
-      });
-
-      console.log(bookmark);
-    })
-
-    this.localNotifications.on('click', (notification: any) => {
-      this.platform.zone.run(() => {
-        this.events.publish('change:novel', JSON.parse(notification.data));
-      })
     })
 
     this.events.subscribe('toggle:splashscreen', () => {

@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Events } from 'ionic-angular';
+import { Events, Platform } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
 import { GoogleAnalytics } from '@ionic-native/google-analytics';
+import { LocalNotifications } from '@ionic-native/local-notifications';
 
 import { PlatformManager } from './platformManager';
 import { Novel } from './novel';
@@ -12,7 +13,12 @@ const ST_BOOKMARK = 'app-bookmarks';
 const ST_BOOKMARK_VERSION = 'app-bookmarks-version';
 const ST_BOOKMARK_NOVEL_WAS_UPTODATE = 'app-bookmarks-was-uptodate';
 const ST_BOOKMARK_LAST_UPDATE_DATE = 'app-bookmarks-date';
-const BK_VERSION = 1.8;
+const ST_BOOKMARK_UID = 'app-bookmarks-uid';
+const BK_VERSION = '1.96';
+
+Array.prototype['removeId'] = function(id) {
+  return this.slice(0, id).concat(this.slice(id + 1, this.length))
+}
 
 type NovelUpMap = {
   novelId: string,
@@ -20,6 +26,7 @@ type NovelUpMap = {
 };
 
 export interface IBookmark {
+  uid: number,
   id: string;
   title: string;
   _platform: string;
@@ -35,7 +42,7 @@ export type IBookmarkMeta = { [id: string] : any; };
 
 @Injectable()
 export class BookmarkProvider {
-  private _version: number = null;
+  private _version: string = null;
   private novelsWasUptodate: NovelUpMap;
 
   private lastUpdatedSubject: BehaviorSubject<number>;
@@ -50,12 +57,16 @@ export class BookmarkProvider {
         return date.toLocaleString();
       })
   }
+  private checkVersionPromise = this.checkVersion();
+  public notificationQueue: Array<string> = []; // array of novelIds
 
   constructor(
+    public plt: Platform,
     public events: Events,
     private novelService: PlatformManager,
     public storage: Storage,
-    private ga: GoogleAnalytics
+    private ga: GoogleAnalytics,
+    private localNotifications: LocalNotifications,
   ) {
     console.log('Hello BookmarkProvider Provider');
 
@@ -73,10 +84,34 @@ export class BookmarkProvider {
     this.events.subscribe('checkupdate:bookmarks', async () => {
       this.checkUpdateBookmarks();
     });
+
+    this.localNotifications.on('click', (notification: any) => {
+      const bookmark = JSON.parse(notification.data);
+      this.plt.zone.run(() => {
+        this.events.publish('change:novel', bookmark);
+      })
+
+      const index = this.notificationQueue.indexOf(bookmark.id);
+      if (index > -1) {
+        this.notificationQueue = this.notificationQueue['removeId'](index);
+      }
+    })
   }
 
   textToast(text: string, time: number = 2000) {
     this.events.publish('toast', text, time);
+  }
+
+  scheduleNotifications(bookmark: IBookmark, newMaxChapter: number) {
+    // if (this.notificationQueue.indexOf(bookmark.id) === -1) {
+      this.localNotifications.schedule({
+        id: bookmark.uid,
+        text: `${bookmark.title}: New Chapter (${newMaxChapter})`,
+        data: bookmark
+      });
+      this.notificationQueue.push(bookmark.id);
+      console.log(bookmark);
+    // }
   }
 
   async updateNovel(novel: Novel) {
@@ -116,7 +151,8 @@ export class BookmarkProvider {
 
         if (novelCurrentChapter < novelMaxChapter) {
           console.log(`${novel.title} has an update available!`);
-          this.events.publish('updated:novel', cnt, bks[novel.id], novelMaxChapter);
+
+          this.scheduleNotifications(bks[novel.id], novelMaxChapter);
           cnt += 1;
           this.novelsWasUptodate[novel.id] = false;
 
@@ -165,11 +201,19 @@ export class BookmarkProvider {
     }
     // update version
     await this.storage.set(ST_BOOKMARK_VERSION, BK_VERSION);
+    this._version = BK_VERSION;
     console.log(`NEW BOOKMARK VERSION ${bkVersion} -> ${BK_VERSION}`);
-    const bookmarks = await this.storage.get(ST_BOOKMARK);
+    const bookmarks: any = await this.storage.get(ST_BOOKMARK);
     if (bookmarks === null)
       return;
-
+    if (BK_VERSION === '1.96') {
+      let cnt = 1;
+      for (let [_, bookmark] of Object['entries'](bookmarks)) {
+        bookmark.uid = cnt;
+        cnt += 1;
+      }
+      await this.storage.set(ST_BOOKMARK_UID, cnt - 1);
+    }
     await this.storage.set(ST_BOOKMARK, bookmarks);
   }
 
@@ -211,7 +255,7 @@ export class BookmarkProvider {
   }
 
   async bookmarks(): Promise<IBookmarkMap> {
-    await this.checkVersion();
+    await this.checkVersionPromise;
     return (await this.storage.get(ST_BOOKMARK)) || {};
   }
 
@@ -220,11 +264,16 @@ export class BookmarkProvider {
     const cachedBm = await this.bookmarks();
     if (cachedBm[novel.id] === undefined) {
       this.ga.trackEvent('bookmark', 'add-bookmark', novel.id);
-      cachedBm[novel.id] = novel.meta();
+      let uid = await this.storage.get(ST_BOOKMARK_UID);
+      cachedBm[novel.id] = {
+        ...novel.meta(),
+        uid: uid + 1
+      }
       cachedBm[novel.id].dateAdded = Date.now();
 
       this.textToast(`Added "${novel.title}" to your bookmarks!`);
-      this.storage.set(ST_BOOKMARK, cachedBm);
+      await this.storage.set(ST_BOOKMARK_UID, uid + 1);
+      await this.storage.set(ST_BOOKMARK, cachedBm);
     } else {
       this.textToast(`"${novel.title}" already bookmarked.`);
       console.log('already bookmarked');
